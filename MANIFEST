@@ -1,0 +1,8 @@
+Changes
+Makefile.PL
+MANIFEST
+README
+Xlib.xs
+typemap
+t/X11-Xlib.t
+lib/X11/Xlib.pm
