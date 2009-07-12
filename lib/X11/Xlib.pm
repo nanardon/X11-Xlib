@@ -136,18 +136,26 @@ __END__
 
 =head1 SEE ALSO
 
-Mention other useful documentation such as the documentation of
-related modules or operating system documentation (such as man pages
-in UNIX), or any relevant external documentation such as RFCs or
-standards.
+=over 4
 
-If you have a mailing list set up for your module, mention it here.
+=item L<X11::GUITest>
 
-If you have a web site set up for your module, mention it here.
+This module provide the same functions but with a high level approach.
+
+=item L<Gtk2>
+
+Functions provided by this modules are mostly include in L<Gtk2> binding, but
+trough Gtk API and perl objects.
+
+=back
+
+=head1 NOTES
+
+This module is still incompleted, but patch are welcome :)
 
 =head1 AUTHOR
 
-Olivier Thauvin, E<lt>olivier@localdomainE<gt>
+Olivier Thauvin, E<lt>nanardon@nanardon.zarb.orgE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 
