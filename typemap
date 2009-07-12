@@ -1,5 +1,6 @@
 TYPEMAP
 Display *             O_OBJECT
+Window                O_OBJECT
 
 INPUT
 O_OBJECT
