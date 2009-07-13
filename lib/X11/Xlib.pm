@@ -104,6 +104,11 @@ Flush pending events sent with *Fake* functions to X11 server.
 
 This function must be used to make fake event taking effect.
 
+=head3 $dpy->XSync($flush)
+
+Force Xserver to sync event. The optionnal $flush allow to discard pending
+event.
+
 =head2 WINDOW FUNCTIONS
 
 =head3 $dpy->RootWindow
