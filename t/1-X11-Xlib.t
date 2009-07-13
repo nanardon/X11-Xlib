@@ -1,4 +1,4 @@
-use Test::More tests => 9;
+use Test::More tests => 10;
 BEGIN { use_ok('X11::Xlib') };
 
 ok(my $display = X11::Xlib->new, "Can get display");
@@ -14,5 +14,5 @@ ok(@keysym, "can get the keyboard mapping");
 
 ok(my $rootwindow = $display->RootWindow(0), "Can get root window");
 isa_ok($rootwindow, 'X11::Xlib::Window');
-
+ok($rootwindow->id, "Can get window id");
 
