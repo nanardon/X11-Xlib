@@ -3,6 +3,7 @@
 #include "XSUB.h"
 
 #include <X11/Xlib.h>
+#include <X11/Xutil.h>
 
 static Display *TheXDisplay = NULL;
 
@@ -154,6 +155,30 @@ XStringToKeysym(string)
     RETVAL = XStringToKeysym(string);
     OUTPUT:
     RETVAL
+
+int
+IsKeypadKey(keysym)
+    unsigned long keysym
+
+int
+IsPrivateKeypadKey(keysym)
+    unsigned long keysym
+
+int
+IsPFKey(keysym)
+    unsigned long keysym
+
+int
+IsFunctionKey(keysym)
+    unsigned long keysym
+
+int
+IsMiscFunctionKey(keysym)
+    unsigned long keysym
+
+int
+IsModifierKey(keysym)
+    unsigned long keysym
 
 unsigned int
 XKeysymToKeycode(dpy, keysym)

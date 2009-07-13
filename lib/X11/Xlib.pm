@@ -12,7 +12,16 @@ XSLoader::load('X11::Xlib', $VERSION);
 
 use Exporter 'import';
 
-our @EXPORT = qw(XKeysymToString XStringToKeysym);
+our @EXPORT = qw(
+    XKeysymToString
+    XStringToKeysym
+    IsFunctionKey
+    IsKeypadKey
+    IsMiscFunctionKey
+    IsModifierKey
+    IsPFKey
+    IsPrivateKeypadKey
+);
 
 =head1 NAME
 
@@ -114,6 +123,30 @@ XKeysymToString is the exact reverse of XStringToKeysym.
 Return the keysym number for human readable caracter $string.
 
 XStringToKeysym is the exact reverse of XKeysymToString.
+
+=head3 IsFunctionKey($keysym)
+
+Return true if $keysym is a function key (F1 .. F35)
+
+=head3 IsKeypadKey($keysym)
+
+Return true is C<$keysym> is on numeric pad
+
+=head3 IsMiscFunctionKey($keysym)
+
+Return true is key is... honestly don't know :\
+
+=head3 IsModifierKey($keysym)
+
+Return true if C<$keysym> is a modifier key (Shift, Alt).
+
+=head3 IsPFKey($keysym)
+
+No idea.
+
+=head3 IsPrivateKeypadKey($keysym)
+
+No more idea.
 
 =head3 $dpy->XKeysymToKeycode($keysym)
 
