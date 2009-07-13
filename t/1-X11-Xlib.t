@@ -16,4 +16,3 @@ ok(my $rootwindow = $display->RootWindow(0), "Can get root window");
 isa_ok($rootwindow, 'X11::Xlib::Window');
 
 
-warn $display->keyboard_leds;

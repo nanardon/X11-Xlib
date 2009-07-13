@@ -4,5 +4,8 @@ MANIFEST
 README
 Xlib.xs
 typemap
-t/X11-Xlib.t
+t/0-Pod-Coverage.t
+t/0-Pod.t
+t/1-X11-Xlib.t
 lib/X11/Xlib.pm
+lib/X11/Xlib/Window.pm
