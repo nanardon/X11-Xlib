@@ -7,41 +7,41 @@
 
 static Display *TheXDisplay = NULL;
 
-MODULE = X11::Xlib		PACKAGE = X11::Xlib		
+MODULE = X11::Xlib                PACKAGE = X11::Xlib
 
 void
 new(class, display = NULL)
     char * class
     char * display
     PREINIT:
-    Display * dpy;
+        Display * dpy;
     PPCODE:
-    dpy = XOpenDisplay(display);
-    XPUSHs(sv_2mortal(sv_setref_pv(newSVpv("", 0), "X11::Xlib", dpy)));
+        dpy = XOpenDisplay(display);
+        XPUSHs(sv_2mortal(sv_setref_pv(newSVpv("", 0), "X11::Xlib", dpy)));
 
 void
 DESTROY(dpy)
     Display *dpy
     PPCODE:
-    (void) XCloseDisplay(dpy);
+        (void) XCloseDisplay(dpy);
 
 int
 DisplayWidth(dpy, screen=0)
     Display *dpy
     int screen
     CODE:
-    RETVAL = DisplayWidth(dpy, screen);
+        RETVAL = DisplayWidth(dpy, screen);
     OUTPUT:
-    RETVAL
+        RETVAL
 
 int
 DisplayHeight(dpy, screen=0)
     Display *dpy
     int screen
     CODE:
-    RETVAL = DisplayHeight(dpy, screen);
+        RETVAL = DisplayHeight(dpy, screen);
     OUTPUT:
-    RETVAL
+        RETVAL
 
 
 # /* Windows */
@@ -51,12 +51,10 @@ RootWindow(dpy, screen)
     Display * dpy
     int screen
     PREINIT:
-    Window window;
+        Window window;
     PPCODE:
-    window = RootWindow(dpy, screen);
-    XPUSHs(sv_2mortal(sv_setref_uv(newSVpv("", 0), "X11::Xlib::Window", window)));
-
-
+        window = RootWindow(dpy, screen);
+        XPUSHs(sv_2mortal(sv_setref_uv(newSVpv("", 0), "X11::Xlib::Window", window)));
 
 # /* Event */
 
@@ -75,7 +73,6 @@ XTestFakeButtonEvent(dpy, button, pressed, EventSendDelay = 10);
     int pressed
     int EventSendDelay
 
-
 int
 XTestFakeKeyEvent(dpy, kc, pressed, EventSendDelay = 10)
     Display * dpy
@@ -92,42 +89,42 @@ void
 XQueryKeymap(dpy)
     Display * dpy
     PREINIT:
-    char keys_return[32];
-    int i, j;
+        char keys_return[32];
+        int i, j;
     PPCODE:
-    XQueryKeymap(dpy, keys_return);
-    for(i=0; i<32; i++) {
-        for (j=0; j<8;j++) {
-            if (keys_return[i] & (1 << j))
-                XPUSHs(sv_2mortal(newSViv(i * 8 + j)));
+        XQueryKeymap(dpy, keys_return);
+        for(i=0; i<32; i++) {
+            for (j=0; j<8;j++) {
+                if (keys_return[i] & (1 << j))
+                    XPUSHs(sv_2mortal(newSViv(i * 8 + j)));
+            }
         }
-    }
 
 unsigned long
 keyboard_leds(dpy)
     Display * dpy;
     PREINIT:
-    XKeyboardState state;
+        XKeyboardState state;
     CODE:
-    XGetKeyboardControl(dpy, &state);
-    RETVAL = state.led_mask;
+        XGetKeyboardControl(dpy, &state);
+        RETVAL = state.led_mask;
     OUTPUT:
-    RETVAL
+        RETVAL
 
 void
 _auto_repeat(dpy)
     Display * dpy;
     PREINIT:
-    XKeyboardState state;
-    int i, j;
+        XKeyboardState state;
+        int i, j;
     CODE:
-    XGetKeyboardControl(dpy, &state);
-    for(i=0; i<32; i++) {
-        for (j=0; j<8; j++) {
-            if (state.auto_repeats[i] & (1 << j))
-                XPUSHs(sv_2mortal(newSViv(i * 8 + j)));
+        XGetKeyboardControl(dpy, &state);
+        for(i=0; i<32; i++) {
+            for (j=0; j<8; j++) {
+                if (state.auto_repeats[i] & (1 << j))
+                    XPUSHs(sv_2mortal(newSViv(i * 8 + j)));
+            }
         }
-    }
 
 void
 XFlush(dpy)
@@ -138,23 +135,23 @@ XSync(dpy, flush=0)
     Display * dpy
     int flush
 
-# /* keyboard function */
+# /* keyboard functions */
 
 char *
 XKeysymToString(keysym)
     unsigned long keysym
     CODE:
-    RETVAL = XKeysymToString(keysym);
+        RETVAL = XKeysymToString(keysym);
     OUTPUT:
-    RETVAL
+        RETVAL
 
 unsigned long
 XStringToKeysym(string)
     char * string
     CODE:
-    RETVAL = XStringToKeysym(string);
+        RETVAL = XStringToKeysym(string);
     OUTPUT:
-    RETVAL
+        RETVAL
 
 int
 IsKeypadKey(keysym)
@@ -185,9 +182,9 @@ XKeysymToKeycode(dpy, keysym)
     Display *dpy
     unsigned long keysym
     CODE:
-    RETVAL = XKeysymToKeycode(dpy, keysym);
+        RETVAL = XKeysymToKeycode(dpy, keysym);
     OUTPUT:
-    RETVAL
+        RETVAL
 
 
 void
@@ -205,12 +202,12 @@ XGetKeyboardMapping(dpy, fkeycode, count = 1)
     for (i=0; i < creturn; i++)
         XPUSHs(sv_2mortal(newSVuv(keysym[i])));
     
-MODULE = X11::Xlib		PACKAGE = X11::Xlib::Window
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::Window
 
 unsigned int
 id(window)
     Window window
     CODE:
-    RETVAL = window;
+        RETVAL = window;
     OUTPUT:
-    RETVAL
+        RETVAL

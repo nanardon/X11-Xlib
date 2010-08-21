@@ -1,6 +1,7 @@
 Revision history for Perl extension X11::Xlib.
 
-0.01  Wed Jul  1 00:25:01 2009
-	- original version; created by h2xs 1.23 with options
-		X11::Xlib
+0.02  Sat Aug 21 13:48:00 2009
+    - formating and doc improvement (by chocolateboy)
 
+0.01  Wed Jul  1 00:25:01 2009
+    - original version; created by h2xs 1.23 with options X11::Xlib
