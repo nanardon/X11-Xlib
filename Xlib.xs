@@ -4,57 +4,65 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
-
-static Display *TheXDisplay = NULL;
+#include <X11/extensions/XTest.h>
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib
 
-void
-new(class, display = NULL)
-    char * class
-    char * display
-    PREINIT:
-        Display * dpy;
-    PPCODE:
-        dpy = XOpenDisplay(display);
-        XPUSHs(sv_2mortal(sv_setref_pv(newSVpv("", 0), "X11::Xlib", dpy)));
+Display *
+XOpenDisplay(connection_string = NULL)
+    char * connection_string
+    CODE:
+        RETVAL = XOpenDisplay(connection_string);
+    OUTPUT:
+        RETVAL
 
 void
-DESTROY(dpy)
+_pointer_value(dpy)
     Display *dpy
     PPCODE:
-        (void) XCloseDisplay(dpy);
+        PUSHs(sv_2mortal(newSVpvn((void*) &dpy, sizeof(dpy))));
+
+void
+XSetCloseDownMode(dpy, close_mode)
+    Display *dpy
+    int close_mode
+    CODE:
+        XSetCloseDownMode(dpy, close_mode);
+
+void
+XCloseDisplay(dpy)
+    Display *dpy
+    CODE:
+        XCloseDisplay(dpy);
 
 int
-DisplayWidth(dpy, screen=0)
+DisplayWidth(dpy, screen=-1)
     Display *dpy
     int screen
     CODE:
-        RETVAL = DisplayWidth(dpy, screen);
+        RETVAL = DisplayWidth(dpy, screen >= 0? screen : DefaultScreen(dpy));
     OUTPUT:
         RETVAL
 
 int
-DisplayHeight(dpy, screen=0)
+DisplayHeight(dpy, screen=-1)
     Display *dpy
     int screen
     CODE:
-        RETVAL = DisplayHeight(dpy, screen);
+        RETVAL = DisplayHeight(dpy, screen >= 0? screen : DefaultScreen(dpy));
     OUTPUT:
         RETVAL
-
 
 # /* Windows */
 
-void
-RootWindow(dpy, screen)
+Window
+RootWindow(dpy, screen=-1)
     Display * dpy
     int screen
-    PREINIT:
-        Window window;
-    PPCODE:
-        window = RootWindow(dpy, screen);
-        XPUSHs(sv_2mortal(sv_setref_uv(newSVpv("", 0), "X11::Xlib::Window", window)));
+    CODE:
+        RETVAL = RootWindow(dpy, screen >= 0? screen : DefaultScreen(dpy));
+    OUTPUT:
+        RETVAL
 
 # /* Event */
 
@@ -186,7 +194,6 @@ XKeysymToKeycode(dpy, keysym)
     OUTPUT:
         RETVAL
 
-
 void
 XGetKeyboardMapping(dpy, fkeycode, count = 1)
     Display *dpy
@@ -201,13 +208,3 @@ XGetKeyboardMapping(dpy, fkeycode, count = 1)
     EXTEND(SP, creturn -1);
     for (i=0; i < creturn; i++)
         XPUSHs(sv_2mortal(newSVuv(keysym[i])));
-    
-MODULE = X11::Xlib                PACKAGE = X11::Xlib::Window
-
-unsigned int
-id(window)
-    Window window
-    CODE:
-        RETVAL = window;
-    OUTPUT:
-        RETVAL

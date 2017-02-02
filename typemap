@@ -1,17 +1,56 @@
 TYPEMAP
-Display *             O_OBJECT
-Window                O_OBJECT
+Display *             O_X11_Xlib
+Window                O_X11_Xlib_XID
+Pixmap                O_X11_Xlib_XID
 
 INPUT
-O_OBJECT
-    if (sv_isobject($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG))
-        $var = ($type)SvIV((SV*)SvRV( $arg ));
+O_X11_Xlib
+    // Allow either instance of X11::Xlib, or instance of X11::Xlib::Display
+    if (sv_isobject($arg)) {
+        if (SvTYPE(SvRV($arg)) == SVt_PVMG) {
+            $var = ($type)SvIV((SV*)SvRV( $arg ));
+        }
+        else if (SvTYPE(SvRV($arg)) == SVt_PVHV) {
+            SV **connection_field= hv_fetch((HV*)SvRV($arg), \"connection\", 10, 0);
+            if (!connection_field || !*connection_field
+                || !sv_isobject(*connection_field)
+                || SvTYPE(SvRV(*connection_field)) != SVt_PVMG
+            )
+                croak( \"${Package}::$func_name() -- ${var}->{connection} is not a valid Xlib Display connection\" );
+            $var = ($type)SvIV((SV*)SvRV(*connection_field));
+        }
+    }
     else {
-        warn( \"${Package}::$func_name() -- $var is not a blessed SV reference\" );
-        XSRETURN_UNDEF;
+        croak( \"${Package}::$func_name() -- $var is not a valid Xlib Display connection\" );
     }
 
 OUTPUT
-O_OBJECT
-        sv_setref_pv( $arg, (char *)CLASS, (void*)$var );
+O_X11_Xlib
+    if (!($var)) {
+        // Translate NULL to undef
+        sv_setsv( $arg, &PL_sv_undef );
+    }
+    else {
+        // Always create instance of X11::Xlib.  X11::Xlib::Display can override this as needed.
+        sv_setref_pv( $arg, \"X11::Xlib\", (void*)$var );
+    }
 
+INPUT
+O_X11_Xlib_XID
+    // Allow unsigned integer, or hashref with field ->{xid}
+    if (SvROK($arg) && (SvTYPE(SvRV($arg)) == SVt_PVHV)) {
+        SV **xid_field= hv_fetch((HV*)SvRV($arg), \"xid\", 3, 0);
+        if (!xid_field || !*xid_field || !SvUOK(*xid_field))
+            croak( \"${Package}::$func_name() -- ${var}->{xid} must be an unsigned integer\" );
+        $var = (unsigned long) SvUV( $arg );
+    }
+    else if (SvUOK($arg)) {
+        $var = (unsigned long) SvUV( $arg );
+    }
+    else
+        croak( \"${Package}::$func_name() -- $var must be an unsigned integer or hashref\" );
+
+OUTPUT
+O_X11_Xlib_XID
+    // Always return unsigned integer.  X11::Xlib::* can override this as needed.
+    sv_setuv( $arg, $var );

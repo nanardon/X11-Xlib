@@ -13,6 +13,7 @@ our $VERSION = '0.03';
 XSLoader::load(__PACKAGE__, $VERSION);
 
 our @EXPORT = qw(
+    XOpenDisplay XCloseDisplay XSync XFlush
     XKeysymToString
     XStringToKeysym
     IsFunctionKey
@@ -22,6 +23,12 @@ our @EXPORT = qw(
     IsPFKey
     IsPrivateKeypadKey
 );
+
+sub new {
+    require X11::Xlib::Display;
+    my $class= shift;
+    X11::Xlib::Display->new(@_);
+}
 
 1;
 
@@ -35,7 +42,7 @@ X11::Xlib - Low-level access to the X11 library
 =head1 SYNOPSIS
 
   use X11::Xlib;
-  my $display = X11::Xlib->new();
+  my $display = X11::Xlib::Display->new();
   ...
 
 =head1 DESCRIPTION
@@ -44,38 +51,70 @@ This module provides low-level access to X11 libary functions.
 
 This includes access to some X11 extensions like the X11 test library (Xtst).
 
+If you import the Xlib functions directly, or call them as methods on an
+instance of X11::Xlib, you get a near-C<C> experience where you are required to
+manage the lifespan of resources, XIDs are integers instead of objects, and the
+library doesn't make any attempt to keep you from passing bad data to Xlib.
+
+If you instead create a L<X11::Xlib::Display> object and call all your methods
+on that, you get a more friendly wrapper around Xlib that helps you manage
+resource lifespan, wraps XIDs with perl objects, and does some sanity checking
+on the state of the library when you call methods.
+
 =cut
 
-=head1 METHODS
+=head1 FUNCTIONS
 
-=head2 X11::Xlib->new($display)
+Most functions can be called as methods on the Xlib connection object, since
+this is usually the first argument.  All functions which are part of Xlib
+can be exported.
 
-Instantiate a new C<X11::Xlib> object. This object contains the connection to the
-X11 display.
+=head2 new
 
-The C<$display> variable specifies the display adress to open. If unset, the
-C<$DISPLAY> environement variable is used.
+This is an alias for C<< X11::Xlib::Display->new >>, to help encourage using
+the object oriented interface.
 
-=head2 DISPLAY METHODS
+=head2 XOpenDisplay($connection_string)
 
-=head3 $display->DisplayWidth($screen)
+  my $display= X11::Xlib::XOpenDisplay($connection_string);
 
-Return the width of screen number C<$screen> (or 0 if not specified).
+Instantiate a new C<X11::Xlib> object. This object contains the connection to
+the X11 display.
 
-=head3 $display->DisplayHeight($screen)
+The C<$connection_string> variable specifies the display string to open.
+(C<"host:display.screen">, or often C<":0"> to connect to the default screen of
+the only display on the localhost)
+If unset, Xlib uses the C<$DISPLAY> environement variable.
 
-Return the height of screen number C<$screen> (or 0 if not specified).
+This handle does *not* automatically close itself when freed!  You must pass
+it to XCloseDisplay, or better, just use the X11::Xlib::Display wrapper.
 
-=head2 EVENT METHODS
+=head2 XCloseDisplay($display)
 
-=head3 $display->XTestFakeMotionEvent($screen, $x, $y, $EventSendDelay)
+Close a handle returned by XOpenDisplay.  Do not call this method if you are
+using the object-oriented L<X11::Xlib::Display> interface because that one
+will call it automatically when the handle goes out of scope.
+
+=head2 DISPLAY FUNCTIONS
+
+=head3 DisplayWidth($display, $screen)
+
+Return the width of screen number C<$screen> (or default if not specified).
+
+=head3 DisplayHeight($display, $screen)
+
+Return the height of screen number C<$screen> (or default if not specified).
+
+=head2 EVENT FUNCTIONS
+
+=head3 XTestFakeMotionEvent($display, $screen, $x, $y, $EventSendDelay)
 
 Fake a mouse movement on screen number C<$screen> to position C<$x>,C<$y>.
 
 The optional C<$EventSendDelay> parameter specifies the number of milliseconds to wait
 before sending the event. The default is 10 milliseconds.
 
-=head3 $display->XTestFakeButtonEvent($button, $pressed, $EventSendDelay);
+=head3 XTestFakeButtonEvent($display, $button, $pressed, $EventSendDelay)
 
 Simulate an action on mouse button number C<$button>. C<$pressed> indicates whether
 the button should be pressed (true) or released (false). 
@@ -83,7 +122,7 @@ the button should be pressed (true) or released (false).
 The optional C<$EventSendDelay> parameter specifies the number of milliseconds ro wait
 before sending the event. The default is 10 milliseconds.
 
-=head3 $display->XTestFakeKeyEvent($kc, $pressed, $EventSendDelay)
+=head3 XTestFakeKeyEvent($display, $kc, $pressed, $EventSendDelay)
 
 Simulate a event on any key on the keyboard. C<$kc> is the key code (8 to 255),
 and C<$pressed> indicates if the key was pressed or released.
@@ -91,34 +130,30 @@ and C<$pressed> indicates if the key was pressed or released.
 The optional C<$EventSendDelay> parameter specifies the number of milliseconds to wait
 before sending the event. The default is 10 milliseconds.
 
-=head3 $display->XBell($percent)
+=head3 XBell($display, $percent)
 
 Make the X server emit a sound.
 
-=head3 $display->XQueryKeymap
+=head3 XQueryKeymap($display)
 
-Return an array of the key codes currently pressed on the keyboard.
+Return a list of the key codes currently pressed on the keyboard.
 
-=head3 $display->keyboard_leds
-
-Return a mask value for the currently-lit keyboard LEDs.
-
-=head3 $display->XFlush
+=head3 XFlush($display)
 
 Flush pending events sent via the Fake* methods to the X11 server.
 
 This method must be used to ensure the fake events take are triggered.
 
-=head3 $display->XSync($flush)
+=head3 XSync($display, $flush)
 
 Force the X server to sync event. The optional C<$flush> parameter allows pending
 events to be discarded.
 
-=head3 $display->XKeysymToKeycode($keysym)
+=head3 XKeysymToKeycode($display, $keysym)
 
 Return the key code corresponding to the character number C<$keysym>.
 
-=head3 $display->XGetKeyboardMapping($keycode, $count)
+=head3 XGetKeyboardMapping($display, $keycode, $count)
 
 Return an array of character numbers corresponding to the key C<$keycode>.
 
@@ -127,9 +162,9 @@ Each value in the array corresponds to the action of a key modifier (Shift, Alt)
 C<$count> is the number of the keycode to return. The default value is 1, e.g.
 it returns the character corresponding to the given $keycode.
 
-=head3 $display->RootWindow
+=head3 RootWindow($display)
 
-Return an L<X11::Xlib::Window> object corresponding to the X11 root window.
+Return the XID of the X11 root window.
 
 =head2 KEYCODE FUNCTIONS
 
@@ -193,6 +228,8 @@ This module is still incomplete, but patches are welcome :)
 =head1 AUTHOR
 
 Olivier Thauvin, E<lt>nanardon@nanardon.zarb.orgE<gt>
+
+Michael Conrad, E<lt>mike@nrdvana.netE<gt>
 
 =head1 COPYRIGHT AND LICENSE
 

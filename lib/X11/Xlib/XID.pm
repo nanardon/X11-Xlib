@@ -1,12 +1,17 @@
-package X11::Xlib::Window;
-
-use 5.010000;
-
+package X11::Xlib::XID;
 use strict;
 use warnings;
-use parent 'X11::Xlib::XID';
+use X11::Xlib;
 
-our $VERSION = '0.01';
+sub new {
+    my $class= shift;
+    my %args= (@_ == 1 && ref $_[0] eq 'HASH')? %{$_[0]} : @_;
+    bless \%args, $class;
+}
+
+sub dpy { shift->{dpy} }
+sub xid { shift->{xid} }
+sub id  { shift->{xid} }
 
 1;
 
