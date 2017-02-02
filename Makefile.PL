@@ -3,8 +3,6 @@ use 5.008000;
 use strict;
 use warnings;
 
-use lib qw(inc);
-
 use Devel::CheckLib;
 use ExtUtils::MakeMaker;
 
@@ -34,6 +32,9 @@ WriteMakefile(
     LIBS   => [ '-lX11 -lXtst -lXext' ],  # e.g., '-lm'
     DEFINE => '',                         # e.g., '-DHAVE_SOMETHING'
     INC    => '-I.',                      # e.g., '-I. -I/usr/include/other'
+    CONFIGURE_REQUIRES => {
+        'Devel::CheckLib' => '1.03',
+    },
     # Un-comment this if you add C files to link with later:
     # OBJECT            => '$(O_FILES)', # link all the C files too
 );

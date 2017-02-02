@@ -1,13 +1,13 @@
 Changes
-inc/Devel/CheckLib.pm
 lib/X11/Xlib.pm
 lib/X11/Xlib/Window.pm
 Makefile.PL
-MANIFEST
-META.yml			Module meta-data (added by MakeMaker)
+MANIFEST			This list of files
 README
 t/0-Pod-Coverage.t
 t/0-Pod.t
 t/1-X11-Xlib.t
 typemap
 Xlib.xs
+META.yml                                 Module YAML meta-data (added by MakeMaker)
+META.json                                Module JSON meta-data (added by MakeMaker)

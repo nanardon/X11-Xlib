@@ -1,5 +1,8 @@
 Revision history for Perl extension X11::Xlib.
 
+0.03 - 2015-01-20
+    - removed distro included Devel::CheckLib, and added it to CONFIGURE_REQUIRES
+
 0.02  Sat Aug 21 13:48:00 2009
     - formating and doc improvement (by chocolateboy)
 
