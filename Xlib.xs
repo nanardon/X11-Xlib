@@ -11,10 +11,6 @@ MODULE = X11::Xlib                PACKAGE = X11::Xlib
 Display *
 XOpenDisplay(connection_string = NULL)
     char * connection_string
-    CODE:
-        RETVAL = XOpenDisplay(connection_string);
-    OUTPUT:
-        RETVAL
 
 void
 _pointer_value(dpy)
