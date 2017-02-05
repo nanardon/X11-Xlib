@@ -206,6 +206,23 @@ Again, no idea.
 
 =cut
 
+=head1 SYSTEM DEPENDENCIES
+
+Xlib libraries are found on most graphical Unixes, but you might lack the header
+files needed for this module.  Try the following:
+
+=over
+
+=item Debian (Ubuntu, Mint)
+
+sudo apt-get install libxtst-dev
+
+=item Fedora
+
+sudo yum install libXtst-devel
+
+=back
+
 =head1 SEE ALSO
 
 =over 4

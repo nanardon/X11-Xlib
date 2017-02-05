@@ -204,3 +204,9 @@ XGetKeyboardMapping(dpy, fkeycode, count = 1)
     EXTEND(SP, creturn -1);
     for (i=0; i < creturn; i++)
         XPUSHs(sv_2mortal(newSVuv(keysym[i])));
+
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::XEvent
+
+INCLUDE: XEvent.auto.xs
+
+# Special handling for several XEvent fields:

@@ -1,7 +1,14 @@
 TYPEMAP
 Display *             O_X11_Xlib
+XEvent *              O_X11_Xlib_XEvent
 Window                O_X11_Xlib_XID
 Pixmap                O_X11_Xlib_XID
+Colormap              O_X11_Xlib_XID
+Drawable              O_X11_Xlib_XID
+Atom                  T_UV
+Time                  T_UV
+Bool                  T_BOOL
+
 
 INPUT
 O_X11_Xlib
@@ -54,3 +61,27 @@ OUTPUT
 O_X11_Xlib_XID
     // Always return unsigned integer.  X11::Xlib::* can override this as needed.
     sv_setuv( $arg, $var );
+
+INPUT
+O_X11_Xlib_XEvent
+	// Initialize the buffer if needed.
+	if (!SvOK($arg)) {
+		sv_setpvn($arg, NULL, 0);
+		memset(SvGROW($arg, sizeof(XEvent)), 0, sizeof(XEvent));
+		$var= (XEvent*) SvPVX($arg);
+	}
+	// When given a Perl scalar, it must be the full size of an XEvent.
+	else if (SvPOK($arg) && !sv_isobject($arg)) {
+		if (SvLEN($arg) < sizeof(XEvent))
+			croak( \"${Package}::$func_name -- XEvent struct is %d bytes long, but length(${var}) is only %d\",
+				sizeof(XEvent), SvLEN($arg));
+		$var= (XEvent*) SvPVX($arg);
+	}
+	// The X11::Xlib::XEvent object is a blessed scalarref.
+	else if (SvROK($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG)) {
+		if (SvLEN(SvRV($arg)) < sizeof(XEvent))
+			croak( \"${Package}::$func_name -- XEvent struct is %d bytes long, but length(\${\$${var}}) is only %d\",
+				sizeof(XEvent), SvLEN($arg));
+		$var= (XEvent*) SvPVX(SvRV($arg));
+	}
+
