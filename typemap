@@ -12,24 +12,7 @@ Bool                  T_BOOL
 
 INPUT
 O_X11_Xlib
-    // Allow either instance of X11::Xlib, or instance of X11::Xlib::Display
-    if (sv_isobject($arg)) {
-        if (SvTYPE(SvRV($arg)) == SVt_PVMG) {
-            $var = ($type)SvIV((SV*)SvRV( $arg ));
-        }
-        else if (SvTYPE(SvRV($arg)) == SVt_PVHV) {
-            SV **connection_field= hv_fetch((HV*)SvRV($arg), \"connection\", 10, 0);
-            if (!connection_field || !*connection_field
-                || !sv_isobject(*connection_field)
-                || SvTYPE(SvRV(*connection_field)) != SVt_PVMG
-            )
-                croak( \"${Package}::$func_name() -- ${var}->{connection} is not a valid Xlib Display connection\" );
-            $var = ($type)SvIV((SV*)SvRV(*connection_field));
-        }
-    }
-    else {
-        croak( \"${Package}::$func_name() -- $var is not a valid Xlib Display connection\" );
-    }
+    $var = PerlXlib_sv_to_display($arg);
 
 OUTPUT
 O_X11_Xlib
@@ -44,18 +27,7 @@ O_X11_Xlib
 
 INPUT
 O_X11_Xlib_XID
-    // Allow unsigned integer, or hashref with field ->{xid}
-    if (SvROK($arg) && (SvTYPE(SvRV($arg)) == SVt_PVHV)) {
-        SV **xid_field= hv_fetch((HV*)SvRV($arg), \"xid\", 3, 0);
-        if (!xid_field || !*xid_field || !SvUOK(*xid_field))
-            croak( \"${Package}::$func_name() -- ${var}->{xid} must be an unsigned integer\" );
-        $var = (unsigned long) SvUV( $arg );
-    }
-    else if (SvUOK($arg)) {
-        $var = (unsigned long) SvUV( $arg );
-    }
-    else
-        croak( \"${Package}::$func_name() -- $var must be an unsigned integer or hashref\" );
+	$var = PerlXlib_sv_to_xid($arg);
 
 OUTPUT
 O_X11_Xlib_XID
@@ -64,24 +36,5 @@ O_X11_Xlib_XID
 
 INPUT
 O_X11_Xlib_XEvent
-	// Initialize the buffer if needed.
-	if (!SvOK($arg)) {
-		sv_setpvn($arg, NULL, 0);
-		memset(SvGROW($arg, sizeof(XEvent)), 0, sizeof(XEvent));
-		$var= (XEvent*) SvPVX($arg);
-	}
-	// When given a Perl scalar, it must be the full size of an XEvent.
-	else if (SvPOK($arg) && !sv_isobject($arg)) {
-		if (SvLEN($arg) < sizeof(XEvent))
-			croak( \"${Package}::$func_name -- XEvent struct is %d bytes long, but length(${var}) is only %d\",
-				sizeof(XEvent), SvLEN($arg));
-		$var= (XEvent*) SvPVX($arg);
-	}
-	// The X11::Xlib::XEvent object is a blessed scalarref.
-	else if (SvROK($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG)) {
-		if (SvLEN(SvRV($arg)) < sizeof(XEvent))
-			croak( \"${Package}::$func_name -- XEvent struct is %d bytes long, but length(\${\$${var}}) is only %d\",
-				sizeof(XEvent), SvLEN($arg));
-		$var= (XEvent*) SvPVX(SvRV($arg));
-	}
+	$var= PerlXlib_sv_to_xevent($arg);
 
