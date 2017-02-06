@@ -329,8 +329,8 @@ void PerlXlib_${goal}_pack($goal *s, HV *fields) {
     # Now sort fields by the type that defines them, for the case statements
     for my $prefix (sort keys %field_to_type) {
         my $typecodes= $field_to_type{$prefix};
-        $c .= "    case $_:\n" for @$typecodes;
-        for my $path (grep { $_ =~ qr/^$prefix\./ and $_ !~ $ignore_re } sort keys %members) {
+        $c .= "    case $_:\n" for sort @$typecodes;
+        for my $path (sort grep { $_ =~ qr/^$prefix\./ and $_ !~ $ignore_re } keys %members) {
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
             $c .= '      fp= hv_fetch(fields, "'.$name.'", '.length($name).", 0);\n"
@@ -356,7 +356,7 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
 @
     # First pack the XAnyEvent fields
     my %have;
-    for my $path (grep { $_ =~ /^xany/ } keys %members) {
+    for my $path (sort grep { $_ =~ /^xany/ } keys %members) {
         my $type= $members{$path};
         my ($name)= ($path =~ /([^.]+)$/);
         ++$have{$name};
@@ -368,8 +368,8 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
     # Now sort fields by the type that defines them, for the case statements
     for my $prefix (sort keys %field_to_type) {
         my $typecodes= $field_to_type{$prefix};
-        $c .= "    case $_:\n" for @$typecodes;
-        for my $path (grep { $_ =~ qr/^$prefix\./ and $_ !~ $ignore_re } sort keys %members) {
+        $c .= "    case $_:\n" for sort @$typecodes;
+        for my $path (sort grep { $_ =~ qr/^$prefix\./ and $_ !~ $ignore_re } keys %members) {
             my $type= $members{$path};
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
@@ -415,7 +415,7 @@ sub $name { \$_[0]->set_$name(\$_[1]) if \@_ > 1; \$_[0]->get_$name() }
         my @consts= map { "X11:Xlib::${_}()" } @$typecodes;
         next unless @consts;
         $typecodemap .= qq{  X11::Xlib::${_}() => "X11::Xlib::${goal}::$member_struct",\n}
-            for @$typecodes;
+            for sort @$typecodes;
         $pod .= "=head2 $member_struct\n\n";
         $subclasses .= <<"@";
 
@@ -423,7 +423,7 @@ package X11::Xlib::${goal}::$member_struct;
 \@X11::Xlib::${goal}::${member_struct}::ISA= ('X11::Xlib::${goal}');
 @
         my $n;
-        for my $path (grep { $_ =~ qr/^$field\./ and $_ !~ $ignore_re } sort keys %members) {
+        for my $path (sort grep { $_ =~ qr/^$field\./ and $_ !~ $ignore_re } keys %members) {
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
             ++$n;

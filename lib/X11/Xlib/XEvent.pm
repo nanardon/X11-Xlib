@@ -213,13 +213,13 @@ L<official documentation|https://www.x.org/releases/X11R7.7/doc/libX11/libX11/li
 # BEGIN GENERATED X11_Xlib_XEvent
 
 
-*get_display= *_get_display unless defined *get_display{CODE};
-*set_display= *_set_display unless defined *set_display{CODE};
-sub display { $_[0]->set_display($_[1]) if @_ > 1; $_[0]->get_display() }
-
 *get_send_event= *_get_send_event unless defined *get_send_event{CODE};
 *set_send_event= *_set_send_event unless defined *set_send_event{CODE};
 sub send_event { $_[0]->set_send_event($_[1]) if @_ > 1; $_[0]->get_send_event() }
+
+*get_window= *_get_window unless defined *get_window{CODE};
+*set_window= *_set_window unless defined *set_window{CODE};
+sub window { $_[0]->set_window($_[1]) if @_ > 1; $_[0]->get_window() }
 
 *get_serial= *_get_serial unless defined *get_serial{CODE};
 *set_serial= *_set_serial unless defined *set_serial{CODE};
@@ -229,9 +229,9 @@ sub serial { $_[0]->set_serial($_[1]) if @_ > 1; $_[0]->get_serial() }
 *set_type= *_set_type unless defined *set_type{CODE};
 sub type { $_[0]->set_type($_[1]) if @_ > 1; $_[0]->get_type() }
 
-*get_window= *_get_window unless defined *get_window{CODE};
-*set_window= *_set_window unless defined *set_window{CODE};
-sub window { $_[0]->set_window($_[1]) if @_ > 1; $_[0]->get_window() }
+*get_display= *_get_display unless defined *get_display{CODE};
+*set_display= *_set_display unless defined *set_display{CODE};
+sub display { $_[0]->set_display($_[1]) if @_ > 1; $_[0]->get_display() }
 our %_type_to_class= (
   X11::Xlib::ButtonPress() => "X11::Xlib::XEvent::XButtonEvent",
   X11::Xlib::ButtonRelease() => "X11::Xlib::XEvent::XButtonEvent",
