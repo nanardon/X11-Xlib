@@ -10,6 +10,8 @@
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib
 
+# Connection Functions -------------------------------------------------------
+
 Display *
 XOpenDisplay(connection_string = NULL)
     char * connection_string
@@ -21,10 +23,33 @@ XOpenDisplay(connection_string = NULL)
         RETVAL
 
 void
-_pointer_value(dpy)
-    Display *dpy
+_pointer_value(conn)
+    SV* conn
     PPCODE:
-        PUSHs(sv_2mortal(newSVpvn((void*) &dpy, sizeof(dpy))));
+        PUSHs(PerlXlib_conn_pointer_value(conn));
+
+void
+_mark_dead(conn)
+    SV* conn
+    PPCODE:
+        PerlXlib_conn_set_dead(conn);
+
+void
+_mark_closed(conn)
+    SV *conn
+    PPCODE:
+        PerlXlib_conn_wipe_pointer(conn);
+
+void
+DESTROY(conn)
+    SV *conn
+    PPCODE:
+        if (sv_isobject(conn) && sv_isa(conn, "X11::Xlib"))
+            PerlXlib_conn_wipe_pointer(conn); // goal is to clean up caches
+
+int
+ConnectionNumber(dpy)
+    Display *dpy
 
 void
 XSetCloseDownMode(dpy, close_mode)
@@ -35,9 +60,107 @@ XSetCloseDownMode(dpy, close_mode)
 
 void
 XCloseDisplay(dpy)
-    Display *dpy
+    SV *dpy
     CODE:
-        XCloseDisplay(dpy);
+        XCloseDisplay(PerlXlib_sv_to_display(dpy));
+        PerlXlib_conn_wipe_pointer(dpy);
+        PerlXlib_conn_set_dead(dpy);
+
+# Event Functions ------------------------------------------------------------
+
+void
+XSelectInput(dpy, wnd, mask)
+    Display *dpy
+    Window wnd
+    int mask
+
+void
+XNextEvent(dpy, event)
+    Display *dpy
+    XEvent *event
+
+Bool
+XCheckWindowEvent(dpy, wnd, event_mask, event_return)
+    Display *dpy
+    Window wnd
+    int event_mask
+    XEvent *event_return
+
+Bool
+XCheckTypedWindowEvent(dpy, wnd, event_type, event_return)
+    Display *dpy
+    Window wnd
+    int event_type
+    XEvent *event_return
+
+Bool
+XCheckMaskEvent(dpy, event_mask, event_return)
+    Display *dpy
+    int event_mask
+    XEvent *event_return
+
+Bool
+XCheckTypedEvent(dpy, event_type, event_return)
+    Display *dpy
+    int event_type
+    XEvent *event_return
+
+Bool
+XSendEvent(dpy, wnd, propagate, event_mask, event_send)
+    Display *dpy
+    Window wnd
+    Bool propagate
+    long event_mask
+    XEvent *event_send
+
+void
+XPutBackEvent(dpy, event)
+    Display *dpy
+    XEvent *event
+
+void
+XFlush(dpy)
+    Display *dpy
+
+void
+XSync(dpy, discard=0)
+    Display * dpy
+    int discard
+
+Bool
+_wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
+    Display *dpy
+    Window wnd
+    int event_type
+    int event_mask
+    XEvent *event_return
+    int max_wait_msec
+    INIT:
+        int retried= 0;
+        fd_set fds;
+        int x11_fd;
+        struct timeval tv;
+    CODE:
+        retry:
+        RETVAL= wnd && event_type? XCheckTypedWindowEvent(dpy, wnd, event_type, event_return)
+              : wnd?               XCheckWindowEvent(dpy, wnd, event_mask, event_return)
+              : event_type?        XCheckTypedEvent(dpy, event_type, event_return)
+              :                    XCheckMaskEvent(dpy, event_mask, event_return);
+        if (!RETVAL && !retried) {
+            x11_fd= ConnectionNumber(dpy);
+            tv.tv_sec= max_wait_msec / 1000;
+            tv.tv_usec= (max_wait_msec % 1000)*1000;
+            FD_ZERO(&fds);
+            FD_SET(x11_fd, &fds);
+            if (select(x11_fd+1, &fds, NULL, &fds, &tv) > 0) {
+                retried= 1;
+                goto retry;
+            }
+        }
+    OUTPUT:
+        RETVAL
+
+# Screen Functions -----------------------------------------------------------
 
 int
 DisplayWidth(dpy, screen=-1)
@@ -57,7 +180,7 @@ DisplayHeight(dpy, screen=-1)
     OUTPUT:
         RETVAL
 
-# /* Windows */
+# Window Functions -----------------------------------------------------------
 
 Window
 RootWindow(dpy, screen=-1)
@@ -137,15 +260,6 @@ _auto_repeat(dpy)
                     XPUSHs(sv_2mortal(newSViv(i * 8 + j)));
             }
         }
-
-void
-XFlush(dpy)
-    Display *dpy
-
-void
-XSync(dpy, flush=0)
-    Display * dpy
-    int flush
 
 # /* keyboard functions */
 

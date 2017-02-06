@@ -5,32 +5,38 @@ void PerlXlib_XEvent_pack(XEvent *e, HV *fields);
 void PerlXlib_XEvent_unpack(XEvent *e, HV *fields);
 
 // Allow either instance of X11::Xlib, or instance of X11::Xlib::Display
+// Be sure to coordinate changes to this code with the _pointer_value and
+// _mark_dead methods in Xlib.xs
 Display* PerlXlib_sv_to_display(SV *sv) {
-    SV **fp;
+    SV **fp, *inner;
     Display *dpy= NULL;
 
     if (!SvOK(sv))
         return NULL; // undef means NULL.  Happens in places like XEvent.display
 
     if (sv_isobject(sv)) {
+        inner= (SV*) SvRV(sv);
         // find connection field in a hashref-based object
-        if (SvTYPE(SvRV(sv)) == SVt_PVHV) {
+        if (SvTYPE(inner) == SVt_PVHV) {
             fp= hv_fetch((HV*)SvRV(sv), "connection", 10, 0);
-            if (fp && *fp && sv_isobject(sv))
-                sv= *fp;
+            if (fp && *fp && sv_isobject(*fp))
+                inner= SvRV(*fp);
         }
-        if (SvTYPE(SvRV(sv)) == SVt_PVMG) {
-            dpy= (Display*) SvIV((SV*)SvRV(sv));
+        if (SvTYPE(inner) == SVt_PVMG && !SvROK(inner)) {
+            dpy= (Display*) SvIV(inner);
             if (dpy) return dpy;
         }
         // Else, we either have one of our objects that is invalid, or something else.
-        // If it's ours, it means it was forcibly closed, so give a better error message.
+        // If it's ours, it means it was closed or otherwise invalidated,
+        // so give a better error messages.
         if (sv_derived_from(sv, "X11::Xlib")) {
             // If that was because Xlib fatal error, then give an even more specific error
             SV *fatal_trapped= get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD);
             if (SvTRUE(fatal_trapped))
                 croak("Cannot call further Xlib functions after fatal Xlib error");
-            croak("Display connection is closed");
+            if (SvROK(inner))
+                croak("Display connection is dead (but still allocated)");
+            croak("Display connection is closed and freed");
         }
     }
     croak("Invalid Display handle; must be a X11::Xlib instance or X11::Xlib::Display instance");
@@ -57,7 +63,77 @@ void PerlXlib_sv_from_display(SV *dest, Display *dpy) {
             sv_rvweaken(*fp);
         }
     }
+}
 
+// try to keep this routine fast rather than thorough
+SV* PerlXlib_conn_pointer_value(SV *conn) {
+    Display *dpy;
+    SV *inner;
+    // We do different coercion here so that _pointer_value can be called
+    // on a connection that is dead
+    if (sv_isobject(conn)) {
+        inner= (SV*) SvRV(conn);
+        if (SvTYPE(inner) == SVt_PVMG && SvROK(inner)) // dead connections are a ref ref
+            inner= (SV*) SvRV(inner);
+        
+        if (SvTYPE(inner) == SVt_PVMG) {
+            dpy= (Display*) SvIVX(inner);
+            return sv_2mortal(dpy?
+                newSVpvn((void*) &dpy, sizeof(dpy))
+                : newSVsv(&PL_sv_undef));
+        }
+    }
+    warn("pointer value");
+    croak("Expected object of type \"X11::Xlib\"");
+    return NULL; // silence compiler
+}
+
+void PerlXlib_conn_set_dead(SV *conn) {
+    SV *inner;
+    // We do different coercion here so that _mark_dead can be called
+    // on a connection that is already dead without triggering its own
+    // error message.
+    if (!sv_isobject(conn) || !sv_isa(conn, "X11::Xlib"))
+        croak("Expected object of type \"X11::Xlib\"");
+    inner= (SV*) SvRV(conn);
+    if (!SvROK(inner)) {
+        // Convert connection from SV->PV_blessed to SV->RV_blessed->PV
+        //  to mark it as dead.
+        sv_bless(conn, gv_stashpv("X11::Xlib::_NoFree", GV_ADD));
+        sv_setref_pv(inner, NULL, (void*) SvIV(inner));
+        // Restore blessing
+        sv_bless(conn, gv_stashpv("X11::Xlib", GV_ADD));
+    }
+}
+
+void PerlXlib_conn_wipe_pointer(SV *conn) {
+    Display *dpy;
+    SV *inner;
+    HV *hv;
+    // We do different coercion here so that _pointer_value can be called
+    // on a connection that is dead.  Make really sure it's one of ours.
+    if (sv_isobject(conn) && sv_isa(conn, "X11::Xlib")) {
+        inner= (SV*) SvRV(conn);
+        if (SvROK(inner)) // dead connections are a ref ref
+            inner= (SV*) SvRV(inner);
+        if (SvTYPE(inner) == SVt_PVMG || SvIOK(inner)) {
+            dpy= (Display*) SvIVX(inner);
+            if (dpy) {
+                SvIV_set(inner, 0);
+                // Now, we must also remove the object from the $_connections cache.
+                // It's a weak reference, but if we leave it there then a new Display*
+                // could get created at the same address and cause confusion.
+                hv_delete(get_hv("X11::Xlib::_connections", GV_ADD),
+                    (void*) &dpy, sizeof(dpy), 0);
+                hv_delete(get_hv("X11::Xlib::Display::_displays", GV_ADD),
+                    (void*) &dpy, sizeof(dpy), 0);
+            }
+            return;
+        }
+    }
+    warn("wipe pointer");
+        sv_dump(conn);
+    croak("Expected object of type \"X11::Xlib\"");
 }
 
 // Allow unsigned integer, or hashref with field ->{xid}

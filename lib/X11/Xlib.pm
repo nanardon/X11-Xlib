@@ -30,18 +30,34 @@ sub new {
     X11::Xlib::Display->new(@_);
 }
 
-# used by XS
-our ($_error_nonfatal_installed, $_error_fatal_installed, $_error_fatal_trapped);
+# Used by XS.  In the spirit of letting perl users violate encapsulation
+#  as needed, the XS code exposes its globals to Perl.
+our (
+    %_connections,              # weak-ref set of all connection objects, keyed by *raw pointer*
+    $_error_nonfatal_installed, # boolean, whether handler is installed
+    $_error_fatal_installed,    # boolean, whether handler is installed
+    $_error_fatal_trapped,      # boolean, whether Xlib is dead from fatal error
+);
 # called by XS, if installed
 sub _error_nonfatal {
     my $event= shift;
-    # TODO: dispatch to an error handler in the Display object, if provided
+    my $dpy= $event->display;
+    if ($dpy && $dpy->can('on_error_cb') && $dpy->on_error_cb) {
+        $dpy->on_error_cb->($dpy, $event);
+    }
 }
 # called by XS, if installed
 sub _error_fatal {
-    # TODO: redefine all the X* functions in this package to make sure
-    # users can't call Xlib again.  Also call error handlers in all Display
-    # objects.
+    my $conn= shift;
+    $conn->_set_dead; # this connection is dead now
+    # also call a user callback in any Display object
+    $_->on_error_cb && $_->on_error_cb->($_)
+        for values %X11::Xlib::_displays;
+
+    # Kill all X11 connections by wiping the pointer.  Yes this is a memory
+    # leak, but since Xlib is no longer usable we can't free them anyway, and
+    # the program will exit soon.
+    $_->_set_dead for values %_connections;
 }
 
 1;
