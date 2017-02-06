@@ -210,24 +210,17 @@ XGetKeyboardMapping(dpy, fkeycode, count = 1)
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::XEvent
 
 void
-_pack(fields)
+_pack(e, fields)
+  XEvent *e
   HV* fields
-  INIT:
-    XEvent e;
-    SV **fp;
   PPCODE:
-    PerlXlib_XEvent_pack(&e, fields);
-    PUSHs(sv_2mortal(newSVpvn((const char*)(void*)&e, sizeof(e))));
+    PerlXlib_XEvent_pack(e, fields);
 
 void
-_unpack(e)
+_unpack(e, HV* fields)
   XEvent* e
-  INIT:
-    HV* fields;
   PPCODE:
-    fields= (HV*) sv_2mortal((SV*) newHV());
-    PerlXlib_Xevent_unpack(fields, e);
-    PUSHs(sv_2mortal(newRV_inc((SV*)fields)));
+    PerlXlib_XEvent_unpack(e, fields);
 
 # ----------------------------------------------------------------------------
 # BEGIN GENERATED X11_Xlib_XEvent
@@ -335,8 +328,8 @@ _get_button(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       RETVAL = event->xbutton.button; break;
     default: croak("Can't access XEvent.button for type=%d", event->type);
     }
@@ -350,8 +343,8 @@ _set_button(event, value)
   unsigned int value
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       event->xbutton.button= value; break;
     default: croak("Can't access XEvent.button for type=%d", event->type);
     }
@@ -437,11 +430,11 @@ _get_detail(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.detail; break;
-    case FocusOut:
     case FocusIn:
+    case FocusOut:
       RETVAL = event->xfocus.detail; break;
     default: croak("Can't access XEvent.detail for type=%d", event->type);
     }
@@ -455,11 +448,11 @@ _set_detail(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.detail= value; break;
-    case FocusOut:
     case FocusIn:
+    case FocusOut:
       event->xfocus.detail= value; break;
     default: croak("Can't access XEvent.detail for type=%d", event->type);
     }
@@ -626,8 +619,8 @@ _get_focus(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.focus; break;
     default: croak("Can't access XEvent.focus for type=%d", event->type);
     }
@@ -641,8 +634,8 @@ _set_focus(event, value)
   Bool value
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.focus= value; break;
     default: croak("Can't access XEvent.focus for type=%d", event->type);
     }
@@ -914,11 +907,11 @@ _get_mode(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.mode; break;
-    case FocusOut:
     case FocusIn:
+    case FocusOut:
       RETVAL = event->xfocus.mode; break;
     default: croak("Can't access XEvent.mode for type=%d", event->type);
     }
@@ -932,11 +925,11 @@ _set_mode(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.mode= value; break;
-    case FocusOut:
     case FocusIn:
+    case FocusOut:
       event->xfocus.mode= value; break;
     default: croak("Can't access XEvent.mode for type=%d", event->type);
     }
@@ -1180,11 +1173,11 @@ _get_root(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       RETVAL = event->xbutton.root; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.root; break;
     case KeyRelease:
     case KeyPress:
@@ -1203,11 +1196,11 @@ _set_root(event, value)
   Window value
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       event->xbutton.root= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.root= value; break;
     case KeyRelease:
     case KeyPress:
@@ -1244,11 +1237,11 @@ _get_same_screen(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       RETVAL = event->xbutton.same_screen; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.same_screen; break;
     case KeyRelease:
     case KeyPress:
@@ -1267,11 +1260,11 @@ _set_same_screen(event, value)
   Bool value
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       event->xbutton.same_screen= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.same_screen= value; break;
     case KeyRelease:
     case KeyPress:
@@ -1352,13 +1345,13 @@ _get_state(event)
   XEvent *event
   PPCODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       PUSHs(sv_2mortal(newSVuv(event->xbutton.state))); break;
     case ColormapNotify:
       PUSHs(sv_2mortal(newSViv(event->xcolormap.state))); break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       PUSHs(sv_2mortal(newSVuv(event->xcrossing.state))); break;
     case KeyRelease:
     case KeyPress:
@@ -1379,13 +1372,13 @@ _set_state(event, value)
   SV* value
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       event->xbutton.state= SvUV(value); break;
     case ColormapNotify:
       event->xcolormap.state= SvIV(value); break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.state= SvUV(value); break;
     case KeyRelease:
     case KeyPress:
@@ -1404,11 +1397,11 @@ _get_subwindow(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       RETVAL = event->xbutton.subwindow; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.subwindow; break;
     case KeyRelease:
     case KeyPress:
@@ -1427,11 +1420,11 @@ _set_subwindow(event, value)
   Window value
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       event->xbutton.subwindow= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.subwindow= value; break;
     case KeyRelease:
     case KeyPress:
@@ -1474,11 +1467,11 @@ _get_time(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       RETVAL = event->xbutton.time; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.time; break;
     case KeyRelease:
     case KeyPress:
@@ -1505,11 +1498,11 @@ _set_time(event, value)
   Time value
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       event->xbutton.time= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.time= value; break;
     case KeyRelease:
     case KeyPress:
@@ -1626,15 +1619,15 @@ _get_x(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       RETVAL = event->xbutton.x; break;
     case ConfigureNotify:
       RETVAL = event->xconfigure.x; break;
     case CreateNotify:
       RETVAL = event->xcreatewindow.x; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.x; break;
     case Expose:
       RETVAL = event->xexpose.x; break;
@@ -1661,15 +1654,15 @@ _set_x(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       event->xbutton.x= value; break;
     case ConfigureNotify:
       event->xconfigure.x= value; break;
     case CreateNotify:
       event->xcreatewindow.x= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.x= value; break;
     case Expose:
       event->xexpose.x= value; break;
@@ -1692,11 +1685,11 @@ _get_x_root(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       RETVAL = event->xbutton.x_root; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.x_root; break;
     case KeyRelease:
     case KeyPress:
@@ -1715,11 +1708,11 @@ _set_x_root(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       event->xbutton.x_root= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.x_root= value; break;
     case KeyRelease:
     case KeyPress:
@@ -1734,15 +1727,15 @@ _get_y(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       RETVAL = event->xbutton.y; break;
     case ConfigureNotify:
       RETVAL = event->xconfigure.y; break;
     case CreateNotify:
       RETVAL = event->xcreatewindow.y; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.y; break;
     case Expose:
       RETVAL = event->xexpose.y; break;
@@ -1769,15 +1762,15 @@ _set_y(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       event->xbutton.y= value; break;
     case ConfigureNotify:
       event->xconfigure.y= value; break;
     case CreateNotify:
       event->xcreatewindow.y= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.y= value; break;
     case Expose:
       event->xexpose.y= value; break;
@@ -1800,11 +1793,11 @@ _get_y_root(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       RETVAL = event->xbutton.y_root; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.y_root; break;
     case KeyRelease:
     case KeyPress:
@@ -1823,11 +1816,11 @@ _set_y_root(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonPress:
     case ButtonRelease:
+    case ButtonPress:
       event->xbutton.y_root= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.y_root= value; break;
     case KeyRelease:
     case KeyPress:
@@ -1839,3 +1832,5 @@ _set_y_root(event, value)
 
 # END GENERATED X11_Xlib_XEvent
 # ----------------------------------------------------------------------------
+
+INCLUDE: PerlXlib_constants.inc

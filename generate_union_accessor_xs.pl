@@ -210,10 +210,18 @@ sub sv_create {
 	my ($type, $value)= @_;
 	return "newSViv($value)" if $int_types{$type};
 	return "newSVuv($value)" if $unsigned_types{$type};
-	return "sv_setref_pv(newSV(0), \"X11::Xlib\", (void*)$value)" if $type eq 'Display *';
+	return "($value? sv_setref_pv(newSV(0), \"X11::Xlib\", (void*)$value) : &PL_sv_undef)" if $type eq 'Display *';
 	return "newSVpvn((void*)$value, sizeof($1)*$2)"
 		if $type =~ /^(\w+) \[ (\d+) \]$/;
 	die "Don't know how to create SV from $type";
+}
+
+sub generate_constants {
+    my $c= '';
+    for (sort keys %type_to_struct) {
+        $c .= qq{PerlXlib_CONSTi($_)\n};
+    }
+    return $c;
 }
 
 sub generate_xs_accessors {
@@ -314,8 +322,7 @@ void PerlXlib_${goal}_pack($goal *s, HV *fields) {
         my ($name)= ($path =~ /([^.]+)$/);
         ++$have{$name};
         $c .= '      fp= hv_fetch(fields, "'.$name.'", '.length($name).", 0);\n"
-           .  '      if (fp && *fp) { '.sv_read($type, 's->'.$path, '*fp')." }\n"
-           .qq/      else { carp("'%s' uninitialized", "$name"); }\n\n/;
+           .  '      if (fp && *fp) { '.sv_read($type, 's->'.$path, '*fp')." }\n";
     }
     $c .= "    switch( s->type ) {\n";
 
@@ -327,7 +334,7 @@ void PerlXlib_${goal}_pack($goal *s, HV *fields) {
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
             $c .= '      fp= hv_fetch(fields, "'.$name.'", '.length($name).", 0);\n"
-               .  '      if (fp && *fp) { '.sv_read($members{$path}, 's->'.$path, '*fp')." } else carp(\"'%s' uninitialized\", \"$name\");\n";
+               .  '      if (fp && *fp) { '.sv_read($members{$path}, 's->'.$path, '*fp')." }\n\n";
         }
         $c .= "      break;\n";
     }
@@ -374,7 +381,7 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
 
     $c .= <<'@';
     default:
-      carp("Unknown XEvent type %d", s->type);
+      warn("Unknown XEvent type %d", s->type);
     }
 }
 @
@@ -392,37 +399,43 @@ sub generate_subclasses {
 
         $pl .= <<"@";
 
-*get_$name ||= *_get_$name;
-*set_$name ||= *_set_$name;
+*get_$name= *_get_$name unless defined *get_${name}{CODE};
+*set_$name= *_set_$name unless defined *set_${name}{CODE};
 sub $name { \$_[0]->set_$name(\$_[1]) if \@_ > 1; \$_[0]->get_$name() }
 @
     }
 
-    my $typecodemap= "our %_type_to_class= {\n";
+    my $typecodemap= "our %_type_to_class= (\n";
     my $subclasses= '';
+    my $pod= '';
 
     for my $member_struct (sort keys %struct_to_field) {
         my $field= $struct_to_field{$member_struct};
         my $typecodes= $field_to_type{$field};
         my @consts= map { "X11:Xlib::${_}()" } @$typecodes;
+        next unless @consts;
         $typecodemap .= qq{  X11::Xlib::${_}() => "X11::Xlib::${goal}::$member_struct",\n}
             for @$typecodes;
+        $pod .= "=head2 $member_struct\n\n";
         $subclasses .= <<"@";
 
 package X11::Xlib::${goal}::$member_struct;
-our \@ISA= 'X11::Xlib::${goal}';
+\@X11::Xlib::${goal}::${member_struct}::ISA= ('X11::Xlib::${goal}');
 @
+        my $n;
         for my $path (grep { $_ =~ qr/^$field\./ and $_ !~ $ignore_re } sort keys %members) {
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
+            ++$n;
+            $pod .= "=head3 $name\n\n";
             $subclasses .= <<"@";
-*get_${name} ||= *X11::Xlib::${goal}::_get_${name};
-*set_${name} ||= *X11::Xlib::${goal}::_set_${name};
+*get_${name}= *X11::Xlib::${goal}::_get_${name} unless defined *get_${name}{CODE};
+*set_${name}= *X11::Xlib::${goal}::_set_${name} unless defined *set_${name}{CODE};
 sub $name { \$_[0]->set_$name(\$_[1]) if \@_ > 1; \$_[0]->get_$name() }
 @
         }
     }
-    $pl .= $typecodemap . "}\n" . $subclasses;
+    $pl .= $typecodemap . ");\n" . $subclasses . "\n" . $pod;
     return $pl;
 }
 
@@ -448,6 +461,7 @@ sub patch_file {
 my $out_xs= "\n";
 my $out_c=  "\n";
 my $out_pl= "\n";
+my $out_const= "";
 my $file_splice_token= "GENERATED X11_Xlib_${goal}";
 
 for my $leaf (sort keys %distinct_leaf) {
@@ -456,7 +470,8 @@ for my $leaf (sort keys %distinct_leaf) {
 }
 $out_c  .= generate_pack_c() . "\n" . generate_unpack_c() . "\n";
 $out_pl .= generate_subclasses();
-
+$out_const .= generate_constants();
 patch_file("Xlib.xs", $file_splice_token, $out_xs);
 patch_file("PerlXlib.c", $file_splice_token, $out_c);
 patch_file("lib/X11/Xlib/${goal}.pm", $file_splice_token, $out_pl);
+patch_file("PerlXlib_constants.inc", $file_splice_token, $out_const);
