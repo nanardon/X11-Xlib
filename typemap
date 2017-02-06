@@ -16,14 +16,7 @@ O_X11_Xlib
 
 OUTPUT
 O_X11_Xlib
-    if (!($var)) {
-        // Translate NULL to undef
-        sv_setsv( $arg, &PL_sv_undef );
-    }
-    else {
-        // Always create instance of X11::Xlib.  X11::Xlib::Display can override this as needed.
-        sv_setref_pv( $arg, \"X11::Xlib\", (void*)$var );
-    }
+    PerlXlib_sv_from_display($arg, $var);
 
 INPUT
 O_X11_Xlib_XID

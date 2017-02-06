@@ -30,6 +30,20 @@ sub new {
     X11::Xlib::Display->new(@_);
 }
 
+# used by XS
+our ($_error_nonfatal_installed, $_error_fatal_installed, $_error_fatal_trapped);
+# called by XS, if installed
+sub _error_nonfatal {
+    my $event= shift;
+    # TODO: dispatch to an error handler in the Display object, if provided
+}
+# called by XS, if installed
+sub _error_fatal {
+    # TODO: redefine all the X* functions in this package to make sure
+    # users can't call Xlib again.  Also call error handlers in all Display
+    # objects.
+}
+
 1;
 
 __END__
@@ -66,13 +80,41 @@ on the state of the library when you call methods.
 =head1 FUNCTIONS
 
 Most functions can be called as methods on the Xlib connection object, since
-this is usually the first argument.  All functions which are part of Xlib
+this is usually the first argument.  All functions which are part of Xlib's API
 can be exported.
 
 =head2 new
 
 This is an alias for C<< X11::Xlib::Display->new >>, to help encourage using
 the object oriented interface.
+
+=head2 install_error_handlers
+
+  X11::Xlib::install_error_handlers( $bool_nonfatal, $bool_fatal );
+
+Error handling in Xlib is pretty bad.  The first problem is that non-fatal
+errors are reported asynchronously in an API that pretends to be synchronous.
+This is mildly annoying.  This library eases the pain by giving you a nice
+L<XEvent|X11::Xlib::XEvent> object to work with, and the ability to deliver
+the errors to a callback on your display or window object.
+
+The second much larger problem is that fatal errors (like losing the connection
+to the server) cause a mandatory termination of the host program.  Seriously.
+The default behavior of Xlib is to print a message and abort, but even if you
+install the C error handler to try to gracefully recover, when the error
+handler returns Xlib still kills your program.  Under normal circumstances you
+would have to perform all cleanup with your stack tied up through Xlib, but
+this library cheats by using croak (C<longjmp>) to escape the callback and let
+you wrap up your script in a normal manner.  <b>However</b>, after a fatal
+error Xlib's internal state could be dammaged, so it is unsafe to make any more
+Xlib calls.  The library tries to help assert this by invalidating all the
+connection objects.
+
+If you really need your program to keep running your best bet is to state-dump
+to shared memory and then exec() a fresh copy of your script and reload the
+dumped state.  Or use XCB instead of Xlib.
+
+=head1 XLIB API
 
 =head2 XOpenDisplay($connection_string)
 

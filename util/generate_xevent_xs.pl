@@ -201,7 +201,7 @@ sub sv_read {
 	return "$access= PerlXlib_sv_to_display($svname);" if $type eq 'Display *';
 	return "{"
 		." if (!SvPOK($svname) || SvLEN($svname) != sizeof($1)*$2)"
-		.'  croak("Expected scalar of length %d but got %d",'." sizeof($1)*$2);"
+		.'  croak("Expected scalar of length %d but got %d",'." sizeof($1)*$2, SvLEN($svname));"
 		." memcpy($access, SvPVX($svname), sizeof($1)*$2);"
 		."}" if $type =~ /^(\w+) \[ (\d+) \]$/;
 	die "Don't know how to read $type from an SV";
@@ -317,7 +317,7 @@ void PerlXlib_${goal}_pack($goal *s, HV *fields) {
 @
     # First pack the XAnyEvent fields
     my %have;
-    for my $path (grep { $_ =~ /^xany/ } keys %members) {
+    for my $path (sort grep { $_ =~ /^xany/ } keys %members) {
         my $type= $members{$path};
         my ($name)= ($path =~ /([^.]+)$/);
         ++$have{$name};

@@ -13,6 +13,12 @@ MODULE = X11::Xlib                PACKAGE = X11::Xlib
 Display *
 XOpenDisplay(connection_string = NULL)
     char * connection_string
+    CODE:
+        if (SvTRUE(get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD)))
+            croak("Cannot call further Xlib functions after fatal Xlib error");
+        RETVAL = XOpenDisplay(connection_string);
+    OUTPUT:
+        RETVAL
 
 void
 _pointer_value(dpy)
@@ -207,6 +213,44 @@ XGetKeyboardMapping(dpy, fkeycode, count = 1)
     for (i=0; i < creturn; i++)
         XPUSHs(sv_2mortal(newSVuv(keysym[i])));
 
+void
+_error_names()
+    INIT:
+        HV* codes;
+        char intbuf[sizeof(long)*3+2];
+    PPCODE:
+        codes= get_hv("X11::Xlib::_error_names", 0);
+        if (!codes) {
+            codes= get_hv("X11::Xlib::_error_names", GV_ADD);
+#define E(name) hv_store(codes, intbuf, snprintf(intbuf, sizeof(intbuf), "%d", name), newSVpv(#name,0), 0) || die("hash-store");
+            E(BadAccess)
+            E(BadAlloc)
+            E(BadAtom)
+            E(BadColor)
+            E(BadCursor)
+            E(BadDrawable)
+            E(BadFont)
+            E(BadGC)
+            E(BadIDChoice)
+            E(BadImplementation)
+            E(BadLength)
+            E(BadMatch)
+            E(BadName)
+            E(BadPixmap)
+            E(BadRequest)
+            E(BadValue)
+            E(BadWindow)
+#undef E
+        }
+        PUSHs(sv_2mortal((SV*)newRV((SV*)codes)));
+
+void
+install_error_handlers(nonfatal,fatal)
+    Bool nonfatal
+    Bool fatal
+    CODE:
+        PerlXlib_install_error_handlers(nonfatal, fatal);
+
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::XEvent
 
 void
@@ -291,7 +335,7 @@ _set_b(event, value)
   CODE:
     switch( event->type ) {
     case ClientMessage:
-      { if (!SvPOK(value) || SvLEN(value) != sizeof(char)*20)  croak("Expected scalar of length %d but got %d", sizeof(char)*20); memcpy(event->xclient.data.b, SvPVX(value), sizeof(char)*20);} break;
+      { if (!SvPOK(value) || SvLEN(value) != sizeof(char)*20)  croak("Expected scalar of length %d but got %d", sizeof(char)*20, SvLEN(value)); memcpy(event->xclient.data.b, SvPVX(value), sizeof(char)*20);} break;
     default: croak("Can't access XEvent.b for type=%d", event->type);
     }
 
@@ -328,8 +372,8 @@ _get_button(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.button; break;
     default: croak("Can't access XEvent.button for type=%d", event->type);
     }
@@ -343,8 +387,8 @@ _set_button(event, value)
   unsigned int value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.button= value; break;
     default: croak("Can't access XEvent.button for type=%d", event->type);
     }
@@ -770,7 +814,7 @@ _set_key_vector(event, value)
   CODE:
     switch( event->type ) {
     case KeymapNotify:
-      { if (!SvPOK(value) || SvLEN(value) != sizeof(char)*32)  croak("Expected scalar of length %d but got %d", sizeof(char)*32); memcpy(event->xkeymap.key_vector, SvPVX(value), sizeof(char)*32);} break;
+      { if (!SvPOK(value) || SvLEN(value) != sizeof(char)*32)  croak("Expected scalar of length %d but got %d", sizeof(char)*32, SvLEN(value)); memcpy(event->xkeymap.key_vector, SvPVX(value), sizeof(char)*32);} break;
     default: croak("Can't access XEvent.key_vector for type=%d", event->type);
     }
 
@@ -779,8 +823,8 @@ _get_keycode(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       RETVAL = event->xkey.keycode; break;
     default: croak("Can't access XEvent.keycode for type=%d", event->type);
     }
@@ -794,8 +838,8 @@ _set_keycode(event, value)
   unsigned int value
   CODE:
     switch( event->type ) {
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       event->xkey.keycode= value; break;
     default: croak("Can't access XEvent.keycode for type=%d", event->type);
     }
@@ -818,7 +862,7 @@ _set_l(event, value)
   CODE:
     switch( event->type ) {
     case ClientMessage:
-      { if (!SvPOK(value) || SvLEN(value) != sizeof(long)*5)  croak("Expected scalar of length %d but got %d", sizeof(long)*5); memcpy(event->xclient.data.l, SvPVX(value), sizeof(long)*5);} break;
+      { if (!SvPOK(value) || SvLEN(value) != sizeof(long)*5)  croak("Expected scalar of length %d but got %d", sizeof(long)*5, SvLEN(value)); memcpy(event->xclient.data.l, SvPVX(value), sizeof(long)*5);} break;
     default: croak("Can't access XEvent.l for type=%d", event->type);
     }
 
@@ -1173,14 +1217,14 @@ _get_root(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.root; break;
     case EnterNotify:
     case LeaveNotify:
       RETVAL = event->xcrossing.root; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       RETVAL = event->xkey.root; break;
     case MotionNotify:
       RETVAL = event->xmotion.root; break;
@@ -1196,14 +1240,14 @@ _set_root(event, value)
   Window value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.root= value; break;
     case EnterNotify:
     case LeaveNotify:
       event->xcrossing.root= value; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       event->xkey.root= value; break;
     case MotionNotify:
       event->xmotion.root= value; break;
@@ -1228,7 +1272,7 @@ _set_s(event, value)
   CODE:
     switch( event->type ) {
     case ClientMessage:
-      { if (!SvPOK(value) || SvLEN(value) != sizeof(short)*10)  croak("Expected scalar of length %d but got %d", sizeof(short)*10); memcpy(event->xclient.data.s, SvPVX(value), sizeof(short)*10);} break;
+      { if (!SvPOK(value) || SvLEN(value) != sizeof(short)*10)  croak("Expected scalar of length %d but got %d", sizeof(short)*10, SvLEN(value)); memcpy(event->xclient.data.s, SvPVX(value), sizeof(short)*10);} break;
     default: croak("Can't access XEvent.s for type=%d", event->type);
     }
 
@@ -1237,14 +1281,14 @@ _get_same_screen(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.same_screen; break;
     case EnterNotify:
     case LeaveNotify:
       RETVAL = event->xcrossing.same_screen; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       RETVAL = event->xkey.same_screen; break;
     case MotionNotify:
       RETVAL = event->xmotion.same_screen; break;
@@ -1260,14 +1304,14 @@ _set_same_screen(event, value)
   Bool value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.same_screen= value; break;
     case EnterNotify:
     case LeaveNotify:
       event->xcrossing.same_screen= value; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       event->xkey.same_screen= value; break;
     case MotionNotify:
       event->xmotion.same_screen= value; break;
@@ -1345,16 +1389,16 @@ _get_state(event)
   XEvent *event
   PPCODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       PUSHs(sv_2mortal(newSVuv(event->xbutton.state))); break;
     case ColormapNotify:
       PUSHs(sv_2mortal(newSViv(event->xcolormap.state))); break;
     case EnterNotify:
     case LeaveNotify:
       PUSHs(sv_2mortal(newSVuv(event->xcrossing.state))); break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       PUSHs(sv_2mortal(newSVuv(event->xkey.state))); break;
     case MotionNotify:
       PUSHs(sv_2mortal(newSVuv(event->xmotion.state))); break;
@@ -1372,16 +1416,16 @@ _set_state(event, value)
   SV* value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.state= SvUV(value); break;
     case ColormapNotify:
       event->xcolormap.state= SvIV(value); break;
     case EnterNotify:
     case LeaveNotify:
       event->xcrossing.state= SvUV(value); break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       event->xkey.state= SvUV(value); break;
     case MotionNotify:
       event->xmotion.state= SvUV(value); break;
@@ -1397,14 +1441,14 @@ _get_subwindow(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.subwindow; break;
     case EnterNotify:
     case LeaveNotify:
       RETVAL = event->xcrossing.subwindow; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       RETVAL = event->xkey.subwindow; break;
     case MotionNotify:
       RETVAL = event->xmotion.subwindow; break;
@@ -1420,14 +1464,14 @@ _set_subwindow(event, value)
   Window value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.subwindow= value; break;
     case EnterNotify:
     case LeaveNotify:
       event->xcrossing.subwindow= value; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       event->xkey.subwindow= value; break;
     case MotionNotify:
       event->xmotion.subwindow= value; break;
@@ -1467,14 +1511,14 @@ _get_time(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.time; break;
     case EnterNotify:
     case LeaveNotify:
       RETVAL = event->xcrossing.time; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       RETVAL = event->xkey.time; break;
     case MotionNotify:
       RETVAL = event->xmotion.time; break;
@@ -1498,14 +1542,14 @@ _set_time(event, value)
   Time value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.time= value; break;
     case EnterNotify:
     case LeaveNotify:
       event->xcrossing.time= value; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       event->xkey.time= value; break;
     case MotionNotify:
       event->xmotion.time= value; break;
@@ -1619,8 +1663,8 @@ _get_x(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.x; break;
     case ConfigureNotify:
       RETVAL = event->xconfigure.x; break;
@@ -1635,8 +1679,8 @@ _get_x(event)
       RETVAL = event->xgraphicsexpose.x; break;
     case GravityNotify:
       RETVAL = event->xgravity.x; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       RETVAL = event->xkey.x; break;
     case MotionNotify:
       RETVAL = event->xmotion.x; break;
@@ -1654,8 +1698,8 @@ _set_x(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.x= value; break;
     case ConfigureNotify:
       event->xconfigure.x= value; break;
@@ -1670,8 +1714,8 @@ _set_x(event, value)
       event->xgraphicsexpose.x= value; break;
     case GravityNotify:
       event->xgravity.x= value; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       event->xkey.x= value; break;
     case MotionNotify:
       event->xmotion.x= value; break;
@@ -1685,14 +1729,14 @@ _get_x_root(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.x_root; break;
     case EnterNotify:
     case LeaveNotify:
       RETVAL = event->xcrossing.x_root; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       RETVAL = event->xkey.x_root; break;
     case MotionNotify:
       RETVAL = event->xmotion.x_root; break;
@@ -1708,14 +1752,14 @@ _set_x_root(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.x_root= value; break;
     case EnterNotify:
     case LeaveNotify:
       event->xcrossing.x_root= value; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       event->xkey.x_root= value; break;
     case MotionNotify:
       event->xmotion.x_root= value; break;
@@ -1727,8 +1771,8 @@ _get_y(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.y; break;
     case ConfigureNotify:
       RETVAL = event->xconfigure.y; break;
@@ -1743,8 +1787,8 @@ _get_y(event)
       RETVAL = event->xgraphicsexpose.y; break;
     case GravityNotify:
       RETVAL = event->xgravity.y; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       RETVAL = event->xkey.y; break;
     case MotionNotify:
       RETVAL = event->xmotion.y; break;
@@ -1762,8 +1806,8 @@ _set_y(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.y= value; break;
     case ConfigureNotify:
       event->xconfigure.y= value; break;
@@ -1778,8 +1822,8 @@ _set_y(event, value)
       event->xgraphicsexpose.y= value; break;
     case GravityNotify:
       event->xgravity.y= value; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       event->xkey.y= value; break;
     case MotionNotify:
       event->xmotion.y= value; break;
@@ -1793,14 +1837,14 @@ _get_y_root(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.y_root; break;
     case EnterNotify:
     case LeaveNotify:
       RETVAL = event->xcrossing.y_root; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       RETVAL = event->xkey.y_root; break;
     case MotionNotify:
       RETVAL = event->xmotion.y_root; break;
@@ -1816,14 +1860,14 @@ _set_y_root(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.y_root= value; break;
     case EnterNotify:
     case LeaveNotify:
       event->xcrossing.y_root= value; break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       event->xkey.y_root= value; break;
     case MotionNotify:
       event->xmotion.y_root= value; break;

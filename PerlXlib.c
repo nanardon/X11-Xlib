@@ -1,31 +1,63 @@
 // This file is included directly by Xlib.xs and is not intended to be
 // externally usable.  I mostly separated it for the syntax hilighting :-)
 
+void PerlXlib_XEvent_pack(XEvent *e, HV *fields);
+void PerlXlib_XEvent_unpack(XEvent *e, HV *fields);
+
 // Allow either instance of X11::Xlib, or instance of X11::Xlib::Display
 Display* PerlXlib_sv_to_display(SV *sv) {
     SV **fp;
     Display *dpy= NULL;
 
     if (!SvOK(sv))
-        return NULL;
+        return NULL; // undef means NULL.  Happens in places like XEvent.display
 
     if (sv_isobject(sv)) {
-        if (SvTYPE(SvRV(sv)) == SVt_PVMG)
-            dpy= (Display*) SvIV((SV*)SvRV( sv ));
-        else if (SvTYPE(SvRV(sv)) == SVt_PVHV) {
+        // find connection field in a hashref-based object
+        if (SvTYPE(SvRV(sv)) == SVt_PVHV) {
             fp= hv_fetch((HV*)SvRV(sv), "connection", 10, 0);
-            if (fp && *fp) {
-                if (!SvOK(*fp))
-                    return NULL;
-                else if (sv_isobject(*fp) && SvTYPE(SvRV(*fp)) == SVt_PVMG)
-                    dpy= (Display*) SvIV((SV*)SvRV(*fp));
-            }
+            if (fp && *fp && sv_isobject(sv))
+                sv= *fp;
+        }
+        if (SvTYPE(SvRV(sv)) == SVt_PVMG) {
+            dpy= (Display*) SvIV((SV*)SvRV(sv));
+            if (dpy) return dpy;
+        }
+        // Else, we either have one of our objects that is invalid, or something else.
+        // If it's ours, it means it was forcibly closed, so give a better error message.
+        if (sv_derived_from(sv, "X11::Xlib")) {
+            // If that was because Xlib fatal error, then give an even more specific error
+            SV *fatal_trapped= get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD);
+            if (SvTRUE(fatal_trapped))
+                croak("Cannot call further Xlib functions after fatal Xlib error");
+            croak("Display connection is closed");
         }
     }
-    if (!dpy)
-        croak("Invalid Display handle; must be a X11::Xlib instance or X11::Xlib::Display instance");
+    croak("Invalid Display handle; must be a X11::Xlib instance or X11::Xlib::Display instance");
+    return NULL; // make compiler happy
+}
 
-    return dpy;
+void PerlXlib_sv_from_display(SV *dest, Display *dpy) {
+    SV **fp;
+    if (!dpy) {
+        // Translate NULL to undef
+        sv_setsv(dest, &PL_sv_undef);
+    }
+    else {
+        fp= hv_fetch(get_hv("X11::Xlib::_connections", GV_ADD), (void*) &dpy, sizeof(dpy), 1);
+        if (!fp) croak("failed to add item to hash (tied?)");
+        if (*fp && SvOK(*fp))
+            sv_setsv(dest, *fp);
+        else {
+            // Always create instance of X11::Xlib.  X11::Xlib::Display can override this as needed.
+            sv_setref_pv(dest, "X11::Xlib", (void*)dpy);
+            // Save a weak ref for later
+            if (!*fp) *fp= newRV(SvRV(dest));
+            else sv_setsv(*fp, dest);
+            sv_rvweaken(*fp);
+        }
+    }
+
 }
 
 // Allow unsigned integer, or hashref with field ->{xid}
@@ -72,6 +104,60 @@ XEvent *PerlXlib_sv_to_xevent(SV *sv) {
     return (XEvent*) SvPVX(sv);
 }
 
+int PerlXlib_X_error_handler(Display *d, XErrorEvent *e) {
+    dSP;
+    ENTER;
+    SAVETMPS;
+    PUSHMARK(SP);
+    EXTEND(SP, 1);
+    PUSHs(sv_2mortal(sv_setref_pvn(newSV(0), "X11::Xlib::XEvent::XErrorEvent", (void*) e, sizeof(XEvent))));
+    PUTBACK;
+    call_pv("X11::Xlib::_error_nonfatal", G_VOID|G_DISCARD|G_EVAL|G_KEEPERR);
+    FREETMPS;
+    LEAVE;
+    return 0;
+}
+
+/*
+
+What a mess.   So Xlib has a stupid design where they forcibly abort the
+program when an I/O error occurs and the X server is lost.  Even if you
+install the error handler, they expect you to abort the program and they
+do it for you if you return.  Furthermore, they tell you that you may not
+call any more Xlib functions at all.
+
+Luckily we can cheat with croak (longjmp) back out of the callback and
+avoid the forced program exit.  However now we can't officially use Xlib
+again for the duration of the program, and there could be lost resources
+from our longjmp.  So, set a global flag to prevent any re-entry into XLib.
+
+*/
+int PerlXlib_X_IO_error_handler(Display *d) {
+    sv_setiv(get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD), 1);
+    warn("Xlib fatal error.  Further calls to Xlib are forbidden.");
+    dSP;
+    PUSHMARK(SP);
+    call_pv("X11::Xlib::_error_fatal", G_VOID|G_DISCARD|G_NOARGS|G_EVAL|G_KEEPERR);
+    croak("Fatal X11 I/O Error"); // longjmp past Xlib, which wants to kill us
+    return 0; // never reached.  Make compiler happy.
+}
+
+// Install the Xlib error handlers, only if they have not already been installed.
+// Use perl scalars to store this status, to avoid threading issues and to
+// give users potential to inspect.
+void PerlXlib_install_error_handlers(Bool nonfatal, Bool fatal) {
+    SV *nonfatal_installed= get_sv("X11::Xlib::_error_nonfatal_installed", GV_ADD);
+    SV *fatal_installed= get_sv("X11::Xlib::_error_fatal_installed", GV_ADD);
+    if (nonfatal && !SvTRUE(nonfatal_installed)) {
+        XSetErrorHandler(&PerlXlib_X_error_handler);
+        sv_setiv(nonfatal_installed, 1);
+    }
+    if (fatal && !SvTRUE(fatal_installed)) {
+        XSetIOErrorHandler(&PerlXlib_X_IO_error_handler);
+        sv_setiv(fatal_installed, 1);
+    }
+}
+
 //----------------------------------------------------------------------------
 // BEGIN GENERATED X11_Xlib_XEvent
 
@@ -79,19 +165,19 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields) {
     SV **fp;
 
     memset(s, 0, sizeof(*s)); // wipe the struct
+      fp= hv_fetch(fields, "display", 7, 0);
+      if (fp && *fp) { s->xany.display= PerlXlib_sv_to_display(*fp); }
       fp= hv_fetch(fields, "send_event", 10, 0);
       if (fp && *fp) { s->xany.send_event= SvIV(*fp); }
       fp= hv_fetch(fields, "serial", 6, 0);
       if (fp && *fp) { s->xany.serial= SvUV(*fp); }
       fp= hv_fetch(fields, "type", 4, 0);
       if (fp && *fp) { s->xany.type= SvIV(*fp); }
-      fp= hv_fetch(fields, "display", 7, 0);
-      if (fp && *fp) { s->xany.display= PerlXlib_sv_to_display(*fp); }
       fp= hv_fetch(fields, "window", 6, 0);
       if (fp && *fp) { s->xany.window= SvUV(*fp); }
     switch( s->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       fp= hv_fetch(fields, "button", 6, 0);
       if (fp && *fp) { s->xbutton.button= SvUV(*fp); }
 
@@ -133,13 +219,13 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields) {
       break;
     case ClientMessage:
       fp= hv_fetch(fields, "b", 1, 0);
-      if (fp && *fp) { { if (!SvPOK(*fp) || SvLEN(*fp) != sizeof(char)*20)  croak("Expected scalar of length %d but got %d", sizeof(char)*20); memcpy(s->xclient.data.b, SvPVX(*fp), sizeof(char)*20);} }
+      if (fp && *fp) { { if (!SvPOK(*fp) || SvLEN(*fp) != sizeof(char)*20)  croak("Expected scalar of length %d but got %d", sizeof(char)*20, SvLEN(*fp)); memcpy(s->xclient.data.b, SvPVX(*fp), sizeof(char)*20);} }
 
       fp= hv_fetch(fields, "l", 1, 0);
-      if (fp && *fp) { { if (!SvPOK(*fp) || SvLEN(*fp) != sizeof(long)*5)  croak("Expected scalar of length %d but got %d", sizeof(long)*5); memcpy(s->xclient.data.l, SvPVX(*fp), sizeof(long)*5);} }
+      if (fp && *fp) { { if (!SvPOK(*fp) || SvLEN(*fp) != sizeof(long)*5)  croak("Expected scalar of length %d but got %d", sizeof(long)*5, SvLEN(*fp)); memcpy(s->xclient.data.l, SvPVX(*fp), sizeof(long)*5);} }
 
       fp= hv_fetch(fields, "s", 1, 0);
-      if (fp && *fp) { { if (!SvPOK(*fp) || SvLEN(*fp) != sizeof(short)*10)  croak("Expected scalar of length %d but got %d", sizeof(short)*10); memcpy(s->xclient.data.s, SvPVX(*fp), sizeof(short)*10);} }
+      if (fp && *fp) { { if (!SvPOK(*fp) || SvLEN(*fp) != sizeof(short)*10)  croak("Expected scalar of length %d but got %d", sizeof(short)*10, SvLEN(*fp)); memcpy(s->xclient.data.s, SvPVX(*fp), sizeof(short)*10);} }
 
       fp= hv_fetch(fields, "format", 6, 0);
       if (fp && *fp) { s->xclient.format= SvIV(*fp); }
@@ -315,8 +401,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields) {
       if (fp && *fp) { s->xgravity.y= SvIV(*fp); }
 
       break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       fp= hv_fetch(fields, "keycode", 7, 0);
       if (fp && *fp) { s->xkey.keycode= SvUV(*fp); }
 
@@ -350,7 +436,7 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields) {
       break;
     case KeymapNotify:
       fp= hv_fetch(fields, "key_vector", 10, 0);
-      if (fp && *fp) { { if (!SvPOK(*fp) || SvLEN(*fp) != sizeof(char)*32)  croak("Expected scalar of length %d but got %d", sizeof(char)*32); memcpy(s->xkeymap.key_vector, SvPVX(*fp), sizeof(char)*32);} }
+      if (fp && *fp) { { if (!SvPOK(*fp) || SvLEN(*fp) != sizeof(char)*32)  croak("Expected scalar of length %d but got %d", sizeof(char)*32, SvLEN(*fp)); memcpy(s->xkeymap.key_vector, SvPVX(*fp), sizeof(char)*32);} }
 
       break;
     case MapNotify:
@@ -516,14 +602,14 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields) {
 
 void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
     hv_store(fields, "type", 4, newSViv(s->type), 0);
+    hv_store(fields, "display"   ,  7, (s->xany.display? sv_setref_pv(newSV(0), "X11::Xlib", (void*)s->xany.display) : &PL_sv_undef), 0);
     hv_store(fields, "send_event", 10, newSViv(s->xany.send_event), 0);
     hv_store(fields, "serial"    ,  6, newSVuv(s->xany.serial), 0);
     hv_store(fields, "type"      ,  4, newSViv(s->xany.type), 0);
-    hv_store(fields, "display"   ,  7, (s->xany.display? sv_setref_pv(newSV(0), "X11::Xlib", (void*)s->xany.display) : &PL_sv_undef), 0);
     hv_store(fields, "window"    ,  6, newSVuv(s->xany.window), 0);
     switch( s->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       hv_store(fields, "button"     ,  6, newSVuv(s->xbutton.button), 0);
       hv_store(fields, "root"       ,  4, newSVuv(s->xbutton.root), 0);
       hv_store(fields, "same_screen", 11, newSViv(s->xbutton.same_screen), 0);
@@ -615,8 +701,8 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       hv_store(fields, "x"          ,  1, newSViv(s->xgravity.x), 0);
       hv_store(fields, "y"          ,  1, newSViv(s->xgravity.y), 0);
       break;
-    case KeyRelease:
     case KeyPress:
+    case KeyRelease:
       hv_store(fields, "keycode"    ,  7, newSVuv(s->xkey.keycode), 0);
       hv_store(fields, "root"       ,  4, newSVuv(s->xkey.root), 0);
       hv_store(fields, "same_screen", 11, newSViv(s->xkey.same_screen), 0);
