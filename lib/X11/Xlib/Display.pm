@@ -73,7 +73,7 @@ sub new {
     my $class= shift;
     my $args= @_ == 1 && ref($_[0]) eq 'HASH'? { %{$_[0]} }
         : @_ == 1? { connection => $_[0] }
-        : 1 & @_ == 0? { @_ }
+        : (1 & @_) == 0? { @_ }
         : croak "Expected hashref, single connection scalar, or even-length list";
     my $self;
     my $conn= $args->{connection};

@@ -69,8 +69,8 @@ sub _error_nonfatal {
 # called by XS, if installed
 sub _error_fatal {
     my $conn= shift;
-    warn "Marking first connection dead";
-    $conn->_mark_dead; # this connection is dead now
+    $conn->_mark_dead; # this connection is dead immediately
+
     if ($on_error_cb) {
         try { $on_error_cb->($conn); }
         catch { warn $_; };
@@ -81,8 +81,8 @@ sub _error_fatal {
         try { $dpy->on_error_cb->($dpy); }
         catch { warn $_; };
     }
-    warn "Marking remaining connections dead";
-    # Kill all X11 connections, since Xlib internal state might be toast
+
+    # Kill all X11 connections, since Xlib internal state might be toast after this
     $_->_mark_dead for grep { defined } values %_connections;
 }
 
