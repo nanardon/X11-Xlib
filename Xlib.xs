@@ -198,6 +198,33 @@ RootWindow(dpy, screen=-1)
     OUTPUT:
         RETVAL
 
+Bool
+XMatchVisualInfo(dpy, screen, depth, class, vis_return)
+    DisplayNotNull dpy
+    int screen
+    int depth
+    int class
+    XVisualInfo *vis_return
+
+void
+XGetVisualInfo(dpy, vinfo_mask, vinfo_template)
+    DisplayNotNull dpy
+    int vinfo_mask
+    XVisualInfo *vinfo_template
+    INIT:
+        XVisualInfo *list;
+        int n= 0, i;
+    PPCODE:
+        list= XGetVisualInfo(dpy, vinfo_mask, vinfo_template, &n);
+        if (list) {
+            for (i= 0; i<n; i++) {
+                PUSHs(sv_2mortal(
+                    sv_setref_pvn(newSV(0), "X11::Xlib::XVisualInfo", (void*)(list+i), sizeof(XVisualInfo))
+                ));
+            }
+            XFree(list);
+        }
+
 # /* Event */
 
 int

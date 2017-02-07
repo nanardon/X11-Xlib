@@ -4,6 +4,15 @@ use warnings;
 use X11::Xlib;
 use Carp;
 
+=head1 SYNOPSIS
+
+  my $conn= X11::Xlib->new();
+  my @visuals= map { $_->unpack } $conn->XGetVisualInfo(0, my $foo);
+  use DDP;
+  p @visuals;
+
+=cut
+
 sub new {
     my $class= shift;
     my $blank_scalar;
@@ -25,7 +34,7 @@ sub pack {
     
     # Warn about any unused arguments
     my @unused= grep { !$self->can($_) } keys %args;
-    carp "Un-used parameters passed to new: ".join(',', @unused)
+    carp "Un-used parameters passed to pack: ".join(',', @unused)
         if @unused;
 
     return $self;

@@ -22,3 +22,8 @@ is( $clone->buffer, $struct->buffer, 'clone contains identical bytes' );
 
 is( $clone->red_mask, 0xFF0000, 'red_mask value preserved' );
 is( $clone->blue_mask, 0x0000FF, 'blue_mask value preserved' );
+
+#my $conn= X11::Xlib->new();
+#my @visuals= map { $_->unpack } $conn->XGetVisualInfo(0, my $foo);
+#use DDP;
+#p @visuals;
