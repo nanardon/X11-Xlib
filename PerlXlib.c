@@ -83,8 +83,7 @@ SV* PerlXlib_conn_pointer_value(SV *conn) {
                 : newSVsv(&PL_sv_undef));
         }
     }
-    warn("pointer value");
-    croak("Expected object of type \"X11::Xlib\"");
+    croak("Expected object of type \"X11::Xlib\" for method %s", "_pointer_value");
     return NULL; // silence compiler
 }
 
@@ -131,9 +130,7 @@ void PerlXlib_conn_wipe_pointer(SV *conn) {
             return;
         }
     }
-    warn("wipe pointer");
-        sv_dump(conn);
-    croak("Expected object of type \"X11::Xlib\"");
+    croak("Expected object of type \"X11::Xlib\" for method %s", "_wipe_pointer");
 }
 
 // Allow unsigned integer, or hashref with field ->{xid}
