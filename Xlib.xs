@@ -376,16 +376,17 @@ MODULE = X11::Xlib                PACKAGE = X11::Xlib::XEvent
 
 void
 _pack(e, fields)
-  XEvent *e
-  HV* fields
-  PPCODE:
-    PerlXlib_XEvent_pack(e, fields);
+    XEvent *e
+    HV *fields
+    PPCODE:
+        PerlXlib_XEvent_pack(e, fields);
 
 void
-_unpack(e, HV* fields)
-  XEvent* e
-  PPCODE:
-    PerlXlib_XEvent_unpack(e, fields);
+_unpack(e, fields)
+    XEvent *e
+    HV *fields
+    PPCODE:
+        PerlXlib_XEvent_unpack(e, fields);
 
 # ----------------------------------------------------------------------------
 # BEGIN GENERATED X11_Xlib_XEvent
@@ -1996,6 +1997,176 @@ _set_y_root(event, value)
     }
 
 # END GENERATED X11_Xlib_XEvent
+# ----------------------------------------------------------------------------
+# BEGIN GENERATED X11_Xlib_XVisualInfo
+
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::XVisualInfo
+
+void
+_pack(s, fields)
+    XVisualInfo *s
+    HV *fields
+    PPCODE:
+        PerlXlib_XVisualInfo_pack(s, fields);
+
+void
+_unpack(s, fields)
+    XVisualInfo *s
+    HV *fields
+    PPCODE:
+        PerlXlib_XVisualInfo_unpack(s, fields);
+
+Visual *
+_get_visual(st)
+    XVisualInfo *st
+    CODE:
+        RETVAL = st->visual;
+    OUTPUT:
+        RETVAL
+
+void
+_set_visual(st, val)
+    XVisualInfo *st
+    Visual * val
+    CODE:
+        st->visual= val;
+
+unsigned long
+_get_green_mask(st)
+    XVisualInfo *st
+    CODE:
+        RETVAL = st->green_mask;
+    OUTPUT:
+        RETVAL
+
+void
+_set_green_mask(st, val)
+    XVisualInfo *st
+    unsigned long val
+    CODE:
+        st->green_mask= val;
+
+int
+_get_depth(st)
+    XVisualInfo *st
+    CODE:
+        RETVAL = st->depth;
+    OUTPUT:
+        RETVAL
+
+void
+_set_depth(st, val)
+    XVisualInfo *st
+    int val
+    CODE:
+        st->depth= val;
+
+int
+_get_bits_per_rgb(st)
+    XVisualInfo *st
+    CODE:
+        RETVAL = st->bits_per_rgb;
+    OUTPUT:
+        RETVAL
+
+void
+_set_bits_per_rgb(st, val)
+    XVisualInfo *st
+    int val
+    CODE:
+        st->bits_per_rgb= val;
+
+VisualID
+_get_visualid(st)
+    XVisualInfo *st
+    CODE:
+        RETVAL = st->visualid;
+    OUTPUT:
+        RETVAL
+
+void
+_set_visualid(st, val)
+    XVisualInfo *st
+    VisualID val
+    CODE:
+        st->visualid= val;
+
+unsigned long
+_get_blue_mask(st)
+    XVisualInfo *st
+    CODE:
+        RETVAL = st->blue_mask;
+    OUTPUT:
+        RETVAL
+
+void
+_set_blue_mask(st, val)
+    XVisualInfo *st
+    unsigned long val
+    CODE:
+        st->blue_mask= val;
+
+int
+_get_colormap_size(st)
+    XVisualInfo *st
+    CODE:
+        RETVAL = st->colormap_size;
+    OUTPUT:
+        RETVAL
+
+void
+_set_colormap_size(st, val)
+    XVisualInfo *st
+    int val
+    CODE:
+        st->colormap_size= val;
+
+int
+_get_screen(st)
+    XVisualInfo *st
+    CODE:
+        RETVAL = st->screen;
+    OUTPUT:
+        RETVAL
+
+void
+_set_screen(st, val)
+    XVisualInfo *st
+    int val
+    CODE:
+        st->screen= val;
+
+unsigned long
+_get_red_mask(st)
+    XVisualInfo *st
+    CODE:
+        RETVAL = st->red_mask;
+    OUTPUT:
+        RETVAL
+
+void
+_set_red_mask(st, val)
+    XVisualInfo *st
+    unsigned long val
+    CODE:
+        st->red_mask= val;
+
+int
+_get_class(st)
+    XVisualInfo *st
+    CODE:
+        RETVAL = st->class;
+    OUTPUT:
+        RETVAL
+
+void
+_set_class(st, val)
+    XVisualInfo *st
+    int val
+    CODE:
+        st->class= val;
+
+# END GENERATED X11_Xlib_XVisualInfo
 # ----------------------------------------------------------------------------
 
 INCLUDE: PerlXlib_constants.inc

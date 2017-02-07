@@ -114,33 +114,34 @@ XID PerlXlib_sv_to_xid(SV *sv) {
     return (XID) SvUV(*xid_field);
 }
 
-XEvent *PerlXlib_sv_to_xevent(SV *sv) {
-    SV **event_field;
-    XEvent e;
+SV* PerlXlib_get_struct_buffer(SV *sv, const char* struct_name, int struct_size) {
+    SV **fp;
 
-    // De-reference scalar-ref or hashref->{xevent}
+    // De-reference ${scalar_ref} or $hashref->{buffer}
     if (SvROK(sv)) {
         if (SvTYPE(SvRV(sv)) == SVt_PVMG)
             sv= SvRV(sv);
-        // Also accept a hashref with 'xevent' parameter
+        // Also accept a hashref with 'buffer' parameter
         else if (SvTYPE(SvRV(sv)) == SVt_PVHV
-            && (event_field= hv_fetch((HV*)SvRV(sv), "xevent", 6, 0))
-            && *event_field)
-            sv= *event_field;
+            && (fp= hv_fetch((HV*)SvRV(sv), "buffer", 6, 0))
+            && *fp)
+            sv= *fp;
     }
 
     // Initialize the buffer if needed.
     if (!SvOK(sv)) {
-        memset(&e, 0, sizeof(e));
-        sv_setpvn(sv, (void*) &e, sizeof(e));
-        return (XEvent*) SvPVX(sv);
+        sv_setpvn(sv, "", 0);
+        sv_grow(sv, struct_size+1);
+        SvCUR_set(sv, struct_size);
+        memset(SvPVX(sv), 0, struct_size+1);
+        return sv;
     }
-    // Otherwise we require the caller to have the right size
-    if (!SvPOK(sv))
-        croak("XEvent paramters must be a scalar, scalar ref, hash with { xevent => $buffer }, or undefined");
-    if (SvCUR(sv) < sizeof(XEvent))
-        croak("Scalars used for XEvent must be at least %d bytes long (got %d)", sizeof(XEvent), SvCUR(sv));
-    return (XEvent*) SvPVX(sv);
+    else if (!SvPOK(sv))
+        croak("%s paramters must be a scalar, scalar ref, hash with { buffer => $buffer }, or undefined", struct_name);
+    else if (SvCUR(sv) < struct_size)
+        croak("Scalars used for %s must be at least %d bytes long (got %d)",
+            struct_name, struct_size, SvCUR(sv));
+    return sv;
 }
 
 int PerlXlib_X_error_handler(Display *d, XErrorEvent *e) {
@@ -848,4 +849,54 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
 
 // END GENERATED X11_Xlib_XEvent
 //----------------------------------------------------------------------------
+// BEGIN GENERATED X11_Xlib_XVisualInfo
 
+void PerlXlib_XVisualInfo_pack(XVisualInfo *s, HV *fields) {
+    SV **fp;
+
+    memset(s, 0, sizeof(*s)); // wipe the struct
+    fp= hv_fetch(fields, "bits_per_rgb", 12, 0);
+    if (fp && *fp) { s->bits_per_rgb= SvIV(*fp); }
+    fp= hv_fetch(fields, "blue_mask", 9, 0);
+    if (fp && *fp) { s->blue_mask= SvUV(*fp); }
+    fp= hv_fetch(fields, "class", 5, 0);
+    if (fp && *fp) { s->class= SvIV(*fp); }
+    fp= hv_fetch(fields, "colormap_size", 13, 0);
+    if (fp && *fp) { s->colormap_size= SvIV(*fp); }
+    fp= hv_fetch(fields, "depth", 5, 0);
+    if (fp && *fp) { s->depth= SvIV(*fp); }
+    fp= hv_fetch(fields, "green_mask", 10, 0);
+    if (fp && *fp) { s->green_mask= SvUV(*fp); }
+    fp= hv_fetch(fields, "red_mask", 8, 0);
+    if (fp && *fp) { s->red_mask= SvUV(*fp); }
+    fp= hv_fetch(fields, "screen", 6, 0);
+    if (fp && *fp) { s->screen= SvIV(*fp); }
+    fp= hv_fetch(fields, "visual", 6, 0);
+    if (fp && *fp) { { if (!SvPOK(*fp) || SvCUR(*fp) != sizeof(Visual *))  croak("Expected scalar of length %d but got %d", sizeof(Visual *), SvCUR(*fp)); s->visual= * (Visual * *) SvPVX(*fp);} }
+    fp= hv_fetch(fields, "visualid", 8, 0);
+    if (fp && *fp) { s->visualid= SvUV(*fp); }
+
+}
+
+void PerlXlib_XVisualInfo_unpack(XVisualInfo *s, HV *fields) {
+    // hv_store may return NULL if there is an error, or if the hash is tied.
+    // If it does, we need to clean up the value.
+    SV *sv= NULL;
+    if (!hv_store(fields, "bits_per_rgb", 12, (sv=newSViv(s->bits_per_rgb)), 0)) goto store_fail;
+    if (!hv_store(fields, "blue_mask" ,  9, (sv=newSVuv(s->blue_mask)), 0)) goto store_fail;
+    if (!hv_store(fields, "class"     ,  5, (sv=newSViv(s->class)), 0)) goto store_fail;
+    if (!hv_store(fields, "colormap_size", 13, (sv=newSViv(s->colormap_size)), 0)) goto store_fail;
+    if (!hv_store(fields, "depth"     ,  5, (sv=newSViv(s->depth)), 0)) goto store_fail;
+    if (!hv_store(fields, "green_mask", 10, (sv=newSVuv(s->green_mask)), 0)) goto store_fail;
+    if (!hv_store(fields, "red_mask"  ,  8, (sv=newSVuv(s->red_mask)), 0)) goto store_fail;
+    if (!hv_store(fields, "screen"    ,  6, (sv=newSViv(s->screen)), 0)) goto store_fail;
+    if (!hv_store(fields, "visual"    ,  6, (sv=newSVpvn((void*) &s->visual, sizeof(Visual *))), 0)) goto store_fail;
+    if (!hv_store(fields, "visualid"  ,  8, (sv=newSVuv(s->visualid)), 0)) goto store_fail;
+    return;
+    store_fail:
+        if (sv) sv_2mortal(sv);
+        croak("Can't store field in supplied hash (tied maybe?)");
+}
+
+// END GENERATED X11_Xlib_XVisualInfo
+//----------------------------------------------------------------------------
