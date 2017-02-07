@@ -32,20 +32,20 @@ void
 _mark_dead(conn)
     SV* conn
     PPCODE:
-        PerlXlib_conn_set_dead(conn);
+        PerlXlib_conn_mark_dead(conn);
 
 void
 _mark_closed(conn)
     SV *conn
     PPCODE:
-        PerlXlib_conn_wipe_pointer(conn);
+        PerlXlib_conn_mark_closed(conn);
 
 void
 DESTROY(conn)
     SV *conn
     PPCODE:
         if (sv_isobject(conn) && sv_isa(conn, "X11::Xlib"))
-            PerlXlib_conn_wipe_pointer(conn); // goal is to clean up caches
+            PerlXlib_conn_mark_closed(conn); // goal is to clean up caches
 
 int
 ConnectionNumber(dpy)
@@ -63,8 +63,7 @@ XCloseDisplay(dpy)
     SV *dpy
     CODE:
         XCloseDisplay(PerlXlib_sv_to_display(dpy));
-        PerlXlib_conn_wipe_pointer(dpy);
-        PerlXlib_conn_set_dead(dpy);
+        PerlXlib_conn_mark_closed(dpy);
 
 # Event Functions ------------------------------------------------------------
 
@@ -359,7 +358,7 @@ _error_names()
         PUSHs(sv_2mortal((SV*)newRV((SV*)codes)));
 
 void
-install_error_handlers(nonfatal,fatal)
+_install_error_handlers(nonfatal,fatal)
     Bool nonfatal
     Bool fatal
     CODE:
@@ -449,7 +448,7 @@ _set_b(event, value)
   CODE:
     switch( event->type ) {
     case ClientMessage:
-      { if (!SvPOK(value) || SvLEN(value) != sizeof(char)*20)  croak("Expected scalar of length %d but got %d", sizeof(char)*20, SvLEN(value)); memcpy(event->xclient.data.b, SvPVX(value), sizeof(char)*20);} break;
+      { if (!SvPOK(value) || SvCUR(value) != sizeof(char)*20)  croak("Expected scalar of length %d but got %d", sizeof(char)*20, SvCUR(value)); memcpy(event->xclient.data.b, SvPVX(value), sizeof(char)*20);} break;
     default: croak("Can't access XEvent.b for type=%d", event->type);
     }
 
@@ -588,11 +587,11 @@ _get_detail(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.detail; break;
-    case FocusOut:
     case FocusIn:
+    case FocusOut:
       RETVAL = event->xfocus.detail; break;
     default: croak("Can't access XEvent.detail for type=%d", event->type);
     }
@@ -606,11 +605,11 @@ _set_detail(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.detail= value; break;
-    case FocusOut:
     case FocusIn:
+    case FocusOut:
       event->xfocus.detail= value; break;
     default: croak("Can't access XEvent.detail for type=%d", event->type);
     }
@@ -777,8 +776,8 @@ _get_focus(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.focus; break;
     default: croak("Can't access XEvent.focus for type=%d", event->type);
     }
@@ -792,8 +791,8 @@ _set_focus(event, value)
   Bool value
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.focus= value; break;
     default: croak("Can't access XEvent.focus for type=%d", event->type);
     }
@@ -928,7 +927,7 @@ _set_key_vector(event, value)
   CODE:
     switch( event->type ) {
     case KeymapNotify:
-      { if (!SvPOK(value) || SvLEN(value) != sizeof(char)*32)  croak("Expected scalar of length %d but got %d", sizeof(char)*32, SvLEN(value)); memcpy(event->xkeymap.key_vector, SvPVX(value), sizeof(char)*32);} break;
+      { if (!SvPOK(value) || SvCUR(value) != sizeof(char)*32)  croak("Expected scalar of length %d but got %d", sizeof(char)*32, SvCUR(value)); memcpy(event->xkeymap.key_vector, SvPVX(value), sizeof(char)*32);} break;
     default: croak("Can't access XEvent.key_vector for type=%d", event->type);
     }
 
@@ -976,7 +975,7 @@ _set_l(event, value)
   CODE:
     switch( event->type ) {
     case ClientMessage:
-      { if (!SvPOK(value) || SvLEN(value) != sizeof(long)*5)  croak("Expected scalar of length %d but got %d", sizeof(long)*5, SvLEN(value)); memcpy(event->xclient.data.l, SvPVX(value), sizeof(long)*5);} break;
+      { if (!SvPOK(value) || SvCUR(value) != sizeof(long)*5)  croak("Expected scalar of length %d but got %d", sizeof(long)*5, SvCUR(value)); memcpy(event->xclient.data.l, SvPVX(value), sizeof(long)*5);} break;
     default: croak("Can't access XEvent.l for type=%d", event->type);
     }
 
@@ -1065,11 +1064,11 @@ _get_mode(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.mode; break;
-    case FocusOut:
     case FocusIn:
+    case FocusOut:
       RETVAL = event->xfocus.mode; break;
     default: croak("Can't access XEvent.mode for type=%d", event->type);
     }
@@ -1083,11 +1082,11 @@ _set_mode(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.mode= value; break;
-    case FocusOut:
     case FocusIn:
+    case FocusOut:
       event->xfocus.mode= value; break;
     default: croak("Can't access XEvent.mode for type=%d", event->type);
     }
@@ -1334,8 +1333,8 @@ _get_root(event)
     case ButtonPress:
     case ButtonRelease:
       RETVAL = event->xbutton.root; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.root; break;
     case KeyPress:
     case KeyRelease:
@@ -1357,8 +1356,8 @@ _set_root(event, value)
     case ButtonPress:
     case ButtonRelease:
       event->xbutton.root= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.root= value; break;
     case KeyPress:
     case KeyRelease:
@@ -1386,7 +1385,7 @@ _set_s(event, value)
   CODE:
     switch( event->type ) {
     case ClientMessage:
-      { if (!SvPOK(value) || SvLEN(value) != sizeof(short)*10)  croak("Expected scalar of length %d but got %d", sizeof(short)*10, SvLEN(value)); memcpy(event->xclient.data.s, SvPVX(value), sizeof(short)*10);} break;
+      { if (!SvPOK(value) || SvCUR(value) != sizeof(short)*10)  croak("Expected scalar of length %d but got %d", sizeof(short)*10, SvCUR(value)); memcpy(event->xclient.data.s, SvPVX(value), sizeof(short)*10);} break;
     default: croak("Can't access XEvent.s for type=%d", event->type);
     }
 
@@ -1398,8 +1397,8 @@ _get_same_screen(event)
     case ButtonPress:
     case ButtonRelease:
       RETVAL = event->xbutton.same_screen; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.same_screen; break;
     case KeyPress:
     case KeyRelease:
@@ -1421,8 +1420,8 @@ _set_same_screen(event, value)
     case ButtonPress:
     case ButtonRelease:
       event->xbutton.same_screen= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.same_screen= value; break;
     case KeyPress:
     case KeyRelease:
@@ -1508,8 +1507,8 @@ _get_state(event)
       PUSHs(sv_2mortal(newSVuv(event->xbutton.state))); break;
     case ColormapNotify:
       PUSHs(sv_2mortal(newSViv(event->xcolormap.state))); break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       PUSHs(sv_2mortal(newSVuv(event->xcrossing.state))); break;
     case KeyPress:
     case KeyRelease:
@@ -1535,8 +1534,8 @@ _set_state(event, value)
       event->xbutton.state= SvUV(value); break;
     case ColormapNotify:
       event->xcolormap.state= SvIV(value); break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.state= SvUV(value); break;
     case KeyPress:
     case KeyRelease:
@@ -1558,8 +1557,8 @@ _get_subwindow(event)
     case ButtonPress:
     case ButtonRelease:
       RETVAL = event->xbutton.subwindow; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.subwindow; break;
     case KeyPress:
     case KeyRelease:
@@ -1581,8 +1580,8 @@ _set_subwindow(event, value)
     case ButtonPress:
     case ButtonRelease:
       event->xbutton.subwindow= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.subwindow= value; break;
     case KeyPress:
     case KeyRelease:
@@ -1628,8 +1627,8 @@ _get_time(event)
     case ButtonPress:
     case ButtonRelease:
       RETVAL = event->xbutton.time; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.time; break;
     case KeyPress:
     case KeyRelease:
@@ -1659,8 +1658,8 @@ _set_time(event, value)
     case ButtonPress:
     case ButtonRelease:
       event->xbutton.time= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.time= value; break;
     case KeyPress:
     case KeyRelease:
@@ -1784,8 +1783,8 @@ _get_x(event)
       RETVAL = event->xconfigure.x; break;
     case CreateNotify:
       RETVAL = event->xcreatewindow.x; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.x; break;
     case Expose:
       RETVAL = event->xexpose.x; break;
@@ -1819,8 +1818,8 @@ _set_x(event, value)
       event->xconfigure.x= value; break;
     case CreateNotify:
       event->xcreatewindow.x= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.x= value; break;
     case Expose:
       event->xexpose.x= value; break;
@@ -1846,8 +1845,8 @@ _get_x_root(event)
     case ButtonPress:
     case ButtonRelease:
       RETVAL = event->xbutton.x_root; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.x_root; break;
     case KeyPress:
     case KeyRelease:
@@ -1869,8 +1868,8 @@ _set_x_root(event, value)
     case ButtonPress:
     case ButtonRelease:
       event->xbutton.x_root= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.x_root= value; break;
     case KeyPress:
     case KeyRelease:
@@ -1892,8 +1891,8 @@ _get_y(event)
       RETVAL = event->xconfigure.y; break;
     case CreateNotify:
       RETVAL = event->xcreatewindow.y; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.y; break;
     case Expose:
       RETVAL = event->xexpose.y; break;
@@ -1927,8 +1926,8 @@ _set_y(event, value)
       event->xconfigure.y= value; break;
     case CreateNotify:
       event->xcreatewindow.y= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.y= value; break;
     case Expose:
       event->xexpose.y= value; break;
@@ -1954,8 +1953,8 @@ _get_y_root(event)
     case ButtonPress:
     case ButtonRelease:
       RETVAL = event->xbutton.y_root; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       RETVAL = event->xcrossing.y_root; break;
     case KeyPress:
     case KeyRelease:
@@ -1977,8 +1976,8 @@ _set_y_root(event, value)
     case ButtonPress:
     case ButtonRelease:
       event->xbutton.y_root= value; break;
-    case LeaveNotify:
     case EnterNotify:
+    case LeaveNotify:
       event->xcrossing.y_root= value; break;
     case KeyPress:
     case KeyRelease:

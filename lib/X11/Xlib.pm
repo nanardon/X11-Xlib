@@ -5,15 +5,24 @@ use 5.008000;
 use strict;
 use warnings;
 use base qw(Exporter);
-
+use Carp;
+use Try::Tiny;
 use XSLoader;
 
 our $VERSION = '0.03';
 
 XSLoader::load(__PACKAGE__, $VERSION);
 
+our @EXPORT_OK = qw(
+    XOpenDisplay XCloseDisplay ConnectionNumber XSetCloseDownMode
+
+    XSelectInput XNextEvent XCheckWindowEvent XCheckTypedWindowEvent XCheckMaskEvent
+    XCheckTypedEvent XSendEvent XPutBackEvent XSync XFlush
+
+    XKeysymToString XStringToKeysym
+    IsFunctionKey IsKeypadKey IsMiscFunctionKey IsModifierKey IsPFKey IsPrivateKeypadKey
+);
 our @EXPORT = qw(
-    XOpenDisplay XCloseDisplay XSync XFlush
     XKeysymToString
     XStringToKeysym
     IsFunctionKey
@@ -37,27 +46,44 @@ our (
     $_error_nonfatal_installed, # boolean, whether handler is installed
     $_error_fatal_installed,    # boolean, whether handler is installed
     $_error_fatal_trapped,      # boolean, whether Xlib is dead from fatal error
+    $on_error_cb,               # application-supplied callback
 );
+sub on_error {
+    ref($_[-1]) eq 'CODE' or croak "Expected coderef";
+    $on_error_cb= $_[-1];
+    X11::Xlib::_install_error_handlers(1,1);
+}
 # called by XS, if installed
 sub _error_nonfatal {
     my $event= shift;
     my $dpy= $event->display;
+    if ($on_error_cb) {
+        try { $on_error_cb->($dpy, $event); }
+        catch { warn $_; };
+    }
     if ($dpy && $dpy->can('on_error_cb') && $dpy->on_error_cb) {
-        $dpy->on_error_cb->($dpy, $event);
+        try { $dpy->on_error_cb->($dpy, $event); }
+        catch { warn $_; };
     }
 }
 # called by XS, if installed
 sub _error_fatal {
     my $conn= shift;
-    $conn->_set_dead; # this connection is dead now
+    warn "Marking first connection dead";
+    $conn->_mark_dead; # this connection is dead now
+    if ($on_error_cb) {
+        try { $on_error_cb->($conn); }
+        catch { warn $_; };
+    }
     # also call a user callback in any Display object
-    $_->on_error_cb && $_->on_error_cb->($_)
-        for values %X11::Xlib::_displays;
-
-    # Kill all X11 connections by wiping the pointer.  Yes this is a memory
-    # leak, but since Xlib is no longer usable we can't free them anyway, and
-    # the program will exit soon.
-    $_->_set_dead for values %_connections;
+    for my $dpy (values %X11::Xlib::_displays) {
+        next unless defined $dpy && defined $dpy->on_error_cb;
+        try { $dpy->on_error_cb->($dpy); }
+        catch { warn $_; };
+    }
+    warn "Marking remaining connections dead";
+    # Kill all X11 connections, since Xlib internal state might be toast
+    $_->_mark_dead for grep { defined } values %_connections;
 }
 
 1;

@@ -200,8 +200,8 @@ sub sv_read {
 	return "$access= SvUV($svname);" if $unsigned_types{$type};
 	return "$access= PerlXlib_sv_to_display($svname);" if $type eq 'Display *';
 	return "{"
-		." if (!SvPOK($svname) || SvLEN($svname) != sizeof($1)*$2)"
-		.'  croak("Expected scalar of length %d but got %d",'." sizeof($1)*$2, SvLEN($svname));"
+		." if (!SvPOK($svname) || SvCUR($svname) != sizeof($1)*$2)"
+		.'  croak("Expected scalar of length %d but got %d",'." sizeof($1)*$2, SvCUR($svname));"
 		." memcpy($access, SvPVX($svname), sizeof($1)*$2);"
 		."}" if $type =~ /^(\w+) \[ (\d+) \]$/;
 	die "Don't know how to read $type from an SV";

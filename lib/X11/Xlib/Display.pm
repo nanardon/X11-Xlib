@@ -101,7 +101,7 @@ sub RootWindow {
 
 sub DESTROY {
     my $self= shift;
-    X11::Xlib::XCloseDisplay($self->connection);
+    $self->XCloseDisplay;
 }
 
 1;
