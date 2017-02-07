@@ -1,7 +1,4 @@
 package X11::Xlib::Window;
-
-use 5.010000;
-
 use strict;
 use warnings;
 use parent 'X11::Xlib::XID';
