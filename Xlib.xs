@@ -225,6 +225,19 @@ XGetVisualInfo(dpy, vinfo_mask, vinfo_template)
             XFree(list);
         }
 
+int
+XVisualIDFromVisual(vis)
+    Visual *vis
+
+Visual *
+DefaultVisual(dpy, screen=-1)
+    DisplayNotNull dpy
+    int screen
+    CODE:
+        RETVAL = DefaultVisual(dpy, screen >= 0? screen : DefaultScreen(dpy));
+    OUTPUT:
+        RETVAL
+
 # /* Event */
 
 int

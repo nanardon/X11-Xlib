@@ -99,6 +99,18 @@ sub RootWindow {
     return X11::Xlib::Window->new({ dpy => $self, xid => $ret });
 }
 
+sub default_visual_id {
+    my ($self, $id)= @_;
+    X11::Xlib::XVisualIDFromVisual($self->DefaultVisual);
+}
+
+sub visual_by_id {
+    my ($self, $id)= @_;
+    my $tpl= X11::Xlib::XVisualInfo->new({ visualid => $id });
+    my ($match)= $self->XGetVisualInfo(X11::Xlib::VisualIDMask, $tpl);
+    return $match;
+}
+
 sub DESTROY {
     my $self= shift;
     $self->XCloseDisplay;
