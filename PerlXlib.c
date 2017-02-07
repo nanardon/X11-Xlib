@@ -117,9 +117,15 @@ void PerlXlib_conn_mark_dead(SV *sv) {
 void PerlXlib_conn_mark_closed(SV *sv) {
     HV *hv;
     PerlXlib_conn_t *conn;
-    SV *inner;
+    SV *inner, **fp;
     if (sv_isobject(sv)) {
         inner= (SV*) SvRV(sv);
+        // find connection field in a hashref-based object
+        if (SvTYPE(inner) == SVt_PVHV) {
+            fp= hv_fetch((HV*)SvRV(sv), "connection", 10, 0);
+            if (fp && *fp && sv_isobject(*fp))
+                inner= SvRV(*fp);
+        }
         if (SvTYPE(inner) == SVt_PVMG && SvCUR(inner) == sizeof(PerlXlib_conn_t)) {
             conn= (PerlXlib_conn_t*) SvPVX(inner);
             if (conn->dpy) {
