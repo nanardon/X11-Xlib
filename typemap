@@ -1,5 +1,6 @@
 TYPEMAP
-Display *             O_X11_Xlib
+DisplayNotNull        O_X11_Xlib
+Display *             O_X11_XlibNotNull
 XEvent *              O_X11_Xlib_XEvent
 Window                O_X11_Xlib_XID
 Pixmap                O_X11_Xlib_XID
@@ -11,16 +12,25 @@ Bool                  T_BOOL
 
 
 INPUT
-O_X11_Xlib
-    $var = PerlXlib_sv_to_display($arg);
+O_X11_XlibNotNull
+    $var = PerlXlib_get_conn_from_sv($arg, 1)->dpy;
 
 OUTPUT
-O_X11_Xlib
+O_X11_XlibNotNull
     PerlXlib_sv_from_display($arg, $var);
 
 INPUT
+O_X11_Xlib
+    $var = SvOK($arg)? PerlXlib_get_conn_from_sv($arg, 1)->dpy : NULL;
+
+OUTPUT
+O_X11_Xlib
+    if ( $var ) PerlXlib_sv_from_display($arg, $var);
+    else sv_setsv($arg, &PL_sv_undef);
+
+INPUT
 O_X11_Xlib_XID
-	$var = PerlXlib_sv_to_xid($arg);
+    $var = PerlXlib_sv_to_xid($arg);
 
 OUTPUT
 O_X11_Xlib_XID
@@ -29,5 +39,5 @@ O_X11_Xlib_XID
 
 INPUT
 O_X11_Xlib_XEvent
-	$var= PerlXlib_sv_to_xevent($arg);
+    $var= PerlXlib_sv_to_xevent($arg);
 

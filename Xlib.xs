@@ -23,37 +23,42 @@ XOpenDisplay(connection_string = NULL)
         RETVAL
 
 void
-_pointer_value(conn)
-    SV* conn
+_pointer_value(connsv)
+    SV* connsv
+    INIT:
+        PerlXlib_conn_t *conn;
     PPCODE:
-        PUSHs(PerlXlib_conn_pointer_value(conn));
+        conn= PerlXlib_get_conn_from_sv(connsv, 0);
+        PUSHs(!conn->dpy? &PL_sv_undef
+            : sv_2mortal(newSVpvn((void*) &conn->dpy, sizeof(Display*))));
 
 void
-_mark_dead(conn)
-    SV* conn
+_mark_dead(connsv)
+    SV* connsv
     PPCODE:
-        PerlXlib_conn_mark_dead(conn);
+        PerlXlib_get_conn_from_sv(connsv, 0)->state= PerlXlib_CONN_DEAD;
 
 void
-_mark_closed(conn)
-    SV *conn
+_mark_closed(connsv)
+    SV *connsv
     PPCODE:
-        PerlXlib_conn_mark_closed(conn);
+        PerlXlib_conn_mark_closed(PerlXlib_get_conn_from_sv(connsv, 0));
 
 void
-DESTROY(conn)
-    SV *conn
+DESTROY(connsv)
+    SV *connsv
     PPCODE:
-        if (sv_isobject(conn) && sv_isa(conn, "X11::Xlib"))
-            PerlXlib_conn_mark_closed(conn); // goal is to clean up caches
+        if (sv_isobject(connsv) && sv_isa(connsv, "X11::Xlib"))
+            // goal is to clean up caches
+            PerlXlib_conn_mark_closed(PerlXlib_get_conn_from_sv(connsv, 0));
 
 int
 ConnectionNumber(dpy)
-    Display *dpy
+    DisplayNotNull dpy
 
 void
 XSetCloseDownMode(dpy, close_mode)
-    Display *dpy
+    DisplayNotNull dpy
     int close_mode
     CODE:
         XSetCloseDownMode(dpy, close_mode);
@@ -61,52 +66,55 @@ XSetCloseDownMode(dpy, close_mode)
 void
 XCloseDisplay(dpy)
     SV *dpy
+    INIT:
+        PerlXlib_conn_t *conn;
     CODE:
-        XCloseDisplay(PerlXlib_sv_to_display(dpy));
-        PerlXlib_conn_mark_closed(dpy);
+        conn= PerlXlib_get_conn_from_sv(dpy, 1);
+        XCloseDisplay(conn->dpy);
+        PerlXlib_conn_mark_closed(conn);
 
 # Event Functions ------------------------------------------------------------
 
 void
 XSelectInput(dpy, wnd, mask)
-    Display *dpy
+    DisplayNotNull dpy
     Window wnd
     int mask
 
 void
 XNextEvent(dpy, event)
-    Display *dpy
+    DisplayNotNull dpy
     XEvent *event
 
 Bool
 XCheckWindowEvent(dpy, wnd, event_mask, event_return)
-    Display *dpy
+    DisplayNotNull dpy
     Window wnd
     int event_mask
     XEvent *event_return
 
 Bool
 XCheckTypedWindowEvent(dpy, wnd, event_type, event_return)
-    Display *dpy
+    DisplayNotNull dpy
     Window wnd
     int event_type
     XEvent *event_return
 
 Bool
 XCheckMaskEvent(dpy, event_mask, event_return)
-    Display *dpy
+    DisplayNotNull dpy
     int event_mask
     XEvent *event_return
 
 Bool
 XCheckTypedEvent(dpy, event_type, event_return)
-    Display *dpy
+    DisplayNotNull dpy
     int event_type
     XEvent *event_return
 
 Bool
 XSendEvent(dpy, wnd, propagate, event_mask, event_send)
-    Display *dpy
+    DisplayNotNull dpy
     Window wnd
     Bool propagate
     long event_mask
@@ -114,21 +122,21 @@ XSendEvent(dpy, wnd, propagate, event_mask, event_send)
 
 void
 XPutBackEvent(dpy, event)
-    Display *dpy
+    DisplayNotNull dpy
     XEvent *event
 
 void
 XFlush(dpy)
-    Display *dpy
+    DisplayNotNull dpy
 
 void
 XSync(dpy, discard=0)
-    Display * dpy
+    DisplayNotNull  dpy
     int discard
 
 Bool
 _wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
-    Display *dpy
+    DisplayNotNull dpy
     Window wnd
     int event_type
     int event_mask
@@ -163,7 +171,7 @@ _wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
 
 int
 DisplayWidth(dpy, screen=-1)
-    Display *dpy
+    DisplayNotNull dpy
     int screen
     CODE:
         RETVAL = DisplayWidth(dpy, screen >= 0? screen : DefaultScreen(dpy));
@@ -172,7 +180,7 @@ DisplayWidth(dpy, screen=-1)
 
 int
 DisplayHeight(dpy, screen=-1)
-    Display *dpy
+    DisplayNotNull dpy
     int screen
     CODE:
         RETVAL = DisplayHeight(dpy, screen >= 0? screen : DefaultScreen(dpy));
@@ -183,7 +191,7 @@ DisplayHeight(dpy, screen=-1)
 
 Window
 RootWindow(dpy, screen=-1)
-    Display * dpy
+    DisplayNotNull  dpy
     int screen
     CODE:
         RETVAL = RootWindow(dpy, screen >= 0? screen : DefaultScreen(dpy));
@@ -194,7 +202,7 @@ RootWindow(dpy, screen=-1)
 
 int
 XTestFakeMotionEvent(dpy, screen, x, y, EventSendDelay = 10)
-    Display * dpy
+    DisplayNotNull  dpy
     int screen
     int x
     int y
@@ -202,26 +210,26 @@ XTestFakeMotionEvent(dpy, screen, x, y, EventSendDelay = 10)
 
 int
 XTestFakeButtonEvent(dpy, button, pressed, EventSendDelay = 10);
-    Display * dpy
+    DisplayNotNull  dpy
     int button
     int pressed
     int EventSendDelay
 
 int
 XTestFakeKeyEvent(dpy, kc, pressed, EventSendDelay = 10)
-    Display * dpy
+    DisplayNotNull  dpy
     unsigned char kc
     int pressed
     int EventSendDelay
 
 void
 XBell(dpy, percent)
-    Display * dpy
+    DisplayNotNull  dpy
     int percent
 
 void
 XQueryKeymap(dpy)
-    Display * dpy
+    DisplayNotNull  dpy
     PREINIT:
         char keys_return[32];
         int i, j;
@@ -236,7 +244,7 @@ XQueryKeymap(dpy)
 
 unsigned long
 keyboard_leds(dpy)
-    Display * dpy;
+    DisplayNotNull  dpy;
     PREINIT:
         XKeyboardState state;
     CODE:
@@ -247,7 +255,7 @@ keyboard_leds(dpy)
 
 void
 _auto_repeat(dpy)
-    Display * dpy;
+    DisplayNotNull  dpy;
     PREINIT:
         XKeyboardState state;
         int i, j;
@@ -304,7 +312,7 @@ IsModifierKey(keysym)
 
 unsigned int
 XKeysymToKeycode(dpy, keysym)
-    Display *dpy
+    DisplayNotNull dpy
     unsigned long keysym
     CODE:
         RETVAL = XKeysymToKeycode(dpy, keysym);
@@ -313,7 +321,7 @@ XKeysymToKeycode(dpy, keysym)
 
 void
 XGetKeyboardMapping(dpy, fkeycode, count = 1)
-    Display *dpy
+    DisplayNotNull dpy
     unsigned int fkeycode
     int count
     PREINIT:

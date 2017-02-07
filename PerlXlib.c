@@ -14,16 +14,15 @@ typedef struct PerlXlib_conn_s {
     int foreign: 1;
 } PerlXlib_conn_t;
 
+typedef Display* DisplayNotNull; // Used by typemap for stricter conversion
+
 // Potentiall hot method.
 // Allow either instance of X11::Xlib, or instance of X11::Xlib::Display
 // Be sure to coordinate changes to this code with the _pointer_value and
 // _mark_dead methods in Xlib.xs
-Display* PerlXlib_sv_to_display(SV *sv) {
+PerlXlib_conn_t* PerlXlib_get_conn_from_sv(SV *sv, Bool require_live) {
     SV **fp, *inner;
     PerlXlib_conn_t *conn;
-
-    if (!SvOK(sv))
-        return NULL; // undef means NULL.  Happens in places like XEvent.display
 
     if (sv_isobject(sv)) {
         inner= (SV*) SvRV(sv);
@@ -35,7 +34,8 @@ Display* PerlXlib_sv_to_display(SV *sv) {
         }
         if (SvTYPE(inner) == SVt_PVMG && SvCUR(inner) == sizeof(PerlXlib_conn_t)) {
             conn= (PerlXlib_conn_t*) SvPVX(inner);
-            if (conn->state == PerlXlib_CONN_LIVE) return conn->dpy;
+            if (conn->state == PerlXlib_CONN_LIVE || !require_live)
+                return conn;
             // Else, we either have one of our objects that is invalid, or something else.
             if (sv_derived_from(sv, "X11::Xlib")) {
                 // If that was because Xlib fatal error, then give an even more specific error
@@ -53,6 +53,8 @@ Display* PerlXlib_sv_to_display(SV *sv) {
     croak("Invalid Display handle; must be a X11::Xlib instance or X11::Xlib::Display instance");
     return NULL; // make compiler happy
 }
+//#define PerlXlib_sv_to_display(x) PerlXlib_get_conn_from_sv(x,1)->dpy
+#define PerlXlib_sv_to_display(x) (SvOK(x)? PerlXlib_get_conn_from_sv(x, 1)->dpy : NULL)
 
 void PerlXlib_sv_from_display(SV *dest, Display *dpy) {
     SV **fp;
@@ -82,68 +84,19 @@ void PerlXlib_sv_from_display(SV *dest, Display *dpy) {
     }
 }
 
-SV* PerlXlib_conn_pointer_value(SV *sv) {
-    PerlXlib_conn_t *conn;
-    SV *inner;
-    if (sv_isobject(sv)) {
-        inner= (SV*) SvRV(sv);
-        if (SvTYPE(inner) == SVt_PVMG && SvCUR(inner) == sizeof(PerlXlib_conn_t)) {
-            conn= (PerlXlib_conn_t*) SvPVX(inner);
-            return sv_2mortal(conn->dpy?
-                newSVpvn((void*) &conn->dpy, sizeof(conn->dpy))
-                : newSVsv(&PL_sv_undef));
-        }
+void PerlXlib_conn_mark_closed(PerlXlib_conn_t *conn) {
+    if (conn->dpy) {
+        conn->state= PerlXlib_CONN_CLOSED;
+        // Now, we must also remove the object from the $_connections cache.
+        // It's a weak reference, but if we leave it there then a new Display*
+        // could get created at the same address and cause confusion.
+        hv_delete(get_hv("X11::Xlib::_connections", GV_ADD),
+            (void*) &(conn->dpy), sizeof(Display*), 0);
+        hv_delete(get_hv("X11::Xlib::Display::_displays", GV_ADD),
+            (void*) &(conn->dpy), sizeof(Display*), 0);
+        conn->dpy= NULL;
     }
-    //sv_dump(sv);
-    croak("Invalid X11 connection in _pointer_value");
-    return NULL; // silence compiler
-}
-
-void PerlXlib_conn_mark_dead(SV *sv) {
-    PerlXlib_conn_t *conn;
-    SV *inner;
-    if (sv_isobject(sv) && sv_isa(sv, "X11::Xlib")) {
-        inner= (SV*) SvRV(sv);
-        if (SvTYPE(inner) == SVt_PVMG && SvCUR(inner) == sizeof(PerlXlib_conn_t)) {
-            conn= (PerlXlib_conn_t*) SvPVX(inner);
-            conn->state= PerlXlib_CONN_DEAD;
-            return;
-        }
-    }
-    //sv_dump(sv);
-    croak("Invalid X11 connection in _mark_dead");
-}
-
-void PerlXlib_conn_mark_closed(SV *sv) {
-    HV *hv;
-    PerlXlib_conn_t *conn;
-    SV *inner, **fp;
-    if (sv_isobject(sv)) {
-        inner= (SV*) SvRV(sv);
-        // find connection field in a hashref-based object
-        if (SvTYPE(inner) == SVt_PVHV) {
-            fp= hv_fetch((HV*)SvRV(sv), "connection", 10, 0);
-            if (fp && *fp && sv_isobject(*fp))
-                inner= SvRV(*fp);
-        }
-        if (SvTYPE(inner) == SVt_PVMG && SvCUR(inner) == sizeof(PerlXlib_conn_t)) {
-            conn= (PerlXlib_conn_t*) SvPVX(inner);
-            if (conn->dpy) {
-                conn->state= PerlXlib_CONN_CLOSED;
-                // Now, we must also remove the object from the $_connections cache.
-                // It's a weak reference, but if we leave it there then a new Display*
-                // could get created at the same address and cause confusion.
-                hv_delete(get_hv("X11::Xlib::_connections", GV_ADD),
-                    (void*) &(conn->dpy), sizeof(Display*), 0);
-                hv_delete(get_hv("X11::Xlib::Display::_displays", GV_ADD),
-                    (void*) &(conn->dpy), sizeof(Display*), 0);
-                conn->dpy= NULL;
-            }
-            return;
-        }
-    }
-    //sv_dump(sv);
-    croak("Invalid X11 connection in _mark_closed");
+    return;
 }
 
 // Allow unsigned integer, or hashref with field ->{xid}
