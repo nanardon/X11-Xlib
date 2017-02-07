@@ -336,7 +336,7 @@ _error_names()
         codes= get_hv("X11::Xlib::_error_names", 0);
         if (!codes) {
             codes= get_hv("X11::Xlib::_error_names", GV_ADD);
-#define E(name) hv_store(codes, intbuf, snprintf(intbuf, sizeof(intbuf), "%d", name), newSVpv(#name,0), 0) || die("hash-store");
+#define E(name) hv_store(codes, intbuf, snprintf(intbuf, sizeof(intbuf), "%d", name), newSVpv(#name,0), 0) || die("hv_store");
             E(BadAccess)
             E(BadAlloc)
             E(BadAtom)
@@ -486,8 +486,8 @@ _get_button(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.button; break;
     default: croak("Can't access XEvent.button for type=%d", event->type);
     }
@@ -501,8 +501,8 @@ _set_button(event, value)
   unsigned int value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.button= value; break;
     default: croak("Can't access XEvent.button for type=%d", event->type);
     }
@@ -1331,8 +1331,8 @@ _get_root(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.root; break;
     case LeaveNotify:
     case EnterNotify:
@@ -1354,8 +1354,8 @@ _set_root(event, value)
   Window value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.root= value; break;
     case LeaveNotify:
     case EnterNotify:
@@ -1395,8 +1395,8 @@ _get_same_screen(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.same_screen; break;
     case LeaveNotify:
     case EnterNotify:
@@ -1418,8 +1418,8 @@ _set_same_screen(event, value)
   Bool value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.same_screen= value; break;
     case LeaveNotify:
     case EnterNotify:
@@ -1503,8 +1503,8 @@ _get_state(event)
   XEvent *event
   PPCODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       PUSHs(sv_2mortal(newSVuv(event->xbutton.state))); break;
     case ColormapNotify:
       PUSHs(sv_2mortal(newSViv(event->xcolormap.state))); break;
@@ -1530,8 +1530,8 @@ _set_state(event, value)
   SV* value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.state= SvUV(value); break;
     case ColormapNotify:
       event->xcolormap.state= SvIV(value); break;
@@ -1555,8 +1555,8 @@ _get_subwindow(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.subwindow; break;
     case LeaveNotify:
     case EnterNotify:
@@ -1578,8 +1578,8 @@ _set_subwindow(event, value)
   Window value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.subwindow= value; break;
     case LeaveNotify:
     case EnterNotify:
@@ -1625,8 +1625,8 @@ _get_time(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.time; break;
     case LeaveNotify:
     case EnterNotify:
@@ -1656,8 +1656,8 @@ _set_time(event, value)
   Time value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.time= value; break;
     case LeaveNotify:
     case EnterNotify:
@@ -1777,8 +1777,8 @@ _get_x(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.x; break;
     case ConfigureNotify:
       RETVAL = event->xconfigure.x; break;
@@ -1812,8 +1812,8 @@ _set_x(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.x= value; break;
     case ConfigureNotify:
       event->xconfigure.x= value; break;
@@ -1843,8 +1843,8 @@ _get_x_root(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.x_root; break;
     case LeaveNotify:
     case EnterNotify:
@@ -1866,8 +1866,8 @@ _set_x_root(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.x_root= value; break;
     case LeaveNotify:
     case EnterNotify:
@@ -1885,8 +1885,8 @@ _get_y(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.y; break;
     case ConfigureNotify:
       RETVAL = event->xconfigure.y; break;
@@ -1920,8 +1920,8 @@ _set_y(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.y= value; break;
     case ConfigureNotify:
       event->xconfigure.y= value; break;
@@ -1951,8 +1951,8 @@ _get_y_root(event)
   XEvent *event
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       RETVAL = event->xbutton.y_root; break;
     case LeaveNotify:
     case EnterNotify:
@@ -1974,8 +1974,8 @@ _set_y_root(event, value)
   int value
   CODE:
     switch( event->type ) {
-    case ButtonRelease:
     case ButtonPress:
+    case ButtonRelease:
       event->xbutton.y_root= value; break;
     case LeaveNotify:
     case EnterNotify:

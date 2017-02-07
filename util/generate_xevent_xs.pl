@@ -352,7 +352,10 @@ sub generate_unpack_c {
     # First, pack type, then pack fields for XAnyEvent, then any fields known for that type
     my $c= <<"@";
 void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
-    hv_store(fields, "type", 4, newSViv(s->type), 0);
+    // hv_store may return NULL if there is an error, or if the hash is tied.
+    // If it does, we need to clean up the value!
+    SV *sv= NULL;
+    if (!hv_store(fields, "type", 4, (sv= newSViv(s->type)), 0)) goto store_fail;
 @
     # First pack the XAnyEvent fields
     my %have;
@@ -360,7 +363,7 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
         my $type= $members{$path};
         my ($name)= ($path =~ /([^.]+)$/);
         ++$have{$name};
-        $c .= sprintf "    hv_store(fields, %-12s, %2d, %s, 0);\n",
+        $c .= sprintf "    if (!hv_store(fields, %-12s, %2d, (sv=%s), 0)) goto store_fail;\n",
             qq{"$name"}, length($name), sv_create($type, 's->'.$path);
     }
     $c .= "    switch( s->type ) {\n";
@@ -373,7 +376,7 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
             my $type= $members{$path};
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
-            $c .= sprintf "      hv_store(fields, %-13s, %2d, %s, 0);\n",
+            $c .= sprintf "      if (!hv_store(fields, %-13s, %2d, (sv=%s), 0)) goto store_fail;\n",
                 qq{"$name"}, length($name), sv_create($type, 's->'.$path);
         }
         $c .= "      break;\n";
@@ -383,6 +386,10 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
     default:
       warn("Unknown XEvent type %d", s->type);
     }
+    return;
+    store_fail:
+        if (sv) sv_2mortal(sv);
+        croak("Can't store field in supplied hash (tied maybe?)");
 }
 @
 	return $c;
@@ -392,7 +399,7 @@ sub generate_subclasses {
     my $pl= '';
     # First expose the XAnyEvent fields at the top level
     my %have;
-    for my $path (grep { $_ =~ /^xany/ } keys %members) {
+    for my $path (sort grep { $_ =~ /^xany/ } keys %members) {
         my $type= $members{$path};
         my ($name)= ($path =~ /([^.]+)$/);
         ++$have{$name};

@@ -677,193 +677,200 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields) {
 }
 
 void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
-    hv_store(fields, "type", 4, newSViv(s->type), 0);
-    hv_store(fields, "display"   ,  7, (s->xany.display? sv_setref_pv(newSV(0), "X11::Xlib", (void*)s->xany.display) : &PL_sv_undef), 0);
-    hv_store(fields, "send_event", 10, newSViv(s->xany.send_event), 0);
-    hv_store(fields, "serial"    ,  6, newSVuv(s->xany.serial), 0);
-    hv_store(fields, "type"      ,  4, newSViv(s->xany.type), 0);
-    hv_store(fields, "window"    ,  6, newSVuv(s->xany.window), 0);
+    // hv_store may return NULL if there is an error, or if the hash is tied.
+    // If it does, we need to clean up the value!
+    SV *sv= NULL;
+    if (!hv_store(fields, "type", 4, (sv= newSViv(s->type)), 0)) goto store_fail;
+    if (!hv_store(fields, "display"   ,  7, (sv=(s->xany.display? sv_setref_pv(newSV(0), "X11::Xlib", (void*)s->xany.display) : &PL_sv_undef)), 0)) goto store_fail;
+    if (!hv_store(fields, "send_event", 10, (sv=newSViv(s->xany.send_event)), 0)) goto store_fail;
+    if (!hv_store(fields, "serial"    ,  6, (sv=newSVuv(s->xany.serial)), 0)) goto store_fail;
+    if (!hv_store(fields, "type"      ,  4, (sv=newSViv(s->xany.type)), 0)) goto store_fail;
+    if (!hv_store(fields, "window"    ,  6, (sv=newSVuv(s->xany.window)), 0)) goto store_fail;
     switch( s->type ) {
     case ButtonPress:
     case ButtonRelease:
-      hv_store(fields, "button"     ,  6, newSVuv(s->xbutton.button), 0);
-      hv_store(fields, "root"       ,  4, newSVuv(s->xbutton.root), 0);
-      hv_store(fields, "same_screen", 11, newSViv(s->xbutton.same_screen), 0);
-      hv_store(fields, "state"      ,  5, newSVuv(s->xbutton.state), 0);
-      hv_store(fields, "subwindow"  ,  9, newSVuv(s->xbutton.subwindow), 0);
-      hv_store(fields, "time"       ,  4, newSVuv(s->xbutton.time), 0);
-      hv_store(fields, "x"          ,  1, newSViv(s->xbutton.x), 0);
-      hv_store(fields, "x_root"     ,  6, newSViv(s->xbutton.x_root), 0);
-      hv_store(fields, "y"          ,  1, newSViv(s->xbutton.y), 0);
-      hv_store(fields, "y_root"     ,  6, newSViv(s->xbutton.y_root), 0);
+      if (!hv_store(fields, "button"     ,  6, (sv=newSVuv(s->xbutton.button)), 0)) goto store_fail;
+      if (!hv_store(fields, "root"       ,  4, (sv=newSVuv(s->xbutton.root)), 0)) goto store_fail;
+      if (!hv_store(fields, "same_screen", 11, (sv=newSViv(s->xbutton.same_screen)), 0)) goto store_fail;
+      if (!hv_store(fields, "state"      ,  5, (sv=newSVuv(s->xbutton.state)), 0)) goto store_fail;
+      if (!hv_store(fields, "subwindow"  ,  9, (sv=newSVuv(s->xbutton.subwindow)), 0)) goto store_fail;
+      if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xbutton.time)), 0)) goto store_fail;
+      if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xbutton.x)), 0)) goto store_fail;
+      if (!hv_store(fields, "x_root"     ,  6, (sv=newSViv(s->xbutton.x_root)), 0)) goto store_fail;
+      if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xbutton.y)), 0)) goto store_fail;
+      if (!hv_store(fields, "y_root"     ,  6, (sv=newSViv(s->xbutton.y_root)), 0)) goto store_fail;
       break;
     case CirculateNotify:
-      hv_store(fields, "event"      ,  5, newSVuv(s->xcirculate.event), 0);
-      hv_store(fields, "place"      ,  5, newSViv(s->xcirculate.place), 0);
+      if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xcirculate.event)), 0)) goto store_fail;
+      if (!hv_store(fields, "place"      ,  5, (sv=newSViv(s->xcirculate.place)), 0)) goto store_fail;
       break;
     case ClientMessage:
-      hv_store(fields, "b"          ,  1, newSVpvn((void*)s->xclient.data.b, sizeof(char)*20), 0);
-      hv_store(fields, "l"          ,  1, newSVpvn((void*)s->xclient.data.l, sizeof(long)*5), 0);
-      hv_store(fields, "s"          ,  1, newSVpvn((void*)s->xclient.data.s, sizeof(short)*10), 0);
-      hv_store(fields, "format"     ,  6, newSViv(s->xclient.format), 0);
-      hv_store(fields, "message_type", 12, newSVuv(s->xclient.message_type), 0);
+      if (!hv_store(fields, "b"          ,  1, (sv=newSVpvn((void*)s->xclient.data.b, sizeof(char)*20)), 0)) goto store_fail;
+      if (!hv_store(fields, "l"          ,  1, (sv=newSVpvn((void*)s->xclient.data.l, sizeof(long)*5)), 0)) goto store_fail;
+      if (!hv_store(fields, "s"          ,  1, (sv=newSVpvn((void*)s->xclient.data.s, sizeof(short)*10)), 0)) goto store_fail;
+      if (!hv_store(fields, "format"     ,  6, (sv=newSViv(s->xclient.format)), 0)) goto store_fail;
+      if (!hv_store(fields, "message_type", 12, (sv=newSVuv(s->xclient.message_type)), 0)) goto store_fail;
       break;
     case ColormapNotify:
-      hv_store(fields, "colormap"   ,  8, newSVuv(s->xcolormap.colormap), 0);
-      hv_store(fields, "new"        ,  3, newSViv(s->xcolormap.new), 0);
-      hv_store(fields, "state"      ,  5, newSViv(s->xcolormap.state), 0);
+      if (!hv_store(fields, "colormap"   ,  8, (sv=newSVuv(s->xcolormap.colormap)), 0)) goto store_fail;
+      if (!hv_store(fields, "new"        ,  3, (sv=newSViv(s->xcolormap.new)), 0)) goto store_fail;
+      if (!hv_store(fields, "state"      ,  5, (sv=newSViv(s->xcolormap.state)), 0)) goto store_fail;
       break;
     case ConfigureNotify:
-      hv_store(fields, "above"      ,  5, newSVuv(s->xconfigure.above), 0);
-      hv_store(fields, "border_width", 12, newSViv(s->xconfigure.border_width), 0);
-      hv_store(fields, "event"      ,  5, newSVuv(s->xconfigure.event), 0);
-      hv_store(fields, "height"     ,  6, newSViv(s->xconfigure.height), 0);
-      hv_store(fields, "override_redirect", 17, newSViv(s->xconfigure.override_redirect), 0);
-      hv_store(fields, "width"      ,  5, newSViv(s->xconfigure.width), 0);
-      hv_store(fields, "x"          ,  1, newSViv(s->xconfigure.x), 0);
-      hv_store(fields, "y"          ,  1, newSViv(s->xconfigure.y), 0);
+      if (!hv_store(fields, "above"      ,  5, (sv=newSVuv(s->xconfigure.above)), 0)) goto store_fail;
+      if (!hv_store(fields, "border_width", 12, (sv=newSViv(s->xconfigure.border_width)), 0)) goto store_fail;
+      if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xconfigure.event)), 0)) goto store_fail;
+      if (!hv_store(fields, "height"     ,  6, (sv=newSViv(s->xconfigure.height)), 0)) goto store_fail;
+      if (!hv_store(fields, "override_redirect", 17, (sv=newSViv(s->xconfigure.override_redirect)), 0)) goto store_fail;
+      if (!hv_store(fields, "width"      ,  5, (sv=newSViv(s->xconfigure.width)), 0)) goto store_fail;
+      if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xconfigure.x)), 0)) goto store_fail;
+      if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xconfigure.y)), 0)) goto store_fail;
       break;
     case CreateNotify:
-      hv_store(fields, "border_width", 12, newSViv(s->xcreatewindow.border_width), 0);
-      hv_store(fields, "height"     ,  6, newSViv(s->xcreatewindow.height), 0);
-      hv_store(fields, "override_redirect", 17, newSViv(s->xcreatewindow.override_redirect), 0);
-      hv_store(fields, "parent"     ,  6, newSVuv(s->xcreatewindow.parent), 0);
-      hv_store(fields, "width"      ,  5, newSViv(s->xcreatewindow.width), 0);
-      hv_store(fields, "x"          ,  1, newSViv(s->xcreatewindow.x), 0);
-      hv_store(fields, "y"          ,  1, newSViv(s->xcreatewindow.y), 0);
+      if (!hv_store(fields, "border_width", 12, (sv=newSViv(s->xcreatewindow.border_width)), 0)) goto store_fail;
+      if (!hv_store(fields, "height"     ,  6, (sv=newSViv(s->xcreatewindow.height)), 0)) goto store_fail;
+      if (!hv_store(fields, "override_redirect", 17, (sv=newSViv(s->xcreatewindow.override_redirect)), 0)) goto store_fail;
+      if (!hv_store(fields, "parent"     ,  6, (sv=newSVuv(s->xcreatewindow.parent)), 0)) goto store_fail;
+      if (!hv_store(fields, "width"      ,  5, (sv=newSViv(s->xcreatewindow.width)), 0)) goto store_fail;
+      if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xcreatewindow.x)), 0)) goto store_fail;
+      if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xcreatewindow.y)), 0)) goto store_fail;
       break;
     case EnterNotify:
     case LeaveNotify:
-      hv_store(fields, "detail"     ,  6, newSViv(s->xcrossing.detail), 0);
-      hv_store(fields, "focus"      ,  5, newSViv(s->xcrossing.focus), 0);
-      hv_store(fields, "mode"       ,  4, newSViv(s->xcrossing.mode), 0);
-      hv_store(fields, "root"       ,  4, newSVuv(s->xcrossing.root), 0);
-      hv_store(fields, "same_screen", 11, newSViv(s->xcrossing.same_screen), 0);
-      hv_store(fields, "state"      ,  5, newSVuv(s->xcrossing.state), 0);
-      hv_store(fields, "subwindow"  ,  9, newSVuv(s->xcrossing.subwindow), 0);
-      hv_store(fields, "time"       ,  4, newSVuv(s->xcrossing.time), 0);
-      hv_store(fields, "x"          ,  1, newSViv(s->xcrossing.x), 0);
-      hv_store(fields, "x_root"     ,  6, newSViv(s->xcrossing.x_root), 0);
-      hv_store(fields, "y"          ,  1, newSViv(s->xcrossing.y), 0);
-      hv_store(fields, "y_root"     ,  6, newSViv(s->xcrossing.y_root), 0);
+      if (!hv_store(fields, "detail"     ,  6, (sv=newSViv(s->xcrossing.detail)), 0)) goto store_fail;
+      if (!hv_store(fields, "focus"      ,  5, (sv=newSViv(s->xcrossing.focus)), 0)) goto store_fail;
+      if (!hv_store(fields, "mode"       ,  4, (sv=newSViv(s->xcrossing.mode)), 0)) goto store_fail;
+      if (!hv_store(fields, "root"       ,  4, (sv=newSVuv(s->xcrossing.root)), 0)) goto store_fail;
+      if (!hv_store(fields, "same_screen", 11, (sv=newSViv(s->xcrossing.same_screen)), 0)) goto store_fail;
+      if (!hv_store(fields, "state"      ,  5, (sv=newSVuv(s->xcrossing.state)), 0)) goto store_fail;
+      if (!hv_store(fields, "subwindow"  ,  9, (sv=newSVuv(s->xcrossing.subwindow)), 0)) goto store_fail;
+      if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xcrossing.time)), 0)) goto store_fail;
+      if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xcrossing.x)), 0)) goto store_fail;
+      if (!hv_store(fields, "x_root"     ,  6, (sv=newSViv(s->xcrossing.x_root)), 0)) goto store_fail;
+      if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xcrossing.y)), 0)) goto store_fail;
+      if (!hv_store(fields, "y_root"     ,  6, (sv=newSViv(s->xcrossing.y_root)), 0)) goto store_fail;
       break;
     case DestroyNotify:
-      hv_store(fields, "event"      ,  5, newSVuv(s->xdestroywindow.event), 0);
+      if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xdestroywindow.event)), 0)) goto store_fail;
       break;
     case Expose:
-      hv_store(fields, "count"      ,  5, newSViv(s->xexpose.count), 0);
-      hv_store(fields, "height"     ,  6, newSViv(s->xexpose.height), 0);
-      hv_store(fields, "width"      ,  5, newSViv(s->xexpose.width), 0);
-      hv_store(fields, "x"          ,  1, newSViv(s->xexpose.x), 0);
-      hv_store(fields, "y"          ,  1, newSViv(s->xexpose.y), 0);
+      if (!hv_store(fields, "count"      ,  5, (sv=newSViv(s->xexpose.count)), 0)) goto store_fail;
+      if (!hv_store(fields, "height"     ,  6, (sv=newSViv(s->xexpose.height)), 0)) goto store_fail;
+      if (!hv_store(fields, "width"      ,  5, (sv=newSViv(s->xexpose.width)), 0)) goto store_fail;
+      if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xexpose.x)), 0)) goto store_fail;
+      if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xexpose.y)), 0)) goto store_fail;
       break;
     case FocusIn:
     case FocusOut:
-      hv_store(fields, "detail"     ,  6, newSViv(s->xfocus.detail), 0);
-      hv_store(fields, "mode"       ,  4, newSViv(s->xfocus.mode), 0);
+      if (!hv_store(fields, "detail"     ,  6, (sv=newSViv(s->xfocus.detail)), 0)) goto store_fail;
+      if (!hv_store(fields, "mode"       ,  4, (sv=newSViv(s->xfocus.mode)), 0)) goto store_fail;
       break;
     case GraphicsExpose:
-      hv_store(fields, "count"      ,  5, newSViv(s->xgraphicsexpose.count), 0);
-      hv_store(fields, "drawable"   ,  8, newSVuv(s->xgraphicsexpose.drawable), 0);
-      hv_store(fields, "height"     ,  6, newSViv(s->xgraphicsexpose.height), 0);
-      hv_store(fields, "major_code" , 10, newSViv(s->xgraphicsexpose.major_code), 0);
-      hv_store(fields, "minor_code" , 10, newSViv(s->xgraphicsexpose.minor_code), 0);
-      hv_store(fields, "width"      ,  5, newSViv(s->xgraphicsexpose.width), 0);
-      hv_store(fields, "x"          ,  1, newSViv(s->xgraphicsexpose.x), 0);
-      hv_store(fields, "y"          ,  1, newSViv(s->xgraphicsexpose.y), 0);
+      if (!hv_store(fields, "count"      ,  5, (sv=newSViv(s->xgraphicsexpose.count)), 0)) goto store_fail;
+      if (!hv_store(fields, "drawable"   ,  8, (sv=newSVuv(s->xgraphicsexpose.drawable)), 0)) goto store_fail;
+      if (!hv_store(fields, "height"     ,  6, (sv=newSViv(s->xgraphicsexpose.height)), 0)) goto store_fail;
+      if (!hv_store(fields, "major_code" , 10, (sv=newSViv(s->xgraphicsexpose.major_code)), 0)) goto store_fail;
+      if (!hv_store(fields, "minor_code" , 10, (sv=newSViv(s->xgraphicsexpose.minor_code)), 0)) goto store_fail;
+      if (!hv_store(fields, "width"      ,  5, (sv=newSViv(s->xgraphicsexpose.width)), 0)) goto store_fail;
+      if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xgraphicsexpose.x)), 0)) goto store_fail;
+      if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xgraphicsexpose.y)), 0)) goto store_fail;
       break;
     case GravityNotify:
-      hv_store(fields, "event"      ,  5, newSVuv(s->xgravity.event), 0);
-      hv_store(fields, "x"          ,  1, newSViv(s->xgravity.x), 0);
-      hv_store(fields, "y"          ,  1, newSViv(s->xgravity.y), 0);
+      if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xgravity.event)), 0)) goto store_fail;
+      if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xgravity.x)), 0)) goto store_fail;
+      if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xgravity.y)), 0)) goto store_fail;
       break;
     case KeyPress:
     case KeyRelease:
-      hv_store(fields, "keycode"    ,  7, newSVuv(s->xkey.keycode), 0);
-      hv_store(fields, "root"       ,  4, newSVuv(s->xkey.root), 0);
-      hv_store(fields, "same_screen", 11, newSViv(s->xkey.same_screen), 0);
-      hv_store(fields, "state"      ,  5, newSVuv(s->xkey.state), 0);
-      hv_store(fields, "subwindow"  ,  9, newSVuv(s->xkey.subwindow), 0);
-      hv_store(fields, "time"       ,  4, newSVuv(s->xkey.time), 0);
-      hv_store(fields, "x"          ,  1, newSViv(s->xkey.x), 0);
-      hv_store(fields, "x_root"     ,  6, newSViv(s->xkey.x_root), 0);
-      hv_store(fields, "y"          ,  1, newSViv(s->xkey.y), 0);
-      hv_store(fields, "y_root"     ,  6, newSViv(s->xkey.y_root), 0);
+      if (!hv_store(fields, "keycode"    ,  7, (sv=newSVuv(s->xkey.keycode)), 0)) goto store_fail;
+      if (!hv_store(fields, "root"       ,  4, (sv=newSVuv(s->xkey.root)), 0)) goto store_fail;
+      if (!hv_store(fields, "same_screen", 11, (sv=newSViv(s->xkey.same_screen)), 0)) goto store_fail;
+      if (!hv_store(fields, "state"      ,  5, (sv=newSVuv(s->xkey.state)), 0)) goto store_fail;
+      if (!hv_store(fields, "subwindow"  ,  9, (sv=newSVuv(s->xkey.subwindow)), 0)) goto store_fail;
+      if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xkey.time)), 0)) goto store_fail;
+      if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xkey.x)), 0)) goto store_fail;
+      if (!hv_store(fields, "x_root"     ,  6, (sv=newSViv(s->xkey.x_root)), 0)) goto store_fail;
+      if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xkey.y)), 0)) goto store_fail;
+      if (!hv_store(fields, "y_root"     ,  6, (sv=newSViv(s->xkey.y_root)), 0)) goto store_fail;
       break;
     case KeymapNotify:
-      hv_store(fields, "key_vector" , 10, newSVpvn((void*)s->xkeymap.key_vector, sizeof(char)*32), 0);
+      if (!hv_store(fields, "key_vector" , 10, (sv=newSVpvn((void*)s->xkeymap.key_vector, sizeof(char)*32)), 0)) goto store_fail;
       break;
     case MapNotify:
-      hv_store(fields, "event"      ,  5, newSVuv(s->xmap.event), 0);
-      hv_store(fields, "override_redirect", 17, newSViv(s->xmap.override_redirect), 0);
+      if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xmap.event)), 0)) goto store_fail;
+      if (!hv_store(fields, "override_redirect", 17, (sv=newSViv(s->xmap.override_redirect)), 0)) goto store_fail;
       break;
     case MappingNotify:
-      hv_store(fields, "count"      ,  5, newSViv(s->xmapping.count), 0);
-      hv_store(fields, "first_keycode", 13, newSViv(s->xmapping.first_keycode), 0);
-      hv_store(fields, "request"    ,  7, newSViv(s->xmapping.request), 0);
+      if (!hv_store(fields, "count"      ,  5, (sv=newSViv(s->xmapping.count)), 0)) goto store_fail;
+      if (!hv_store(fields, "first_keycode", 13, (sv=newSViv(s->xmapping.first_keycode)), 0)) goto store_fail;
+      if (!hv_store(fields, "request"    ,  7, (sv=newSViv(s->xmapping.request)), 0)) goto store_fail;
       break;
     case MotionNotify:
-      hv_store(fields, "is_hint"    ,  7, newSViv(s->xmotion.is_hint), 0);
-      hv_store(fields, "root"       ,  4, newSVuv(s->xmotion.root), 0);
-      hv_store(fields, "same_screen", 11, newSViv(s->xmotion.same_screen), 0);
-      hv_store(fields, "state"      ,  5, newSVuv(s->xmotion.state), 0);
-      hv_store(fields, "subwindow"  ,  9, newSVuv(s->xmotion.subwindow), 0);
-      hv_store(fields, "time"       ,  4, newSVuv(s->xmotion.time), 0);
-      hv_store(fields, "x"          ,  1, newSViv(s->xmotion.x), 0);
-      hv_store(fields, "x_root"     ,  6, newSViv(s->xmotion.x_root), 0);
-      hv_store(fields, "y"          ,  1, newSViv(s->xmotion.y), 0);
-      hv_store(fields, "y_root"     ,  6, newSViv(s->xmotion.y_root), 0);
+      if (!hv_store(fields, "is_hint"    ,  7, (sv=newSViv(s->xmotion.is_hint)), 0)) goto store_fail;
+      if (!hv_store(fields, "root"       ,  4, (sv=newSVuv(s->xmotion.root)), 0)) goto store_fail;
+      if (!hv_store(fields, "same_screen", 11, (sv=newSViv(s->xmotion.same_screen)), 0)) goto store_fail;
+      if (!hv_store(fields, "state"      ,  5, (sv=newSVuv(s->xmotion.state)), 0)) goto store_fail;
+      if (!hv_store(fields, "subwindow"  ,  9, (sv=newSVuv(s->xmotion.subwindow)), 0)) goto store_fail;
+      if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xmotion.time)), 0)) goto store_fail;
+      if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xmotion.x)), 0)) goto store_fail;
+      if (!hv_store(fields, "x_root"     ,  6, (sv=newSViv(s->xmotion.x_root)), 0)) goto store_fail;
+      if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xmotion.y)), 0)) goto store_fail;
+      if (!hv_store(fields, "y_root"     ,  6, (sv=newSViv(s->xmotion.y_root)), 0)) goto store_fail;
       break;
     case NoExpose:
-      hv_store(fields, "drawable"   ,  8, newSVuv(s->xnoexpose.drawable), 0);
-      hv_store(fields, "major_code" , 10, newSViv(s->xnoexpose.major_code), 0);
-      hv_store(fields, "minor_code" , 10, newSViv(s->xnoexpose.minor_code), 0);
+      if (!hv_store(fields, "drawable"   ,  8, (sv=newSVuv(s->xnoexpose.drawable)), 0)) goto store_fail;
+      if (!hv_store(fields, "major_code" , 10, (sv=newSViv(s->xnoexpose.major_code)), 0)) goto store_fail;
+      if (!hv_store(fields, "minor_code" , 10, (sv=newSViv(s->xnoexpose.minor_code)), 0)) goto store_fail;
       break;
     case PropertyNotify:
-      hv_store(fields, "atom"       ,  4, newSVuv(s->xproperty.atom), 0);
-      hv_store(fields, "state"      ,  5, newSViv(s->xproperty.state), 0);
-      hv_store(fields, "time"       ,  4, newSVuv(s->xproperty.time), 0);
+      if (!hv_store(fields, "atom"       ,  4, (sv=newSVuv(s->xproperty.atom)), 0)) goto store_fail;
+      if (!hv_store(fields, "state"      ,  5, (sv=newSViv(s->xproperty.state)), 0)) goto store_fail;
+      if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xproperty.time)), 0)) goto store_fail;
       break;
     case ReparentNotify:
-      hv_store(fields, "event"      ,  5, newSVuv(s->xreparent.event), 0);
-      hv_store(fields, "override_redirect", 17, newSViv(s->xreparent.override_redirect), 0);
-      hv_store(fields, "parent"     ,  6, newSVuv(s->xreparent.parent), 0);
-      hv_store(fields, "x"          ,  1, newSViv(s->xreparent.x), 0);
-      hv_store(fields, "y"          ,  1, newSViv(s->xreparent.y), 0);
+      if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xreparent.event)), 0)) goto store_fail;
+      if (!hv_store(fields, "override_redirect", 17, (sv=newSViv(s->xreparent.override_redirect)), 0)) goto store_fail;
+      if (!hv_store(fields, "parent"     ,  6, (sv=newSVuv(s->xreparent.parent)), 0)) goto store_fail;
+      if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xreparent.x)), 0)) goto store_fail;
+      if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xreparent.y)), 0)) goto store_fail;
       break;
     case ResizeRequest:
-      hv_store(fields, "height"     ,  6, newSViv(s->xresizerequest.height), 0);
-      hv_store(fields, "width"      ,  5, newSViv(s->xresizerequest.width), 0);
+      if (!hv_store(fields, "height"     ,  6, (sv=newSViv(s->xresizerequest.height)), 0)) goto store_fail;
+      if (!hv_store(fields, "width"      ,  5, (sv=newSViv(s->xresizerequest.width)), 0)) goto store_fail;
       break;
     case SelectionNotify:
-      hv_store(fields, "property"   ,  8, newSVuv(s->xselection.property), 0);
-      hv_store(fields, "requestor"  ,  9, newSVuv(s->xselection.requestor), 0);
-      hv_store(fields, "selection"  ,  9, newSVuv(s->xselection.selection), 0);
-      hv_store(fields, "target"     ,  6, newSVuv(s->xselection.target), 0);
-      hv_store(fields, "time"       ,  4, newSVuv(s->xselection.time), 0);
+      if (!hv_store(fields, "property"   ,  8, (sv=newSVuv(s->xselection.property)), 0)) goto store_fail;
+      if (!hv_store(fields, "requestor"  ,  9, (sv=newSVuv(s->xselection.requestor)), 0)) goto store_fail;
+      if (!hv_store(fields, "selection"  ,  9, (sv=newSVuv(s->xselection.selection)), 0)) goto store_fail;
+      if (!hv_store(fields, "target"     ,  6, (sv=newSVuv(s->xselection.target)), 0)) goto store_fail;
+      if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xselection.time)), 0)) goto store_fail;
       break;
     case SelectionClear:
-      hv_store(fields, "selection"  ,  9, newSVuv(s->xselectionclear.selection), 0);
-      hv_store(fields, "time"       ,  4, newSVuv(s->xselectionclear.time), 0);
+      if (!hv_store(fields, "selection"  ,  9, (sv=newSVuv(s->xselectionclear.selection)), 0)) goto store_fail;
+      if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xselectionclear.time)), 0)) goto store_fail;
       break;
     case SelectionRequest:
-      hv_store(fields, "owner"      ,  5, newSVuv(s->xselectionrequest.owner), 0);
-      hv_store(fields, "property"   ,  8, newSVuv(s->xselectionrequest.property), 0);
-      hv_store(fields, "requestor"  ,  9, newSVuv(s->xselectionrequest.requestor), 0);
-      hv_store(fields, "selection"  ,  9, newSVuv(s->xselectionrequest.selection), 0);
-      hv_store(fields, "target"     ,  6, newSVuv(s->xselectionrequest.target), 0);
-      hv_store(fields, "time"       ,  4, newSVuv(s->xselectionrequest.time), 0);
+      if (!hv_store(fields, "owner"      ,  5, (sv=newSVuv(s->xselectionrequest.owner)), 0)) goto store_fail;
+      if (!hv_store(fields, "property"   ,  8, (sv=newSVuv(s->xselectionrequest.property)), 0)) goto store_fail;
+      if (!hv_store(fields, "requestor"  ,  9, (sv=newSVuv(s->xselectionrequest.requestor)), 0)) goto store_fail;
+      if (!hv_store(fields, "selection"  ,  9, (sv=newSVuv(s->xselectionrequest.selection)), 0)) goto store_fail;
+      if (!hv_store(fields, "target"     ,  6, (sv=newSVuv(s->xselectionrequest.target)), 0)) goto store_fail;
+      if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xselectionrequest.time)), 0)) goto store_fail;
       break;
     case UnmapNotify:
-      hv_store(fields, "event"      ,  5, newSVuv(s->xunmap.event), 0);
-      hv_store(fields, "from_configure", 14, newSViv(s->xunmap.from_configure), 0);
+      if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xunmap.event)), 0)) goto store_fail;
+      if (!hv_store(fields, "from_configure", 14, (sv=newSViv(s->xunmap.from_configure)), 0)) goto store_fail;
       break;
     case VisibilityNotify:
-      hv_store(fields, "state"      ,  5, newSViv(s->xvisibility.state), 0);
+      if (!hv_store(fields, "state"      ,  5, (sv=newSViv(s->xvisibility.state)), 0)) goto store_fail;
       break;
     default:
       warn("Unknown XEvent type %d", s->type);
     }
+    return;
+    store_fail:
+        if (sv) sv_2mortal(sv);
+        croak("Can't store field in supplied hash (tied maybe?)");
 }
 
 // END GENERATED X11_Xlib_XEvent
