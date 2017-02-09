@@ -158,38 +158,203 @@ dumped state.  Or use XCB instead of Xlib.
 
 =head1 XLIB API
 
-=head2 XOpenDisplay($connection_string)
+=head2 CONNECTION FUNCTIONS
+
+=head3 XOpenDisplay
 
   my $display= X11::Xlib::XOpenDisplay($connection_string);
 
-Instantiate a new C<X11::Xlib> object. This object contains the connection to
-the X11 display.
+Instantiate a new L</Display> object. This object contains the connection to
+the X11 display.  This will be an instance of C<X11::Xlib>.
+The L<X11::Xlib::Display> object constructor is recommended instead.
 
 The C<$connection_string> variable specifies the display string to open.
-(C<"host:display.screen">, or often C<":0"> to connect to the default screen of
-the only display on the localhost)
+(C<"host:display.screen">, or often C<":0"> to connect to the only screen of
+the only display on C<localhost>)
 If unset, Xlib uses the C<$DISPLAY> environement variable.
 
-This handle does *not* automatically close itself when freed!  You must pass
-it to XCloseDisplay, or better, just use the X11::Xlib::Display wrapper.
+If the handle goes out of scope, its destructor calls C<XCloseDisplay>, unless
+you already called C<XCloseDisplay> or the X connection was lost.  (Be sure to
+read the notes under L</install_error_handlers>
 
-=head2 XCloseDisplay($display)
+=head3 XCloseDisplay
 
-Close a handle returned by XOpenDisplay.  Do not call this method if you are
-using the object-oriented L<X11::Xlib::Display> interface because that one
-will call it automatically when the handle goes out of scope.
+  XCloseDisplay($display);
+  # or, just:
+  undef $display
 
-=head2 DISPLAY FUNCTIONS
+Close a handle returned by XOpenDisplay.  You do not need to call this method
+since the handle's destructor does it for you, unless you want to forcibly
+stop communicating with X and can't track down your references.  Once closed,
+all further Xlib calls on the handle will die with an exception.
 
-=head3 DisplayWidth($display, $screen)
+=head3 ConnectionNumber
 
-Return the width of screen number C<$screen> (or default if not specified).
+  my $fh= IO::Handle->new_from_fd( $display->ConnectionNumber, 'w+' );
 
-=head3 DisplayHeight($display, $screen)
+Return the file descriptor (integer) of the socket connected to the server.
+This is useful for select/poll designs.
+(See also: L<X11::Xlib::Display->wait_event|X11::Xlib::Display/wait_event>)
 
-Return the height of screen number C<$screen> (or default if not specified).
+=head3 XSetCloseDownMode
 
-=head2 EVENT FUNCTIONS
+  XSetCloseDownMode($display, $close_mode)
+
+Determines what resources are freed upon disconnect.  See X11 documentation.
+
+=head2 COMMUNICATION FUNCTIONS
+
+Most of these functions return an L</XEvent> by way of an "out" parameter that
+gets overwritten during the call, in the style of C.  You may pass in an
+undefined scalar to be automatically allocated for you.
+
+=head3 XNextEvent
+
+  XNextEvent($display, my $event_return)
+  ... # event scalar is populated with event
+
+You probably don't want this.  It blocks forever until an event arrives.
+I added it for completeness.  See L<X11::Xlib::Display/wait_event>
+for a more Perl-ish interface.
+
+=head3 XCheckMaskEvent
+
+=head3 XCheckWindowEvent
+
+=head3 XCheckTypedEvent
+
+=head3 XCheckTypedWindowEvent
+
+  if ( XCheckMaskEvent($display, $event_mask, my $event_return) ) ...
+  if ( XCheckTypedEvent($display, $event_type, my $event_return) ) ...
+  if ( XCheckWindowEvent($display, $event_mask, $window, my $event_return) ) ...
+  if ( XCheckTypedWindowEvent($display, $event_type, $window, my $event_return) ) ...
+
+Each of these variations checks whether there is a matching event received from
+the server and not yet extracted form the message queue.  If so, it stores the
+event into C<$event_return> and returns true.  Else it returns false without
+blocking.
+
+There's also a variation that uses a callback to choose which message to extract
+but that would be a pain to implement and probably not used much.
+
+=head3 XSendEvent
+
+  XSendEvent($display, $window, $propagate, $event_mask, $xevent)
+    or die "Xlib hates us";
+
+Send an XEvent.
+
+=head3 XPutBackEvent
+
+  XPutBackEvent($display, $xevent)
+
+Push an XEvent back onto the queue.  This can also presumably put an
+arbitrarily bogus event onto your own queue since it returns void.
+
+=head3 XFlush
+
+  XFlush($display)
+
+Push any queued messages to the X11 server.  If you're wondering why nothing
+happened when you called an XTest function, this is why.
+
+=head3 XSync
+
+  XSync($display);
+  XSync($display, $discard);
+
+Force a round trip to the server to process all pending messages and receive
+the responses (or errors).  A true value for the second argument will wipe your
+incoming event queue.
+
+=head3 XSelectInput
+
+  XSelectInput($display, $window, $event_mask)
+
+Change the event mask for a window.
+
+=head2 SCREEN FUNCTIONS
+
+=head3 DisplayWidth
+
+=head3 DisplayHeight
+
+  my $w= DisplayWidth($display, $screen);
+  my $h= DisplayHeight($display, $screen);
+
+Return the width or height of screen number C<$screen>.  You can omit the
+C<$screen> paramter to use the default screen of your L<Display> connection.
+
+=head3 RootWindow
+
+  my $xid= RootWindow($display, $screen)
+
+Return the XID of the X11 root window.  C<$screen> is optional, and defaults to the
+default screen of your connection.
+If you want a Window object, call this method on L<X11::Xlib::Display>.
+
+=head3 XMatchVisualInfo
+
+  XMatchVisualInfo($display, $screen, $depth, $class, my $xvisualinfo_return)
+    or die "Don't have one of those";
+
+Loads the details of a L</Visual> into the final argument,
+which must be an L</XVisualInfo> (or undefined, to create one)
+
+Returns true if it found a matching visual.
+
+=head3 XGetVisualInfo
+
+  my @info_structs= XGetVisualInfo($display, $mask, $xvis_template);
+
+Returns a list of L</XVisualInfo> each describing an available L</Visual>
+which matches the template (also XVisualInfo) you provided.
+
+C<$mask> can be one of:
+
+  VisualIDMask
+  VisualScreenMask
+  VisualDepthMask
+  VisualClassMask
+  VisualRedMaskMask
+  VisualGreenMaskMask
+  VisualBlueMaskMask
+  VisualColormapSizeMask
+  VisualBitsPerRGBMask
+  VisualAllMask
+
+each describing a field of L<X11::Xlib::XVisualInfo> which is relevant
+to your search.
+
+=head3 XVisualIDFromVisual
+
+  my $vis_id= XVisualIDFromVisual($visual);
+  # or, assuming $visual is blessed,
+  my $vis_id= $visual->id;
+
+Pull the visual ID out of the opaque object $visual.
+
+If what you wanted was actually the XVisualInfo for a C<$visual>, then try:
+
+  my ($vis_info)= GetVisualInfo($display, VisualIDMask, { visualid => $vis_id });
+  # or with Display object:
+  $display->visual_by_id($vis_id);
+
+=head3 DefaultVisual
+
+  my $visual= DefaultVisual($display, $screen);
+
+Screen is optional and defaults to the default screen of your connection.
+This returns a L</Visual>, not a L</XVisualInfo>.
+
+=head2 XTEST INPUT SIMULATION
+
+These methods create fake server-wide input events, useful for automated testing.
+They are available through the XTEST extension.
+
+Don't forget to call L</XFlush> after these methods, if you want the events to
+happen immediately.
 
 =head3 XTestFakeMotionEvent($display, $screen, $x, $y, $EventSendDelay)
 
@@ -222,16 +387,7 @@ Make the X server emit a sound.
 
 Return a list of the key codes currently pressed on the keyboard.
 
-=head3 XFlush($display)
-
-Flush pending events sent via the Fake* methods to the X11 server.
-
-This method must be used to ensure the fake events take are triggered.
-
-=head3 XSync($display, $flush)
-
-Force the X server to sync event. The optional C<$flush> parameter allows pending
-events to be discarded.
+=head2 KEYCODE FUNCTIONS
 
 =head3 XKeysymToKeycode($display, $keysym)
 
@@ -245,12 +401,6 @@ Each value in the array corresponds to the action of a key modifier (Shift, Alt)
 
 C<$count> is the number of the keycode to return. The default value is 1, e.g.
 it returns the character corresponding to the given $keycode.
-
-=head3 RootWindow($display)
-
-Return the XID of the X11 root window.
-
-=head2 KEYCODE FUNCTIONS
 
 =head3 XKeysymToString($keysym)
 
@@ -289,6 +439,65 @@ No idea.
 Again, no idea.
 
 =cut
+
+=head1 STRUCTURES
+
+Xlib has a lot of C structs.  Most of them do not have much "depth"
+(i.e. pointers to further nested structs) and so I chose to represent them
+as simple blessed scalar refs to a byte string.  This gives you the ability
+to pack new values into the struct which might not be known by this module,
+and keeps the object relatively lightweight.  Most also have a C<pack> and
+C<unpack> method which convert from/to a hashref.
+Sometimes however these structs do contain a raw pointer value, and so you
+should take extreme care if you do modify the bytes.
+
+Xlib also has a lot of "opaque objects" where they just give you a pointer
+and some methods to access it without any explanation of its inner fields.
+I represent these with the matching Perl feature for blessed opaque references,
+so the only way to interact with the pointer value is through XS code.
+In each case, when the object goes out of scope, this library calls the
+appropriate "Free" function.
+
+Finally, there are lots of objects which exist on the server, and Xlib just
+gives you a number (L</XID>) to refer to them when making future requests.
+Windows are the most common example.  Since these are simple integers, and
+can be shared among any program connected to the same display, this module
+allows a mix of simple scalar values or blessed objects when calling any
+function that expects an C<XID>.  The blessed objects derive from L<X11::Xlib::XID>.
+
+Most supported structures have their own package with further documentation,
+but here is a quick list:
+
+=head2 Display
+
+Represents a connection to an X11 server.  Xlib provides an B<opaque pointer>
+C<Display*> on which you can call methods.  These are represented by this
+package, C<X11::Xlib>.  The L<X11::Xlib::Display> package provides a more
+perl-ish interface and some helper methods to "DWIM".
+
+=head2 XEvent
+
+A B<struct> that can hold any sort of message sent to/from the server.  The struct
+is a union of many other structs, which you can read about in L<X11::Xlib::XEvent>.
+
+=head2 Visual
+
+An B<opaque pointer> describing binary representation of pixels for some mode of
+the display.  There's probably only one in use on the entire display (i.e. RGBA)
+but Xlib makes you look it up and pass it around to various functions.
+
+=head2 XVisualInfo
+
+A more useful B<struct> describing a Visual.  See L<X11::Xlib::XVisualInfo>.
+
+=head2 Colormap
+
+An B<XID> referencing what used to be a palette for 8-bit graphics but which is
+now mostly a useless appendage to be passed to L</XCreateWindow>.
+
+=head2 Window
+
+An B<XID> referencing a Window.  See L<X11::Xlib::Window>.
 
 =head1 SYSTEM DEPENDENCIES
 
