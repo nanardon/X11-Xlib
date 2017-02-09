@@ -76,12 +76,6 @@ XCloseDisplay(dpy)
 # Event Functions ------------------------------------------------------------
 
 void
-XSelectInput(dpy, wnd, mask)
-    DisplayNotNull dpy
-    Window wnd
-    int mask
-
-void
 XNextEvent(dpy, event)
     DisplayNotNull dpy
     XEvent *event
@@ -133,6 +127,12 @@ void
 XSync(dpy, discard=0)
     DisplayNotNull  dpy
     int discard
+
+void
+XSelectInput(dpy, wnd, mask)
+    DisplayNotNull dpy
+    Window wnd
+    int mask
 
 Bool
 _wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
@@ -187,8 +187,6 @@ DisplayHeight(dpy, screen=-1)
     OUTPUT:
         RETVAL
 
-# Window Functions -----------------------------------------------------------
-
 Window
 RootWindow(dpy, screen=-1)
     DisplayNotNull  dpy
@@ -238,7 +236,18 @@ DefaultVisual(dpy, screen=-1)
     OUTPUT:
         RETVAL
 
-# /* Event */
+Colormap
+XCreateColormap(dpy, wnd, visual, alloc)
+    DisplayNotNull dpy
+    Window wnd
+    Visual *visual
+    int alloc
+
+# Window Functions -----------------------------------------------------------
+
+
+
+# XTest Functions ------------------------------------------------------------
 
 int
 XTestFakeMotionEvent(dpy, screen, x, y, EventSendDelay = 10)
@@ -282,6 +291,8 @@ XQueryKeymap(dpy)
             }
         }
 
+# Keyboard/Keycode Functions -------------------------------------------------
+
 unsigned long
 keyboard_leds(dpy)
     DisplayNotNull  dpy;
@@ -307,8 +318,6 @@ _auto_repeat(dpy)
                     XPUSHs(sv_2mortal(newSViv(i * 8 + j)));
             }
         }
-
-# /* keyboard functions */
 
 char *
 XKeysymToString(keysym)

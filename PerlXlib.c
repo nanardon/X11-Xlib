@@ -8,6 +8,9 @@ void PerlXlib_XEvent_unpack(XEvent *e, HV *fields);
 #define PerlXlib_CONN_LIVE   0x7FEDCB01
 #define PerlXlib_CONN_DEAD   0x7FEDCB02
 #define PerlXlib_CONN_CLOSED 0x7FEDCB03
+
+// This object provides extra storage for flags associated with a Display*
+//  and is what the perl \X11::Xlib scalar ref actually holds.
 typedef struct PerlXlib_conn_s {
     Display *dpy;
     int state;
@@ -15,11 +18,10 @@ typedef struct PerlXlib_conn_s {
 } PerlXlib_conn_t;
 
 typedef Display* DisplayNotNull; // Used by typemap for stricter conversion
+typedef void PerlXlib_struct_pack_fn(SV*, HV*);
 
-// Potentiall hot method.
+// Potentially hot method.
 // Allow either instance of X11::Xlib, or instance of X11::Xlib::Display
-// Be sure to coordinate changes to this code with the _pointer_value and
-// _mark_dead methods in Xlib.xs
 PerlXlib_conn_t* PerlXlib_get_conn_from_sv(SV *sv, Bool require_live) {
     SV **fp, *inner;
     PerlXlib_conn_t *conn;
@@ -56,6 +58,8 @@ PerlXlib_conn_t* PerlXlib_get_conn_from_sv(SV *sv, Bool require_live) {
 //#define PerlXlib_sv_to_display(x) PerlXlib_get_conn_from_sv(x,1)->dpy
 #define PerlXlib_sv_to_display(x) (SvOK(x)? PerlXlib_get_conn_from_sv(x, 1)->dpy : NULL)
 
+// Converting a Display* to a \X11::Xlib is difficult because we want
+// to re-use the existing object.  We cache them in %X11::Xlib::_connections.
 void PerlXlib_sv_from_display(SV *dest, Display *dpy) {
     SV **fp;
     PerlXlib_conn_t conn;
@@ -114,34 +118,42 @@ XID PerlXlib_sv_to_xid(SV *sv) {
     return (XID) SvUV(*xid_field);
 }
 
-SV* PerlXlib_get_struct_buffer(SV *sv, const char* struct_name, int struct_size) {
-    SV **fp;
+void* PerlXlib_get_struct_ptr(SV *sv, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer) {
+    void* buf;
 
-    // De-reference ${scalar_ref} or $hashref->{buffer}
     if (SvROK(sv)) {
+        // Follow scalar refs, to get to the buffer of a blessed object
         if (SvTYPE(SvRV(sv)) == SVt_PVMG)
             sv= SvRV(sv);
-        // Also accept a hashref with 'buffer' parameter
-        else if (SvTYPE(SvRV(sv)) == SVt_PVHV
-            && (fp= hv_fetch((HV*)SvRV(sv), "buffer", 6, 0))
-            && *fp)
-            sv= *fp;
-    }
+            // continue below using this SV
 
-    // Initialize the buffer if needed.
+        // Also accept a hashref, which we pass to "pack"
+        else if (SvTYPE(SvRV(sv)) == SVt_PVHV) {
+            // Need a buffer that lasts for the rest of our XS call stack.
+            // Cheat by using a mortal SV :-)
+            buf= SvPVX(sv_2mortal(newSV(struct_size)));
+            pack(buf, (HV*) SvRV(sv));
+            return buf;
+        }
+    }
+    // If uninitialized, initialize to a blessed struct object
+    else if (!SvOK(sv)) {
+        sv= newSVrv(sv, pkg);
+        // sv is now the referenced scalar, which is undef, and gets inflated next
+    }
+    
     if (!SvOK(sv)) {
         sv_setpvn(sv, "", 0);
         sv_grow(sv, struct_size+1);
         SvCUR_set(sv, struct_size);
         memset(SvPVX(sv), 0, struct_size+1);
-        return sv;
     }
     else if (!SvPOK(sv))
-        croak("%s paramters must be a scalar, scalar ref, hash with { buffer => $buffer }, or undefined", struct_name);
+        croak("Paramters requiring %s can only be coerced from scalar, scalar ref, hashref, or undef", pkg);
     else if (SvCUR(sv) < struct_size)
-        croak("Scalars used for %s must be at least %d bytes long (got %d)",
-            struct_name, struct_size, SvCUR(sv));
-    return sv;
+        croak("Scalars used as %s must be at least %d bytes long (got %d)",
+            pkg, struct_size, SvCUR(sv));
+    return SvPVX(sv);
 }
 
 int PerlXlib_X_error_handler(Display *d, XErrorEvent *e) {

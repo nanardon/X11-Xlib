@@ -63,3 +63,6 @@ PerlXlib_CONSTi(VisualBlueMaskMask)
 PerlXlib_CONSTi(VisualColormapSizeMask)
 PerlXlib_CONSTi(VisualBitsPerRGBMask)
 PerlXlib_CONSTi(VisualAllMask)
+// Colormap flags
+PerlXlib_CONSTi(AllocAll)
+PerlXlib_CONSTi(AllocNone)

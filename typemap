@@ -1,8 +1,8 @@
 TYPEMAP
-DisplayNotNull        O_X11_Xlib
-Display *             O_X11_XlibNotNull
-XEvent *              O_X11_Xlib_XEvent
-XVisualInfo *         O_X11_Xlib_XVisualInfo
+DisplayNotNull        O_X11_XlibNotNull
+Display *             O_X11_Xlib
+XEvent *              O_X11_Xlib_Struct
+XVisualInfo *         O_X11_Xlib_Struct
 Window                O_X11_Xlib_XID
 Pixmap                O_X11_Xlib_XID
 Colormap              O_X11_Xlib_XID
@@ -11,7 +11,7 @@ VisualID              O_X11_Xlib_XID
 Atom                  T_UV
 Time                  T_UV
 Bool                  T_BOOL
-Visual *              T_OPAQUE
+Visual *              O_X11_Xlib_Opaque
 
 INPUT
 O_X11_XlibNotNull
@@ -40,9 +40,20 @@ O_X11_Xlib_XID
     sv_setuv( $arg, $var );
 
 INPUT
-O_X11_Xlib_XEvent
-    $var= (XEvent*) SvPVX( PerlXlib_get_struct_buffer($arg, \"XEvent\", sizeof(XEvent)) );
+O_X11_Xlib_Struct
+    $var= ( $type ) PerlXlib_get_struct_ptr(
+        $arg, \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\", sizeof(@{[ $type =~ /(\w+)/ ]}),
+        (PerlXlib_struct_pack_fn*) &PerlXlib_@{[ $type =~ /(\w+)/ ]}_pack
+    );
 
 INPUT
-O_X11_Xlib_XVisualInfo
-    $var= (XVisualInfo*) SvPVX( PerlXlib_get_struct_buffer($arg, \"XVisualInfo\", sizeof(XVisualInfo)) );
+O_X11_Xlib_Opaque
+    if (sv_isa($arg, \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\")) {
+        $var= ($type) SvPVX((SV*)SvRV($arg));
+    } else {
+        croak( \"$var is not a X11::Xlib::@{[ $type =~ /(\w+)/ ]}\" );
+    }
+
+OUTPUT
+O_X11_Xlib_Opaque
+    sv_setref_pv($arg, \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\", (void*) $var);
