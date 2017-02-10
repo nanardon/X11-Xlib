@@ -10,7 +10,7 @@
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib
 
-# Connection Functions -------------------------------------------------------
+# Connection Functions (fn_conn) ---------------------------------------------
 
 Display *
 XOpenDisplay(connection_string = NULL)
@@ -73,7 +73,7 @@ XCloseDisplay(dpy)
         XCloseDisplay(conn->dpy);
         PerlXlib_conn_mark_closed(conn);
 
-# Event Functions ------------------------------------------------------------
+# Event Functions (fn_event) -------------------------------------------------
 
 void
 XNextEvent(dpy, event)
@@ -167,32 +167,32 @@ _wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
     OUTPUT:
         RETVAL
 
-# Screen Functions -----------------------------------------------------------
+# Screen Functions (fn_screen) -----------------------------------------------
 
 int
-DisplayWidth(dpy, screen=-1)
+DisplayWidth(dpy, screen=DefaultScreen(dpy))
     DisplayNotNull dpy
     int screen
     CODE:
-        RETVAL = DisplayWidth(dpy, screen >= 0? screen : DefaultScreen(dpy));
+        RETVAL = DisplayWidth(dpy, screen);
     OUTPUT:
         RETVAL
 
 int
-DisplayHeight(dpy, screen=-1)
+DisplayHeight(dpy, screen=DefaultScreen(dpy))
     DisplayNotNull dpy
     int screen
     CODE:
-        RETVAL = DisplayHeight(dpy, screen >= 0? screen : DefaultScreen(dpy));
+        RETVAL = DisplayHeight(dpy, screen);
     OUTPUT:
         RETVAL
 
 Window
-RootWindow(dpy, screen=-1)
+RootWindow(dpy, screen=DefaultScreen(dpy))
     DisplayNotNull  dpy
     int screen
     CODE:
-        RETVAL = RootWindow(dpy, screen >= 0? screen : DefaultScreen(dpy));
+        RETVAL = RootWindow(dpy, screen);
     OUTPUT:
         RETVAL
 
@@ -228,26 +228,26 @@ XVisualIDFromVisual(vis)
     Visual *vis
 
 Visual *
-DefaultVisual(dpy, screen=-1)
+DefaultVisual(dpy, screen=DefaultScreen(dpy))
     DisplayNotNull dpy
     int screen
     CODE:
-        RETVAL = DefaultVisual(dpy, screen >= 0? screen : DefaultScreen(dpy));
+        RETVAL = DefaultVisual(dpy, screen);
     OUTPUT:
         RETVAL
 
 Colormap
-XCreateColormap(dpy, wnd, visual, alloc)
+XCreateColormap(dpy, wnd=RootWindow(dpy, DefaultScreen(dpy)), visual=DefaultVisual(dpy, DefaultScreen(dpy)), alloc=AllocNone)
     DisplayNotNull dpy
     Window wnd
     Visual *visual
     int alloc
 
-# Window Functions -----------------------------------------------------------
+# Window Functions (fn_window) -----------------------------------------------
 
 
 
-# XTest Functions ------------------------------------------------------------
+# XTest Functions (fn_xtest) -------------------------------------------------
 
 int
 XTestFakeMotionEvent(dpy, screen, x, y, EventSendDelay = 10)
@@ -291,7 +291,7 @@ XQueryKeymap(dpy)
             }
         }
 
-# Keyboard/Keycode Functions -------------------------------------------------
+# Keyboard/Keycode Functions (fn_key) ----------------------------------------
 
 unsigned long
 keyboard_leds(dpy)
@@ -2218,4 +2218,67 @@ _set_class(st, val)
 # END GENERATED X11_Xlib_XVisualInfo
 # ----------------------------------------------------------------------------
 
-INCLUDE: PerlXlib_constants.inc
+BOOT:
+# BEGIN GENERATED BOOT CONSTANTS
+  HV* stash= gv_stashpvn("X11::Xlib", 9, 1);
+  newCONSTSUB(stash, "ButtonPress", newSViv(ButtonPress));
+  newCONSTSUB(stash, "ButtonRelease", newSViv(ButtonRelease));
+  newCONSTSUB(stash, "CirculateNotify", newSViv(CirculateNotify));
+  newCONSTSUB(stash, "ClientMessage", newSViv(ClientMessage));
+  newCONSTSUB(stash, "ColormapNotify", newSViv(ColormapNotify));
+  newCONSTSUB(stash, "ConfigureNotify", newSViv(ConfigureNotify));
+  newCONSTSUB(stash, "CreateNotify", newSViv(CreateNotify));
+  newCONSTSUB(stash, "DestroyNotify", newSViv(DestroyNotify));
+  newCONSTSUB(stash, "EnterNotify", newSViv(EnterNotify));
+  newCONSTSUB(stash, "Expose", newSViv(Expose));
+  newCONSTSUB(stash, "FocusIn", newSViv(FocusIn));
+  newCONSTSUB(stash, "FocusOut", newSViv(FocusOut));
+  newCONSTSUB(stash, "GraphicsExpose", newSViv(GraphicsExpose));
+  newCONSTSUB(stash, "GravityNotify", newSViv(GravityNotify));
+  newCONSTSUB(stash, "KeyPress", newSViv(KeyPress));
+  newCONSTSUB(stash, "KeyRelease", newSViv(KeyRelease));
+  newCONSTSUB(stash, "KeymapNotify", newSViv(KeymapNotify));
+  newCONSTSUB(stash, "LeaveNotify", newSViv(LeaveNotify));
+  newCONSTSUB(stash, "MapNotify", newSViv(MapNotify));
+  newCONSTSUB(stash, "MappingNotify", newSViv(MappingNotify));
+  newCONSTSUB(stash, "MotionNotify", newSViv(MotionNotify));
+  newCONSTSUB(stash, "NoExpose", newSViv(NoExpose));
+  newCONSTSUB(stash, "PropertyNotify", newSViv(PropertyNotify));
+  newCONSTSUB(stash, "ReparentNotify", newSViv(ReparentNotify));
+  newCONSTSUB(stash, "ResizeRequest", newSViv(ResizeRequest));
+  newCONSTSUB(stash, "SelectionClear", newSViv(SelectionClear));
+  newCONSTSUB(stash, "SelectionNotify", newSViv(SelectionNotify));
+  newCONSTSUB(stash, "SelectionRequest", newSViv(SelectionRequest));
+  newCONSTSUB(stash, "UnmapNotify", newSViv(UnmapNotify));
+  newCONSTSUB(stash, "VisibilityNotify", newSViv(VisibilityNotify));
+  newCONSTSUB(stash, "BadAccess", newSViv(BadAccess));
+  newCONSTSUB(stash, "BadAlloc", newSViv(BadAlloc));
+  newCONSTSUB(stash, "BadAtom", newSViv(BadAtom));
+  newCONSTSUB(stash, "BadColor", newSViv(BadColor));
+  newCONSTSUB(stash, "BadCursor", newSViv(BadCursor));
+  newCONSTSUB(stash, "BadDrawable", newSViv(BadDrawable));
+  newCONSTSUB(stash, "BadFont", newSViv(BadFont));
+  newCONSTSUB(stash, "BadGC", newSViv(BadGC));
+  newCONSTSUB(stash, "BadIDChoice", newSViv(BadIDChoice));
+  newCONSTSUB(stash, "BadImplementation", newSViv(BadImplementation));
+  newCONSTSUB(stash, "BadLength", newSViv(BadLength));
+  newCONSTSUB(stash, "BadMatch", newSViv(BadMatch));
+  newCONSTSUB(stash, "BadName", newSViv(BadName));
+  newCONSTSUB(stash, "BadPixmap", newSViv(BadPixmap));
+  newCONSTSUB(stash, "BadRequest", newSViv(BadRequest));
+  newCONSTSUB(stash, "BadValue", newSViv(BadValue));
+  newCONSTSUB(stash, "BadWindow", newSViv(BadWindow));
+  newCONSTSUB(stash, "VisualIDMask", newSViv(VisualIDMask));
+  newCONSTSUB(stash, "VisualScreenMask", newSViv(VisualScreenMask));
+  newCONSTSUB(stash, "VisualDepthMask", newSViv(VisualDepthMask));
+  newCONSTSUB(stash, "VisualClassMask", newSViv(VisualClassMask));
+  newCONSTSUB(stash, "VisualRedMaskMask", newSViv(VisualRedMaskMask));
+  newCONSTSUB(stash, "VisualGreenMaskMask", newSViv(VisualGreenMaskMask));
+  newCONSTSUB(stash, "VisualBlueMaskMask", newSViv(VisualBlueMaskMask));
+  newCONSTSUB(stash, "VisualColormapSizeMask", newSViv(VisualColormapSizeMask));
+  newCONSTSUB(stash, "VisualBitsPerRGBMask", newSViv(VisualBitsPerRGBMask));
+  newCONSTSUB(stash, "VisualAllMask", newSViv(VisualAllMask));
+  newCONSTSUB(stash, "AllocAll", newSViv(AllocAll));
+  newCONSTSUB(stash, "AllocNone", newSViv(AllocNone));
+# END GENERATED BOOT CONSTANTS
+#

@@ -216,14 +216,6 @@ sub sv_create {
 	die "Don't know how to create SV from $type";
 }
 
-sub generate_constants {
-    my $c= '';
-    for (sort keys %type_to_struct) {
-        $c .= qq{PerlXlib_CONSTi($_)\n};
-    }
-    return $c;
-}
-
 sub generate_xs_accessors {
 	my $fieldname= shift;
 	my @variations= sort grep { $_ =~ /(^|\.)$fieldname$/ } keys %members;
@@ -481,4 +473,4 @@ $out_const .= generate_constants();
 patch_file("Xlib.xs", $file_splice_token, $out_xs);
 patch_file("PerlXlib.c", $file_splice_token, $out_c);
 patch_file("lib/X11/Xlib/${goal}.pm", $file_splice_token, $out_pl);
-patch_file("PerlXlib_constants.inc", $file_splice_token, $out_const);
+patch_file("PerlXlib_constants", $file_splice_token, $out_const);

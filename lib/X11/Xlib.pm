@@ -13,24 +13,46 @@ our $VERSION = '0.03';
 
 XSLoader::load(__PACKAGE__, $VERSION);
 
-our @EXPORT_OK = qw(
-    XOpenDisplay XCloseDisplay ConnectionNumber XSetCloseDownMode
-
-    XSelectInput XNextEvent XCheckWindowEvent XCheckTypedWindowEvent XCheckMaskEvent
-    XCheckTypedEvent XSendEvent XPutBackEvent XSync XFlush
-
-    XKeysymToString XStringToKeysym
-    IsFunctionKey IsKeypadKey IsMiscFunctionKey IsModifierKey IsPFKey IsPrivateKeypadKey
+my %_constants= (
+# BEGIN GENERATED XS CONSTANT LIST
+  const_cmap => [qw( AllocAll AllocNone )],
+  const_error => [qw( BadAccess BadAlloc BadAtom BadColor BadCursor BadDrawable
+    BadFont BadGC BadIDChoice BadImplementation BadLength BadMatch BadName
+    BadPixmap BadRequest BadValue BadWindow )],
+  const_event => [qw( ButtonPress ButtonRelease CirculateNotify ClientMessage
+    ColormapNotify ConfigureNotify CreateNotify DestroyNotify EnterNotify
+    Expose FocusIn FocusOut GraphicsExpose GravityNotify KeyPress KeyRelease
+    KeymapNotify LeaveNotify MapNotify MappingNotify MotionNotify NoExpose
+    PropertyNotify ReparentNotify ResizeRequest SelectionClear SelectionNotify
+    SelectionRequest UnmapNotify VisibilityNotify )],
+  const_visual => [qw( VisualAllMask VisualBitsPerRGBMask VisualBlueMaskMask
+    VisualClassMask VisualColormapSizeMask VisualDepthMask VisualGreenMaskMask
+    VisualIDMask VisualRedMaskMask VisualScreenMask )],
+# END GENERATED XS CONSTANT LIST
 );
-our @EXPORT = qw(
-    XKeysymToString
-    XStringToKeysym
-    IsFunctionKey
-    IsKeypadKey
-    IsMiscFunctionKey
-    IsModifierKey
-    IsPFKey
-    IsPrivateKeypadKey
+my %_functions= (
+# BEGIN GENERATED XS FUNCTION LIST
+  fn_conn => [qw( ConnectionNumber XCloseDisplay XOpenDisplay XSetCloseDownMode
+    )],
+  fn_event => [qw( XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent
+    XCheckWindowEvent XFlush XNextEvent XPutBackEvent XSelectInput XSendEvent
+    XSync )],
+  fn_key => [qw( IsFunctionKey IsKeypadKey IsMiscFunctionKey IsModifierKey
+    IsPFKey IsPrivateKeypadKey XGetKeyboardMapping XKeysymToKeycode
+    XKeysymToString XStringToKeysym )],
+  fn_screen => [qw( DefaultVisual DisplayHeight DisplayWidth RootWindow
+    XCreateColormap XGetVisualInfo XMatchVisualInfo XVisualIDFromVisual )],
+  fn_window => [qw(  )],
+  fn_xtest => [qw( XBell XQueryKeymap XTestFakeButtonEvent XTestFakeKeyEvent
+    XTestFakeMotionEvent )],
+# END GENERATED XS FUNCTION LIST
+);
+our %EXPORT_TAGS= (
+    %_constants,
+    %_functions,
+    constants => [ map { @$_ } values %_constants ],
+    functions => [ map { @$_ } values %_functions ],
+    all => [ map { @$_ } values %_constants, values %_functions ],
 );
 
 sub new {
@@ -347,6 +369,19 @@ If what you wanted was actually the XVisualInfo for a C<$visual>, then try:
 
 Screen is optional and defaults to the default screen of your connection.
 This returns a L</Visual>, not a L</XVisualInfo>.
+
+=head3 XCreateColormap
+
+  my $xid= XCreateColormap($display, $rootwindow, $visual, $alloc_flag);
+  # or 99% of the time
+  my $xid= XCreateColormap($display, RootWindow($display), DefaultVisual($display), AllocNone);
+  # and thus these are the defaults
+  my $xid= XCreateColormap($display);
+
+Create a L</Colormap>.  Why is this function in the "Screen" section and not
+the "Window" section?  because it claims the only reason it wants the Window
+is to determine the screen to create a map for. The C<$visual> is a L</Visual>
+object, and the C<$alloc_flag> is either C<AllocNone> or C<AllocAll>.
 
 =head2 XTEST INPUT SIMULATION
 
