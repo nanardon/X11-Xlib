@@ -13,6 +13,8 @@ our $VERSION = '0.03';
 
 XSLoader::load(__PACKAGE__, $VERSION);
 
+require X11::Xlib::XEvent;
+
 my %_constants= (
 # BEGIN GENERATED XS CONSTANT LIST
   const_cmap => [qw( AllocAll AllocNone )],
@@ -47,13 +49,15 @@ my %_functions= (
     XTestFakeMotionEvent )],
 # END GENERATED XS FUNCTION LIST
 );
+our @EXPORT_OK;
 our %EXPORT_TAGS= (
     %_constants,
     %_functions,
     constants => [ map { @$_ } values %_constants ],
     functions => [ map { @$_ } values %_functions ],
-    all => [ map { @$_ } values %_constants, values %_functions ],
+    all => \(@EXPORT_OK= map { @$_ } values %_constants, values %_functions ),
 );
+our @EXPORT= @{ $EXPORT_TAGS{fn_key} };
 
 sub new {
     require X11::Xlib::Display;

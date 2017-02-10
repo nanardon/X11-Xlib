@@ -132,7 +132,7 @@ void* PerlXlib_get_struct_ptr(SV *sv, const char* pkg, int struct_size, PerlXlib
             // Need a buffer that lasts for the rest of our XS call stack.
             // Cheat by using a mortal SV :-)
             buf= SvPVX(sv_2mortal(newSV(struct_size)));
-            pack(buf, (HV*) SvRV(sv));
+            packer(buf, (HV*) SvRV(sv));
             return buf;
         }
     }
