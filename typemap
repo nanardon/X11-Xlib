@@ -8,6 +8,7 @@ Pixmap                O_X11_Xlib_XID
 Colormap              O_X11_Xlib_XID
 Drawable              O_X11_Xlib_XID
 VisualID              O_X11_Xlib_XID
+GC                    O_X11_Xlib_Opaque
 Atom                  T_UV
 Time                  T_UV
 Bool                  T_BOOL
@@ -51,7 +52,7 @@ O_X11_Xlib_Opaque
     if (sv_isa($arg, \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\")) {
         $var= ($type) SvPVX((SV*)SvRV($arg));
     } else {
-        croak( \"$var is not a X11::Xlib::@{[ $type =~ /(\w+)/ ]}\" );
+        croak( \"%s is not a %s\", \"$var\", \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\" );
     }
 
 OUTPUT

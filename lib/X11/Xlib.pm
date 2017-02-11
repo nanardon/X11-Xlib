@@ -34,16 +34,19 @@ my %_constants= (
 );
 my %_functions= (
 # BEGIN GENERATED XS FUNCTION LIST
-  fn_conn => [qw( ConnectionNumber XCloseDisplay XOpenDisplay XSetCloseDownMode
-    )],
+  fn_conn => [qw( ConnectionNumber XCloseDisplay XOpenDisplay XServerVendor
+    XSetCloseDownMode XVendorRelease )],
   fn_event => [qw( XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent
     XCheckWindowEvent XFlush XNextEvent XPutBackEvent XSelectInput XSendEvent
     XSync )],
   fn_key => [qw( IsFunctionKey IsKeypadKey IsMiscFunctionKey IsModifierKey
     IsPFKey IsPrivateKeypadKey XGetKeyboardMapping XKeysymToKeycode
     XKeysymToString XStringToKeysym )],
-  fn_screen => [qw( DefaultVisual DisplayHeight DisplayWidth RootWindow
-    XCreateColormap XGetVisualInfo XMatchVisualInfo XVisualIDFromVisual )],
+  fn_screen => [qw( DefaultColormap DefaultDepth DefaultGC DefaultVisual
+    DisplayHeight DisplayHeightMM DisplayWidth DisplayWidthMM RootWindow
+    ScreenCount )],
+  fn_vis => [qw( XCreateColormap XFreeColormap XGetVisualInfo XMatchVisualInfo
+    XVisualIDFromVisual )],
   fn_window => [qw(  )],
   fn_xtest => [qw( XBell XQueryKeymap XTestFakeButtonEvent XTestFakeKeyEvent
     XTestFakeMotionEvent )],
@@ -129,7 +132,7 @@ X11::Xlib - Low-level access to the X11 library
 
 =head1 DESCRIPTION
 
-This module provides low-level access to X11 libary functions.
+This module provides low-level access to Xlib functions.
 
 This includes access to some X11 extensions like the X11 test library (Xtst).
 
@@ -148,8 +151,10 @@ on the state of the library when you call methods.
 =head1 FUNCTIONS
 
 Most functions can be called as methods on the Xlib connection object, since
-this is usually the first argument.  All functions which are part of Xlib's API
-can be exported.
+this is usually the first argument.  Every Xlib function listed below can be
+exported, and you can grab them all with
+
+  use X11::Xlib ':functions';
 
 =head2 new
 
@@ -161,7 +166,8 @@ the object oriented interface.
   X11::Xlib::install_error_handlers( $bool_nonfatal, $bool_fatal );
 
 Error handling in Xlib is pretty bad.  The first problem is that non-fatal
-errors are reported asynchronously in an API that pretends to be synchronous.
+errors are reported asynchronously in an API masquerading as if they were
+synchronous function calls.
 This is mildly annoying.  This library eases the pain by giving you a nice
 L<XEvent|X11::Xlib::XEvent> object to work with, and the ability to deliver
 the errors to a callback on your display or window object.
@@ -190,8 +196,8 @@ dumped state.  Or use XCB instead of Xlib.
 
   my $display= X11::Xlib::XOpenDisplay($connection_string);
 
-Instantiate a new L</Display> object. This object contains the connection to
-the X11 display.  This will be an instance of C<X11::Xlib>.
+Instantiate a new (C<c> level) L</Display> instance. This object contains the
+connection to the X11 display.  This will be an instance of C<X11::Xlib>.
 The L<X11::Xlib::Display> object constructor is recommended instead.
 
 The C<$connection_string> variable specifies the display string to open.
@@ -300,7 +306,29 @@ incoming event queue.
 
 Change the event mask for a window.
 
-=head2 SCREEN FUNCTIONS
+=head2 SCREEN ATTRIBUTES
+
+Xlib provides opaque L</Display> and L</Screen> structs which have locally-
+stored attributes, but which you must use method calls to access.
+For each attribute of a screen, there are four separate ways to access it:
+
+  DisplayFoo($display, $screen_num);     # C Macro like ->{screens}[$screen_num]{foo}
+  XDisplayFoo($display, $screen_num);    # External linked function from Xlib
+  FooOfScreen($screen_pointer);          # C Macro like ->{foo}
+  XFooOfScreen($screen_pointer);         # External linked function from Xlib
+
+Since screen pointers become invalid when the Display is closed, I decided not
+to expose them, and since DisplayFoo and XDisplayFoo are identical I decided
+to only implement the first since it makes one less symbol to link from Xlib.
+
+So, if you grab some sample code from somewhere and wonder where those functions
+went, drop the leading X and do a quick search on this page.
+
+=head3 ScreenCount
+
+  my $n= ScreenCount($display);
+
+Return number of configured L</Screen>s of this display.
 
 =head3 DisplayWidth
 
@@ -308,9 +336,21 @@ Change the event mask for a window.
 
   my $w= DisplayWidth($display, $screen);
   my $h= DisplayHeight($display, $screen);
+  # use instead of WidthOfScreen, HeightOfScreen
 
 Return the width or height of screen number C<$screen>.  You can omit the
 C<$screen> paramter to use the default screen of your L<Display> connection.
+
+=head3 DisplayWidthMM
+
+=head3 DisplayHeightMM
+
+  my $w= DisplayWidthMM($display, $screen);
+  my $h= DisplayHeightMM($display, $screen);
+  # use instead of WidthMMOfScreen, HeightMMOfScreen
+
+Return the physical width or height (in millimeters) of screen number <$screen>.
+You can omit the screen number to use the default screen of the display.
 
 =head3 RootWindow
 
@@ -319,6 +359,24 @@ C<$screen> paramter to use the default screen of your L<Display> connection.
 Return the XID of the X11 root window.  C<$screen> is optional, and defaults to the
 default screen of your connection.
 If you want a Window object, call this method on L<X11::Xlib::Display>.
+
+=head3 DefaultVisual
+
+  my $visual= DefaultVisual($display, $screen);
+  # use instead of DefaultVisualOfScreen
+
+Screen is optional and defaults to the default screen of your connection.
+This returns a L</Visual>, not a L</XVisualInfo>.
+
+=head3 DefaultDepth
+
+  my $bits_per_pixel= DefaultDepth($display, $screen);
+  # use instead of DefaultDepthOfScreen, DisplayPlanes, PlanesOfScreen
+
+Return bits-per-pixel of the root window of a screen.
+If you omit C<$screen> it uses the default screen.
+
+=head2 VISUAL/COLORMAP FUNCTIONS
 
 =head3 XMatchVisualInfo
 
@@ -361,18 +419,11 @@ to your search.
 
 Pull the visual ID out of the opaque object $visual.
 
-If what you wanted was actually the XVisualInfo for a C<$visual>, then try:
+If what you wanted was actually the L</XVisualInfo> for a C<$visual>, then try:
 
   my ($vis_info)= GetVisualInfo($display, VisualIDMask, { visualid => $vis_id });
   # or with Display object:
   $display->visual_by_id($vis_id);
-
-=head3 DefaultVisual
-
-  my $visual= DefaultVisual($display, $screen);
-
-Screen is optional and defaults to the default screen of your connection.
-This returns a L</Visual>, not a L</XVisualInfo>.
 
 =head3 XCreateColormap
 
@@ -382,10 +433,24 @@ This returns a L</Visual>, not a L</XVisualInfo>.
   # and thus these are the defaults
   my $xid= XCreateColormap($display);
 
-Create a L</Colormap>.  Why is this function in the "Screen" section and not
-the "Window" section?  because it claims the only reason it wants the Window
-is to determine the screen to create a map for. The C<$visual> is a L</Visual>
+Create a L</Colormap>.  The C<$visual> is a L</Visual>
 object, and the C<$alloc_flag> is either C<AllocNone> or C<AllocAll>.
+
+=head3 XFreeColormap
+
+  XFreeColormap($display, $colormap);
+
+Delete a L</Colormap>, and set the colormap to C<None> for any window that was
+using it.
+
+=head3 Colormap TODO
+
+  XInstallColormap XUninstallColormap, XListInstalledColormaps
+  XGetWMColormapWindows XSetWMColormapWindows, XSetWindowColormap
+  XAllocColor XStoreColors XFreeColors XAllocColorPlanes XAllocNamedColor
+  XQueryColors XCopyColormapAndFree
+
+If anyone actually needs palette graphics anymore, send me a patch :-)
 
 =head2 XTEST INPUT SIMULATION
 

@@ -52,6 +52,14 @@ DESTROY(connsv)
             // goal is to clean up caches
             PerlXlib_conn_mark_closed(PerlXlib_get_conn_from_sv(connsv, 0));
 
+char *
+XServerVendor(dpy)
+    DisplayNotNull dpy
+
+int
+XVendorRelease(dpy)
+    DisplayNotNull dpy
+
 int
 ConnectionNumber(dpy)
     DisplayNotNull dpy
@@ -170,22 +178,8 @@ _wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
 # Screen Functions (fn_screen) -----------------------------------------------
 
 int
-DisplayWidth(dpy, screen=DefaultScreen(dpy))
+ScreenCount(dpy)
     DisplayNotNull dpy
-    int screen
-    CODE:
-        RETVAL = DisplayWidth(dpy, screen);
-    OUTPUT:
-        RETVAL
-
-int
-DisplayHeight(dpy, screen=DefaultScreen(dpy))
-    DisplayNotNull dpy
-    int screen
-    CODE:
-        RETVAL = DisplayHeight(dpy, screen);
-    OUTPUT:
-        RETVAL
 
 Window
 RootWindow(dpy, screen=DefaultScreen(dpy))
@@ -195,6 +189,48 @@ RootWindow(dpy, screen=DefaultScreen(dpy))
         RETVAL = RootWindow(dpy, screen);
     OUTPUT:
         RETVAL
+
+Colormap
+DefaultColormap(dpy, screen=DefaultScreen(dpy))
+    DisplayNotNull dpy
+    int screen
+
+int
+DefaultDepth(dpy, screen=DefaultScreen(dpy))
+    DisplayNotNull dpy
+    int screen
+
+GC
+DefaultGC(dpy, screen=DefaultScreen(dpy))
+    DisplayNotNull dpy
+    int screen
+
+Visual *
+DefaultVisual(dpy, screen=DefaultScreen(dpy))
+    DisplayNotNull dpy
+    int screen
+
+int
+DisplayWidth(dpy, screen=DefaultScreen(dpy))
+    DisplayNotNull dpy
+    int screen
+
+int
+DisplayHeight(dpy, screen=DefaultScreen(dpy))
+    DisplayNotNull dpy
+    int screen
+
+int
+DisplayWidthMM(dpy, screen=DefaultScreen(dpy))
+    DisplayNotNull dpy
+    int screen
+
+int
+DisplayHeightMM(dpy, screen=DefaultScreen(dpy))
+    DisplayNotNull dpy
+    int screen
+
+# Visual Functions (fn_vis) --------------------------------------------------
 
 Bool
 XMatchVisualInfo(dpy, screen, depth, class, vis_return)
@@ -227,15 +263,6 @@ int
 XVisualIDFromVisual(vis)
     Visual *vis
 
-Visual *
-DefaultVisual(dpy, screen=DefaultScreen(dpy))
-    DisplayNotNull dpy
-    int screen
-    CODE:
-        RETVAL = DefaultVisual(dpy, screen);
-    OUTPUT:
-        RETVAL
-
 Colormap
 XCreateColormap(dpy, wnd=RootWindow(dpy, DefaultScreen(dpy)), visual=DefaultVisual(dpy, DefaultScreen(dpy)), alloc=AllocNone)
     DisplayNotNull dpy
@@ -243,9 +270,10 @@ XCreateColormap(dpy, wnd=RootWindow(dpy, DefaultScreen(dpy)), visual=DefaultVisu
     Visual *visual
     int alloc
 
-# Window Functions (fn_window) -----------------------------------------------
-
-
+Colormap
+XFreeColormap(dpy, cmap)
+    DisplayNotNull dpy
+    int cmap
 
 # XTest Functions (fn_xtest) -------------------------------------------------
 
