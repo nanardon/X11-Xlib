@@ -251,7 +251,7 @@ type(event, value=NULL)
           // re-initialize all fields in the area that changed
           memset( ((char*)(void*)event) + sizeof(XAnyEvent), 0, sizeof(XEvent)-sizeof(XAnyEvent) );
           // re-bless the object if the thing passed to us was actually an object
-          if (sv_derived_from(ST(0), "X11::Xlib::Struct::XEvent"))
+          if (sv_derived_from(ST(0), "X11::Xlib::XEvent"))
             sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
         }
       }
@@ -350,10 +350,10 @@ sub generate_pack_c {
 const char* PerlXlib_xevent_pkg_for_type(int type) {
   switch (type) {
 @
-    $c .= qq{  case $_: return "X11::Xlib::Struct::XEvent::$type_to_struct{$_}";\n}
+    $c .= qq{  case $_: return "X11::Xlib::XEvent::$type_to_struct{$_}";\n}
         for keys %type_to_struct;
     $c .= <<"@";
-  default: return "X11::Xlib::Struct::XEvent";
+  default: return "X11::Xlib::XEvent";
   }
 }
 
@@ -486,14 +486,14 @@ sub generate_subclasses {
         next if $member_struct eq 'XAnyEvent' or !$typecodes or !@$typecodes;
         $pod .= "=head2 $member_struct\n\n"
             . "Used for event type: ".join(', ', @$typecodes)."\n\n";
-        $subclasses .= "\n\n\@X11::Xlib::Struct::${goal}::${member_struct}::ISA= ( __PACKAGE__ );\n";
+        $subclasses .= "\n\n\@X11::Xlib::${goal}::${member_struct}::ISA= ( __PACKAGE__ );\n";
         my $n;
         for my $path (sort grep { $_ =~ qr/^$field\./ and $_ !~ $ignore_re } keys %members) {
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
             ++$n;
             $pod .= "=head3 $name\n\n";
-            $subclasses .= "*X11::Xlib::Struct::${goal}::${member_struct}::$name= *_$name;\n";
+            $subclasses .= "*X11::Xlib::${goal}::${member_struct}::$name= *_$name;\n";
         }
     }
     $pod .= "=cut\n\n";
@@ -546,7 +546,7 @@ _pack(e, fields, consume)
         PerlXlib_XEvent_pack(e, fields, consume);
         newpkg= PerlXlib_xevent_pkg_for_type(e->type);
         // re-bless the object if the thing passed to us was actually an object
-        if (oldpkg != newpkg && sv_derived_from(ST(0), "X11::Xlib::Struct::XEvent"))
+        if (oldpkg != newpkg && sv_derived_from(ST(0), "X11::Xlib::XEvent"))
             sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
 
 void

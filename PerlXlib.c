@@ -216,41 +216,41 @@ void PerlXlib_install_error_handlers(Bool nonfatal, Bool fatal) {
 
 const char* PerlXlib_xevent_pkg_for_type(int type) {
   switch (type) {
-  case ConfigureRequest: return "X11::Xlib::Struct::XEvent::XConfigureRequestEvent";
-  case MapNotify: return "X11::Xlib::Struct::XEvent::XMapEvent";
-  case ColormapNotify: return "X11::Xlib::Struct::XEvent::XColormapEvent";
-  case EnterNotify: return "X11::Xlib::Struct::XEvent::XCrossingEvent";
-  case KeyPress: return "X11::Xlib::Struct::XEvent::XKeyEvent";
-  case LeaveNotify: return "X11::Xlib::Struct::XEvent::XCrossingEvent";
-  case FocusIn: return "X11::Xlib::Struct::XEvent::XFocusChangeEvent";
-  case PropertyNotify: return "X11::Xlib::Struct::XEvent::XPropertyEvent";
-  case ResizeRequest: return "X11::Xlib::Struct::XEvent::XResizeRequestEvent";
-  case SelectionRequest: return "X11::Xlib::Struct::XEvent::XSelectionRequestEvent";
-  case KeyRelease: return "X11::Xlib::Struct::XEvent::XKeyEvent";
-  case DestroyNotify: return "X11::Xlib::Struct::XEvent::XDestroyWindowEvent";
-  case GraphicsExpose: return "X11::Xlib::Struct::XEvent::XGraphicsExposeEvent";
-  case FocusOut: return "X11::Xlib::Struct::XEvent::XFocusChangeEvent";
-  case CirculateRequest: return "X11::Xlib::Struct::XEvent::XCirculateRequestEvent";
-  case ButtonPress: return "X11::Xlib::Struct::XEvent::XButtonEvent";
-  case Expose: return "X11::Xlib::Struct::XEvent::XExposeEvent";
-  case ReparentNotify: return "X11::Xlib::Struct::XEvent::XReparentEvent";
-  case ConfigureNotify: return "X11::Xlib::Struct::XEvent::XConfigureEvent";
-  case GenericEvent: return "X11::Xlib::Struct::XEvent::XGenericEvent";
-  case SelectionNotify: return "X11::Xlib::Struct::XEvent::XSelectionEvent";
-  case GravityNotify: return "X11::Xlib::Struct::XEvent::XGravityEvent";
-  case MotionNotify: return "X11::Xlib::Struct::XEvent::XMotionEvent";
-  case ClientMessage: return "X11::Xlib::Struct::XEvent::XClientMessageEvent";
-  case UnmapNotify: return "X11::Xlib::Struct::XEvent::XUnmapEvent";
-  case ButtonRelease: return "X11::Xlib::Struct::XEvent::XButtonEvent";
-  case MappingNotify: return "X11::Xlib::Struct::XEvent::XMappingEvent";
-  case CreateNotify: return "X11::Xlib::Struct::XEvent::XCreateWindowEvent";
-  case CirculateNotify: return "X11::Xlib::Struct::XEvent::XCirculateEvent";
-  case KeymapNotify: return "X11::Xlib::Struct::XEvent::XKeymapEvent";
-  case NoExpose: return "X11::Xlib::Struct::XEvent::XNoExposeEvent";
-  case VisibilityNotify: return "X11::Xlib::Struct::XEvent::XVisibilityEvent";
-  case MapRequest: return "X11::Xlib::Struct::XEvent::XMapRequestEvent";
-  case SelectionClear: return "X11::Xlib::Struct::XEvent::XSelectionClearEvent";
-  default: return "X11::Xlib::Struct::XEvent";
+  case ConfigureRequest: return "X11::Xlib::XEvent::XConfigureRequestEvent";
+  case MapNotify: return "X11::Xlib::XEvent::XMapEvent";
+  case ColormapNotify: return "X11::Xlib::XEvent::XColormapEvent";
+  case EnterNotify: return "X11::Xlib::XEvent::XCrossingEvent";
+  case KeyPress: return "X11::Xlib::XEvent::XKeyEvent";
+  case LeaveNotify: return "X11::Xlib::XEvent::XCrossingEvent";
+  case FocusIn: return "X11::Xlib::XEvent::XFocusChangeEvent";
+  case PropertyNotify: return "X11::Xlib::XEvent::XPropertyEvent";
+  case ResizeRequest: return "X11::Xlib::XEvent::XResizeRequestEvent";
+  case SelectionRequest: return "X11::Xlib::XEvent::XSelectionRequestEvent";
+  case KeyRelease: return "X11::Xlib::XEvent::XKeyEvent";
+  case DestroyNotify: return "X11::Xlib::XEvent::XDestroyWindowEvent";
+  case GraphicsExpose: return "X11::Xlib::XEvent::XGraphicsExposeEvent";
+  case FocusOut: return "X11::Xlib::XEvent::XFocusChangeEvent";
+  case CirculateRequest: return "X11::Xlib::XEvent::XCirculateRequestEvent";
+  case ButtonPress: return "X11::Xlib::XEvent::XButtonEvent";
+  case Expose: return "X11::Xlib::XEvent::XExposeEvent";
+  case ReparentNotify: return "X11::Xlib::XEvent::XReparentEvent";
+  case ConfigureNotify: return "X11::Xlib::XEvent::XConfigureEvent";
+  case GenericEvent: return "X11::Xlib::XEvent::XGenericEvent";
+  case SelectionNotify: return "X11::Xlib::XEvent::XSelectionEvent";
+  case GravityNotify: return "X11::Xlib::XEvent::XGravityEvent";
+  case MotionNotify: return "X11::Xlib::XEvent::XMotionEvent";
+  case ClientMessage: return "X11::Xlib::XEvent::XClientMessageEvent";
+  case UnmapNotify: return "X11::Xlib::XEvent::XUnmapEvent";
+  case ButtonRelease: return "X11::Xlib::XEvent::XButtonEvent";
+  case MappingNotify: return "X11::Xlib::XEvent::XMappingEvent";
+  case CreateNotify: return "X11::Xlib::XEvent::XCreateWindowEvent";
+  case CirculateNotify: return "X11::Xlib::XEvent::XCirculateEvent";
+  case KeymapNotify: return "X11::Xlib::XEvent::XKeymapEvent";
+  case NoExpose: return "X11::Xlib::XEvent::XNoExposeEvent";
+  case VisibilityNotify: return "X11::Xlib::XEvent::XVisibilityEvent";
+  case MapRequest: return "X11::Xlib::XEvent::XMapRequestEvent";
+  case SelectionClear: return "X11::Xlib::XEvent::XSelectionClearEvent";
+  default: return "X11::Xlib::XEvent";
   }
 }
 

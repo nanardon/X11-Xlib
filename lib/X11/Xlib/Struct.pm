@@ -112,8 +112,8 @@ sub buffer { ${$_[0]} }
 # The struct code is all in XS, so all we need to do is declare the package
 # inheritence.  Except for XEvent, which is complicated.
 
-require X11::Xlib::Struct::XEvent;
-@X11::Xlib::Struct::XVisualInfo::ISA= ( __PACKAGE__ );
-@X11::Xlib::Struct::XSetWindowAttributes::ISA= ( __PACKAGE__ );
+require X11::Xlib::XEvent;
+@X11::Xlib::XVisualInfo::ISA= ( __PACKAGE__ );
+@X11::Xlib::XSetWindowAttributes::ISA= ( __PACKAGE__ );
 
 1;
