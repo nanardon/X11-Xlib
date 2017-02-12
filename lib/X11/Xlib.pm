@@ -13,7 +13,7 @@ our $VERSION = '0.03';
 
 XSLoader::load(__PACKAGE__, $VERSION);
 
-require X11::Xlib::XEvent;
+require X11::Xlib::Struct;
 
 my %_constants= (
 # BEGIN GENERATED XS CONSTANT LIST
@@ -451,6 +451,88 @@ using it.
   XQueryColors XCopyColormapAndFree
 
 If anyone actually needs palette graphics anymore, send me a patch :-)
+
+=head2 PIXMAP FUNCTIONS
+
+=head3 XCreatePixmap
+
+  my $xid= XCreatePixmap($display, $drawable, $width, $height, $depth);
+
+The C<$drawable> parameter is just used to determine the screen.
+You probably want to pass either C<DefaultRootWindow($display)> or the window
+you're creating the pixmap for.
+
+=head3 XFreePixmap
+
+  XFreePixmap($display, $pixmap);
+
+=head3 XCreateBitmapFromData
+
+  my $pixmap_xid= XCreateBitmapFromData($display, $drawable, $data, $width, $height);
+
+First, be aware that in X11, a "bitmap" is literally a "Bit" "Map" (1 bit per pixel).
+
+The C<$drawable> determines which screen the pixmap is created for.
+The C<$data> is a string of bytes.
+
+The C<$data> should technically be opaque, written by another X11 function
+after having rendering graphics to a pixmap or something, but since those
+aren't implemented here yet, you'll just have to know the format.
+
+=head3 XCreatePixmapFromBitmapData
+
+  my $pixmap_xid= XCreatePixmapFromBitmapData($display, $drawable, $data,
+    $width, $height, $fg, $bg, $depth);
+
+This function uses a bitmap (1 bit per pixel) and a foreground and background
+color to build a pixmap of those two colors.  It's basically upscaling color
+from monochrome to C<$depth>.
+
+=head2 WINDOW FUNCTIONS
+
+=head3 XCreateWindow
+
+  my $wnd_xid= XCreateWindow(
+    $display,
+    $parent_window,  # such as DefaultRootWindow()
+    $x, $y,
+    $width, $height,
+    $border_width,
+    $color_depth,    # such as $visual_info->depth or DefaultDepth($display)
+    $class,          # InputOutput, InputOnly, or CopyFromParent
+    $visual,         # such as $visual_info->visual or DefaultVisual($display)
+    $attr_mask,      # indicates which fields of \%attrs are initialized
+    \%attrs          # struct XSetWindowAttributes or hashref of its fields
+  );
+
+The parameters the probably need more explanation are C<$visual> and C<%attrs>.
+
+C<$visual> is a L</Visual>.  You probably either want to use the default visual
+of the screen (L</DefaultVisual>) or look up your own visual using
+L</XGetVisualInfo> or L</XMatchVisualInfo> (which is a L</VisualInfo>, and has
+an attribute C<< ->visual >>).  In the second case, you should also pass
+C<$visual_info->depth> as the C<$depth> parameter, and create a matching
+L</Colormap> which you pass via the C<\%attrs> parameter.
+
+Since this function didn't have nearly enough parameters for the imaginations
+of the Xlib creators, they added the full L</XSetWindowAttributes> structure
+as a final argument.  But to save you the trouble of setting all I<those>
+fields, they added an C<$attr_mask> to indicate which fields you are using.
+
+The window is initially un-mapped (i.e. hidden).  See L</XMapWindow>
+
+=head3 XCreateSimpleWindow
+
+  my $wnd_xid= XCreateSimpleWindow(
+    $display, $parent_window,
+    $x, $y, $width, $height,
+    $border_width, $border_color, $background_color
+  );
+
+This function basically creates a "child window", clipped to its parent, with
+all the same visual configuration.
+
+It is initially unmapped.  See L</XMapWindow>.
 
 =head2 XTEST INPUT SIMULATION
 

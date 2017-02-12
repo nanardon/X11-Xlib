@@ -1,14 +1,15 @@
 #!/usr/bin/env perl
-
+use Carp::Always;
+BEGIN { $Carp::Verbose= 1; }
 use strict;
 use warnings;
 use Test::More tests => 20;
 
-use_ok('X11::Xlib::XEvent') or die;
+use_ok('X11::Xlib::Struct::XEvent') or die;
 sub err(&) { my $code= shift; my $ret; { local $@= ''; eval { $code->() }; $ret= $@; } $ret }
 
 # Create a new XEvent
-my $blank_event= new_ok( 'X11::Xlib::XEvent', [], 'blank event' );
+my $blank_event= new_ok( 'X11::Xlib::Struct::XEvent', [], 'blank event' );
 ok( defined $blank_event->buffer, 'buffer is defined' );
 ok( length($blank_event->buffer) > 0, 'and has non-zero length' );
 is( $blank_event->type,    0,     'type=0' );
@@ -24,8 +25,8 @@ like( err{ $blank_event->_get_x }, qr/XEvent\.x/, 'XS refuses to fetch subtype f
 
 # Create an XEvent with constructor arguments
 my $bp_ev;
-is( err{ $bp_ev= X11::Xlib::XEvent->new(type => 'ButtonPress'); }, '', 'create buttonpress event' );
-isa_ok( $bp_ev, 'X11::Xlib::XEvent::XButtonEvent', 'event' )
+is( err{ $bp_ev= X11::Xlib::Struct::XEvent->new(type => 'ButtonPress'); }, '', 'create buttonpress event' );
+isa_ok( $bp_ev, 'X11::Xlib::Struct::XEvent::XButtonEvent', 'event' )
     or diag explain $bp_ev;
 
 is( $bp_ev->type, X11::Xlib::ButtonPress(), 'button press correct type' );
@@ -35,7 +36,7 @@ is( err{ $bp_ev->x(50) }, '', 'set x on button event' );
 is( err{ $bp_ev->y(-7) }, '', 'set y on button event' );
 
 # Clone an event via its fields:
-my $clone= new_ok( 'X11::Xlib::XEvent', [$bp_ev->unpack], 'clone event with pack(unpack)' )
+my $clone= new_ok( 'X11::Xlib::Struct::XEvent', [$bp_ev->unpack], 'clone event with pack(unpack)' )
     or diag explain $bp_ev->unpack;
 is( $clone->buffer, $bp_ev->buffer, 'clone contains identical bytes' );
 

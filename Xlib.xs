@@ -301,6 +301,81 @@ XFreeColormap(dpy, cmap)
     DisplayNotNull dpy
     int cmap
 
+# Pixmap Functions (fn_pix) --------------------------------------------------
+
+Pixmap
+XCreatePixmap(dpy, drw, width, height, depth)
+    DisplayNotNull dpy
+    Drawable drw
+    int width
+    int height
+    int depth
+
+void
+XFreePixmap(dpy, pix)
+    DisplayNotNull dpy
+    Pixmap pix
+
+Pixmap
+XCreateBitmapFromData(dpy, drw, data, width, height)
+    DisplayNotNull dpy
+    Drawable drw
+    SV * data
+    int width
+    int height
+    CODE:
+        if (!SvPOK(data) || SvCUR(data) < ( (width * height + 7) / 8 ))
+            croak( "'data' must be at least %d bytes long", ( (width * height + 7) / 8 ));
+        RETVAL = XCreateBitmapFromData(dpy, drw, SvPVX(data), width, height);
+    OUTPUT:
+        RETVAL
+
+Pixmap
+XCreatePixmapFromBitmapData(dpy, drw, data, width, height, fg, bg, depth)
+    DisplayNotNull dpy
+    Drawable drw
+    SV * data
+    int width
+    int height
+    long fg
+    long bg
+    int depth
+    CODE:
+        if (!SvPOK(data) || SvCUR(data) < ( (width * height + 7) / 8 ))
+            croak( "'data' must be at least %d bytes long", ( (width * height + 7) / 8 ));
+        RETVAL = XCreatePixmapFromBitmapData(dpy, drw, SvPVX(data), width, height, fg, bg, depth);
+    OUTPUT:
+        RETVAL
+
+# Window Functions (fn_win) --------------------------------------------------
+
+Window
+XCreateWindow(dpy, parent, x, y, w, h, border, depth, class, visual, attr_mask, attrs)
+    DisplayNotNull dpy
+    Window parent
+    int x
+    int y
+    int w
+    int h
+    int border
+    int depth
+    int class
+    Visual *visual
+    int attr_mask
+    XSetWindowAttributes *attrs
+
+Window
+XCreateSimpleWindow(dpy, parent, x, y, w, h, border_width, border_color, background_color)
+    DisplayNotNull dpy
+    Window parent
+    int x
+    int y
+    int w
+    int h
+    int border_width
+    int border_color
+    int background_color
+
 # XTest Functions (fn_xtest) -------------------------------------------------
 
 int
@@ -475,14 +550,38 @@ _install_error_handlers(nonfatal,fatal)
     CODE:
         PerlXlib_install_error_handlers(nonfatal, fatal);
 
-MODULE = X11::Xlib                PACKAGE = X11::Xlib::XEvent
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::Struct::XEvent
+
+# ----------------------------------------------------------------------------
+# BEGIN GENERATED X11_Xlib_XEvent
+void
+_initialize(e)
+    XEvent *e
+    PPCODE:
+        memset((void*) e, 0, sizeof(*e));
+
+int
+_sizeof(ignored)
+    SV *ignored
+    CODE:
+        RETVAL = sizeof(XEvent);
+    OUTPUT:
+        RETVAL
 
 void
-_pack(e, fields)
+_pack(e, fields, consume)
     XEvent *e
     HV *fields
+    Bool consume
+    INIT:
+        const char *oldpkg, *newpkg;
     PPCODE:
-        PerlXlib_XEvent_pack(e, fields);
+        oldpkg= PerlXlib_xevent_pkg_for_type(e->type);
+        PerlXlib_XEvent_pack(e, fields, consume);
+        newpkg= PerlXlib_xevent_pkg_for_type(e->type);
+        // re-bless the object if the thing passed to us was actually an object
+        if (oldpkg != newpkg && sv_derives_from(ST(0), "X11::Xlib::Struct::XEvent"))
+            sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
 
 void
 _unpack(e, fields)
@@ -491,1613 +590,993 @@ _unpack(e, fields)
     PPCODE:
         PerlXlib_XEvent_unpack(e, fields);
 
-# ----------------------------------------------------------------------------
-# BEGIN GENERATED X11_Xlib_XEvent
-
-Window
-_get_above(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ConfigureNotify:
-      RETVAL = event->xconfigure.above; break;
-    default: croak("Can't access XEvent.above for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
 void
-_set_above(event, value)
+_above(event, value=NULL)
   XEvent *event
-  Window value
-  CODE:
-    switch( event->type ) {
-    case ConfigureNotify:
-      event->xconfigure.above= value; break;
-    default: croak("Can't access XEvent.above for type=%d", event->type);
-    }
-
-Atom
-_get_atom(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case PropertyNotify:
-      RETVAL = event->xproperty.atom; break;
-    default: croak("Can't access XEvent.atom for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_atom(event, value)
-  XEvent *event
-  Atom value
-  CODE:
-    switch( event->type ) {
-    case PropertyNotify:
-      event->xproperty.atom= value; break;
-    default: croak("Can't access XEvent.atom for type=%d", event->type);
-    }
-
-void
-_get_b(event)
-  XEvent *event
+  SV *value
+  INIT:
+    Window c_value;
   PPCODE:
-    switch( event->type ) {
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case ConfigureNotify:
+      if (value) { event->xconfigure.above = c_value; } else { c_value= event->xconfigure.above; } break;
+    case ConfigureRequest:
+      if (value) { event->xconfigurerequest.above = c_value; } else { c_value= event->xconfigurerequest.above; } break;
+    default: croak("Can't access XEvent.above for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_atom(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Atom c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case PropertyNotify:
+      if (value) { event->xproperty.atom = c_value; } else { c_value= event->xproperty.atom; } break;
+    default: croak("Can't access XEvent.atom for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_b(event, value=NULL)
+  XEvent *event
+  SV *value
+  PPCODE:
+    switch (event->type) {
     case ClientMessage:
-      PUSHs(sv_2mortal(newSVpvn((void*)event->xclient.data.b, sizeof(char)*20))); break;
+      if (value) { { if (!SvPOK(value) || SvCUR(value) != sizeof(char)*20)  croak("Expected scalar of length %d but got %d", sizeof(char)*20, SvCUR(value)); memcpy(event->xclient.data.b, SvPVX(value), sizeof(char)*20);} } else { PUSHs(sv_2mortal(newSVpvn((void*)event->xclient.data.b, sizeof(char)*20))); } break;
     default: croak("Can't access XEvent.b for type=%d", event->type);
     }
 
-
 void
-_set_b(event, value)
+_border_width(event, value=NULL)
   XEvent *event
-  SV* value
-  CODE:
-    switch( event->type ) {
-    case ClientMessage:
-      { if (!SvPOK(value) || SvCUR(value) != sizeof(char)*20)  croak("Expected scalar of length %d but got %d", sizeof(char)*20, SvCUR(value)); memcpy(event->xclient.data.b, SvPVX(value), sizeof(char)*20);} break;
-    default: croak("Can't access XEvent.b for type=%d", event->type);
-    }
-
-int
-_get_border_width(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ConfigureNotify:
-      RETVAL = event->xconfigure.border_width; break;
-    case CreateNotify:
-      RETVAL = event->xcreatewindow.border_width; break;
-    default: croak("Can't access XEvent.border_width for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_border_width(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case ConfigureNotify:
-      event->xconfigure.border_width= value; break;
-    case CreateNotify:
-      event->xcreatewindow.border_width= value; break;
-    default: croak("Can't access XEvent.border_width for type=%d", event->type);
-    }
-
-unsigned int
-_get_button(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      RETVAL = event->xbutton.button; break;
-    default: croak("Can't access XEvent.button for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_button(event, value)
-  XEvent *event
-  unsigned int value
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      event->xbutton.button= value; break;
-    default: croak("Can't access XEvent.button for type=%d", event->type);
-    }
-
-Colormap
-_get_colormap(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ColormapNotify:
-      RETVAL = event->xcolormap.colormap; break;
-    default: croak("Can't access XEvent.colormap for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_colormap(event, value)
-  XEvent *event
-  Colormap value
-  CODE:
-    switch( event->type ) {
-    case ColormapNotify:
-      event->xcolormap.colormap= value; break;
-    default: croak("Can't access XEvent.colormap for type=%d", event->type);
-    }
-
-unsigned int
-_get_cookie(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    default: croak("Can't access XEvent.cookie for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_cookie(event, value)
-  XEvent *event
-  unsigned int value
-  CODE:
-    switch( event->type ) {
-    default: croak("Can't access XEvent.cookie for type=%d", event->type);
-    }
-
-int
-_get_count(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case Expose:
-      RETVAL = event->xexpose.count; break;
-    case GraphicsExpose:
-      RETVAL = event->xgraphicsexpose.count; break;
-    case MappingNotify:
-      RETVAL = event->xmapping.count; break;
-    default: croak("Can't access XEvent.count for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_count(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case Expose:
-      event->xexpose.count= value; break;
-    case GraphicsExpose:
-      event->xgraphicsexpose.count= value; break;
-    case MappingNotify:
-      event->xmapping.count= value; break;
-    default: croak("Can't access XEvent.count for type=%d", event->type);
-    }
-
-int
-_get_detail(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case EnterNotify:
-    case LeaveNotify:
-      RETVAL = event->xcrossing.detail; break;
-    case FocusIn:
-    case FocusOut:
-      RETVAL = event->xfocus.detail; break;
-    default: croak("Can't access XEvent.detail for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_detail(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case EnterNotify:
-    case LeaveNotify:
-      event->xcrossing.detail= value; break;
-    case FocusIn:
-    case FocusOut:
-      event->xfocus.detail= value; break;
-    default: croak("Can't access XEvent.detail for type=%d", event->type);
-    }
-
-Display *
-_get_display(event)
-  XEvent *event
-  CODE:
-    RETVAL = event->xany.display;
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_display(event, value)
-  XEvent *event
-  Display * value
-  CODE:
-    event->xany.display= value;
-
-
-Drawable
-_get_drawable(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case GraphicsExpose:
-      RETVAL = event->xgraphicsexpose.drawable; break;
-    case NoExpose:
-      RETVAL = event->xnoexpose.drawable; break;
-    default: croak("Can't access XEvent.drawable for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_drawable(event, value)
-  XEvent *event
-  Drawable value
-  CODE:
-    switch( event->type ) {
-    case GraphicsExpose:
-      event->xgraphicsexpose.drawable= value; break;
-    case NoExpose:
-      event->xnoexpose.drawable= value; break;
-    default: croak("Can't access XEvent.drawable for type=%d", event->type);
-    }
-
-Window
-_get_event(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case CirculateNotify:
-      RETVAL = event->xcirculate.event; break;
-    case ConfigureNotify:
-      RETVAL = event->xconfigure.event; break;
-    case DestroyNotify:
-      RETVAL = event->xdestroywindow.event; break;
-    case GravityNotify:
-      RETVAL = event->xgravity.event; break;
-    case MapNotify:
-      RETVAL = event->xmap.event; break;
-    case ReparentNotify:
-      RETVAL = event->xreparent.event; break;
-    case UnmapNotify:
-      RETVAL = event->xunmap.event; break;
-    default: croak("Can't access XEvent.event for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_event(event, value)
-  XEvent *event
-  Window value
-  CODE:
-    switch( event->type ) {
-    case CirculateNotify:
-      event->xcirculate.event= value; break;
-    case ConfigureNotify:
-      event->xconfigure.event= value; break;
-    case DestroyNotify:
-      event->xdestroywindow.event= value; break;
-    case GravityNotify:
-      event->xgravity.event= value; break;
-    case MapNotify:
-      event->xmap.event= value; break;
-    case ReparentNotify:
-      event->xreparent.event= value; break;
-    case UnmapNotify:
-      event->xunmap.event= value; break;
-    default: croak("Can't access XEvent.event for type=%d", event->type);
-    }
-
-int
-_get_evtype(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    default: croak("Can't access XEvent.evtype for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_evtype(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    default: croak("Can't access XEvent.evtype for type=%d", event->type);
-    }
-
-int
-_get_extension(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    default: croak("Can't access XEvent.extension for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_extension(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    default: croak("Can't access XEvent.extension for type=%d", event->type);
-    }
-
-int
-_get_first_keycode(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case MappingNotify:
-      RETVAL = event->xmapping.first_keycode; break;
-    default: croak("Can't access XEvent.first_keycode for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_first_keycode(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case MappingNotify:
-      event->xmapping.first_keycode= value; break;
-    default: croak("Can't access XEvent.first_keycode for type=%d", event->type);
-    }
-
-Bool
-_get_focus(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case EnterNotify:
-    case LeaveNotify:
-      RETVAL = event->xcrossing.focus; break;
-    default: croak("Can't access XEvent.focus for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_focus(event, value)
-  XEvent *event
-  Bool value
-  CODE:
-    switch( event->type ) {
-    case EnterNotify:
-    case LeaveNotify:
-      event->xcrossing.focus= value; break;
-    default: croak("Can't access XEvent.focus for type=%d", event->type);
-    }
-
-int
-_get_format(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ClientMessage:
-      RETVAL = event->xclient.format; break;
-    default: croak("Can't access XEvent.format for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_format(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case ClientMessage:
-      event->xclient.format= value; break;
-    default: croak("Can't access XEvent.format for type=%d", event->type);
-    }
-
-Bool
-_get_from_configure(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case UnmapNotify:
-      RETVAL = event->xunmap.from_configure; break;
-    default: croak("Can't access XEvent.from_configure for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_from_configure(event, value)
-  XEvent *event
-  Bool value
-  CODE:
-    switch( event->type ) {
-    case UnmapNotify:
-      event->xunmap.from_configure= value; break;
-    default: croak("Can't access XEvent.from_configure for type=%d", event->type);
-    }
-
-int
-_get_height(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ConfigureNotify:
-      RETVAL = event->xconfigure.height; break;
-    case CreateNotify:
-      RETVAL = event->xcreatewindow.height; break;
-    case Expose:
-      RETVAL = event->xexpose.height; break;
-    case GraphicsExpose:
-      RETVAL = event->xgraphicsexpose.height; break;
-    case ResizeRequest:
-      RETVAL = event->xresizerequest.height; break;
-    default: croak("Can't access XEvent.height for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_height(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case ConfigureNotify:
-      event->xconfigure.height= value; break;
-    case CreateNotify:
-      event->xcreatewindow.height= value; break;
-    case Expose:
-      event->xexpose.height= value; break;
-    case GraphicsExpose:
-      event->xgraphicsexpose.height= value; break;
-    case ResizeRequest:
-      event->xresizerequest.height= value; break;
-    default: croak("Can't access XEvent.height for type=%d", event->type);
-    }
-
-char
-_get_is_hint(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case MotionNotify:
-      RETVAL = event->xmotion.is_hint; break;
-    default: croak("Can't access XEvent.is_hint for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_is_hint(event, value)
-  XEvent *event
-  char value
-  CODE:
-    switch( event->type ) {
-    case MotionNotify:
-      event->xmotion.is_hint= value; break;
-    default: croak("Can't access XEvent.is_hint for type=%d", event->type);
-    }
-
-void
-_get_key_vector(event)
-  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
   PPCODE:
-    switch( event->type ) {
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case ConfigureNotify:
+      if (value) { event->xconfigure.border_width = c_value; } else { c_value= event->xconfigure.border_width; } break;
+    case ConfigureRequest:
+      if (value) { event->xconfigurerequest.border_width = c_value; } else { c_value= event->xconfigurerequest.border_width; } break;
+    case CreateNotify:
+      if (value) { event->xcreatewindow.border_width = c_value; } else { c_value= event->xcreatewindow.border_width; } break;
+    default: croak("Can't access XEvent.border_width for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_button(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    unsigned int c_value;
+  PPCODE:
+    if (value) { c_value= SvUV(value); }
+    switch (event->type) {
+    case ButtonPress:
+    case ButtonRelease:
+      if (value) { event->xbutton.button = c_value; } else { c_value= event->xbutton.button; } break;
+    default: croak("Can't access XEvent.button for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_colormap(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Colormap c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case ColormapNotify:
+      if (value) { event->xcolormap.colormap = c_value; } else { c_value= event->xcolormap.colormap; } break;
+    default: croak("Can't access XEvent.colormap for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_cookie(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    unsigned int c_value;
+  PPCODE:
+    if (value) { c_value= SvUV(value); }
+    switch (event->type) {
+    default: croak("Can't access XEvent.cookie for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_count(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case Expose:
+      if (value) { event->xexpose.count = c_value; } else { c_value= event->xexpose.count; } break;
+    case GraphicsExpose:
+      if (value) { event->xgraphicsexpose.count = c_value; } else { c_value= event->xgraphicsexpose.count; } break;
+    case MappingNotify:
+      if (value) { event->xmapping.count = c_value; } else { c_value= event->xmapping.count; } break;
+    default: croak("Can't access XEvent.count for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_detail(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case ConfigureRequest:
+      if (value) { event->xconfigurerequest.detail = c_value; } else { c_value= event->xconfigurerequest.detail; } break;
+    case EnterNotify:
+    case LeaveNotify:
+      if (value) { event->xcrossing.detail = c_value; } else { c_value= event->xcrossing.detail; } break;
+    case FocusIn:
+    case FocusOut:
+      if (value) { event->xfocus.detail = c_value; } else { c_value= event->xfocus.detail; } break;
+    default: croak("Can't access XEvent.detail for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+display(event, value=NULL)
+  XEvent *event
+  SV *value
+  PPCODE:
+    if (value) {
+      event->xany.display= PerlXlib_sv_to_display(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal((event->xany.display? sv_setref_pv(newSV(0), "X11::Xlib", (void*)event->xany.display) : &PL_sv_undef)));
+    }
+
+void
+_drawable(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Drawable c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case GraphicsExpose:
+      if (value) { event->xgraphicsexpose.drawable = c_value; } else { c_value= event->xgraphicsexpose.drawable; } break;
+    case NoExpose:
+      if (value) { event->xnoexpose.drawable = c_value; } else { c_value= event->xnoexpose.drawable; } break;
+    default: croak("Can't access XEvent.drawable for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_event(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Window c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case CirculateNotify:
+      if (value) { event->xcirculate.event = c_value; } else { c_value= event->xcirculate.event; } break;
+    case ConfigureNotify:
+      if (value) { event->xconfigure.event = c_value; } else { c_value= event->xconfigure.event; } break;
+    case DestroyNotify:
+      if (value) { event->xdestroywindow.event = c_value; } else { c_value= event->xdestroywindow.event; } break;
+    case GravityNotify:
+      if (value) { event->xgravity.event = c_value; } else { c_value= event->xgravity.event; } break;
+    case MapNotify:
+      if (value) { event->xmap.event = c_value; } else { c_value= event->xmap.event; } break;
+    case ReparentNotify:
+      if (value) { event->xreparent.event = c_value; } else { c_value= event->xreparent.event; } break;
+    case UnmapNotify:
+      if (value) { event->xunmap.event = c_value; } else { c_value= event->xunmap.event; } break;
+    default: croak("Can't access XEvent.event for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_evtype(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case GenericEvent:
+      if (value) { event->xgeneric.evtype = c_value; } else { c_value= event->xgeneric.evtype; } break;
+    default: croak("Can't access XEvent.evtype for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_extension(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case GenericEvent:
+      if (value) { event->xgeneric.extension = c_value; } else { c_value= event->xgeneric.extension; } break;
+    default: croak("Can't access XEvent.extension for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_first_keycode(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case MappingNotify:
+      if (value) { event->xmapping.first_keycode = c_value; } else { c_value= event->xmapping.first_keycode; } break;
+    default: croak("Can't access XEvent.first_keycode for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_focus(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Bool c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case EnterNotify:
+    case LeaveNotify:
+      if (value) { event->xcrossing.focus = c_value; } else { c_value= event->xcrossing.focus; } break;
+    default: croak("Can't access XEvent.focus for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_format(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case ClientMessage:
+      if (value) { event->xclient.format = c_value; } else { c_value= event->xclient.format; } break;
+    default: croak("Can't access XEvent.format for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_from_configure(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Bool c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case UnmapNotify:
+      if (value) { event->xunmap.from_configure = c_value; } else { c_value= event->xunmap.from_configure; } break;
+    default: croak("Can't access XEvent.from_configure for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_height(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case ConfigureNotify:
+      if (value) { event->xconfigure.height = c_value; } else { c_value= event->xconfigure.height; } break;
+    case ConfigureRequest:
+      if (value) { event->xconfigurerequest.height = c_value; } else { c_value= event->xconfigurerequest.height; } break;
+    case CreateNotify:
+      if (value) { event->xcreatewindow.height = c_value; } else { c_value= event->xcreatewindow.height; } break;
+    case Expose:
+      if (value) { event->xexpose.height = c_value; } else { c_value= event->xexpose.height; } break;
+    case GraphicsExpose:
+      if (value) { event->xgraphicsexpose.height = c_value; } else { c_value= event->xgraphicsexpose.height; } break;
+    case ResizeRequest:
+      if (value) { event->xresizerequest.height = c_value; } else { c_value= event->xresizerequest.height; } break;
+    default: croak("Can't access XEvent.height for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_is_hint(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    char c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case MotionNotify:
+      if (value) { event->xmotion.is_hint = c_value; } else { c_value= event->xmotion.is_hint; } break;
+    default: croak("Can't access XEvent.is_hint for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_key_vector(event, value=NULL)
+  XEvent *event
+  SV *value
+  PPCODE:
+    switch (event->type) {
     case KeymapNotify:
-      PUSHs(sv_2mortal(newSVpvn((void*)event->xkeymap.key_vector, sizeof(char)*32))); break;
+      if (value) { { if (!SvPOK(value) || SvCUR(value) != sizeof(char)*32)  croak("Expected scalar of length %d but got %d", sizeof(char)*32, SvCUR(value)); memcpy(event->xkeymap.key_vector, SvPVX(value), sizeof(char)*32);} } else { PUSHs(sv_2mortal(newSVpvn((void*)event->xkeymap.key_vector, sizeof(char)*32))); } break;
     default: croak("Can't access XEvent.key_vector for type=%d", event->type);
     }
 
-
 void
-_set_key_vector(event, value)
+_keycode(event, value=NULL)
   XEvent *event
-  SV* value
-  CODE:
-    switch( event->type ) {
-    case KeymapNotify:
-      { if (!SvPOK(value) || SvCUR(value) != sizeof(char)*32)  croak("Expected scalar of length %d but got %d", sizeof(char)*32, SvCUR(value)); memcpy(event->xkeymap.key_vector, SvPVX(value), sizeof(char)*32);} break;
-    default: croak("Can't access XEvent.key_vector for type=%d", event->type);
-    }
-
-unsigned int
-_get_keycode(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case KeyPress:
-    case KeyRelease:
-      RETVAL = event->xkey.keycode; break;
-    default: croak("Can't access XEvent.keycode for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_keycode(event, value)
-  XEvent *event
-  unsigned int value
-  CODE:
-    switch( event->type ) {
-    case KeyPress:
-    case KeyRelease:
-      event->xkey.keycode= value; break;
-    default: croak("Can't access XEvent.keycode for type=%d", event->type);
-    }
-
-void
-_get_l(event)
-  XEvent *event
+  SV *value
+  INIT:
+    unsigned int c_value;
   PPCODE:
-    switch( event->type ) {
+    if (value) { c_value= SvUV(value); }
+    switch (event->type) {
+    case KeyPress:
+    case KeyRelease:
+      if (value) { event->xkey.keycode = c_value; } else { c_value= event->xkey.keycode; } break;
+    default: croak("Can't access XEvent.keycode for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_l(event, value=NULL)
+  XEvent *event
+  SV *value
+  PPCODE:
+    switch (event->type) {
     case ClientMessage:
-      PUSHs(sv_2mortal(newSVpvn((void*)event->xclient.data.l, sizeof(long)*5))); break;
+      if (value) { { if (!SvPOK(value) || SvCUR(value) != sizeof(long)*5)  croak("Expected scalar of length %d but got %d", sizeof(long)*5, SvCUR(value)); memcpy(event->xclient.data.l, SvPVX(value), sizeof(long)*5);} } else { PUSHs(sv_2mortal(newSVpvn((void*)event->xclient.data.l, sizeof(long)*5))); } break;
     default: croak("Can't access XEvent.l for type=%d", event->type);
     }
 
-
 void
-_set_l(event, value)
+_major_code(event, value=NULL)
   XEvent *event
-  SV* value
-  CODE:
-    switch( event->type ) {
-    case ClientMessage:
-      { if (!SvPOK(value) || SvCUR(value) != sizeof(long)*5)  croak("Expected scalar of length %d but got %d", sizeof(long)*5, SvCUR(value)); memcpy(event->xclient.data.l, SvPVX(value), sizeof(long)*5);} break;
-    default: croak("Can't access XEvent.l for type=%d", event->type);
-    }
-
-int
-_get_major_code(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case GraphicsExpose:
-      RETVAL = event->xgraphicsexpose.major_code; break;
-    case NoExpose:
-      RETVAL = event->xnoexpose.major_code; break;
-    default: croak("Can't access XEvent.major_code for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_major_code(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case GraphicsExpose:
-      event->xgraphicsexpose.major_code= value; break;
-    case NoExpose:
-      event->xnoexpose.major_code= value; break;
-    default: croak("Can't access XEvent.major_code for type=%d", event->type);
-    }
-
-Atom
-_get_message_type(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ClientMessage:
-      RETVAL = event->xclient.message_type; break;
-    default: croak("Can't access XEvent.message_type for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_message_type(event, value)
-  XEvent *event
-  Atom value
-  CODE:
-    switch( event->type ) {
-    case ClientMessage:
-      event->xclient.message_type= value; break;
-    default: croak("Can't access XEvent.message_type for type=%d", event->type);
-    }
-
-int
-_get_minor_code(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case GraphicsExpose:
-      RETVAL = event->xgraphicsexpose.minor_code; break;
-    case NoExpose:
-      RETVAL = event->xnoexpose.minor_code; break;
-    default: croak("Can't access XEvent.minor_code for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_minor_code(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case GraphicsExpose:
-      event->xgraphicsexpose.minor_code= value; break;
-    case NoExpose:
-      event->xnoexpose.minor_code= value; break;
-    default: croak("Can't access XEvent.minor_code for type=%d", event->type);
-    }
-
-int
-_get_mode(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case EnterNotify:
-    case LeaveNotify:
-      RETVAL = event->xcrossing.mode; break;
-    case FocusIn:
-    case FocusOut:
-      RETVAL = event->xfocus.mode; break;
-    default: croak("Can't access XEvent.mode for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_mode(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case EnterNotify:
-    case LeaveNotify:
-      event->xcrossing.mode= value; break;
-    case FocusIn:
-    case FocusOut:
-      event->xfocus.mode= value; break;
-    default: croak("Can't access XEvent.mode for type=%d", event->type);
-    }
-
-Bool
-_get_new(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ColormapNotify:
-      RETVAL = event->xcolormap.new; break;
-    default: croak("Can't access XEvent.new for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_new(event, value)
-  XEvent *event
-  Bool value
-  CODE:
-    switch( event->type ) {
-    case ColormapNotify:
-      event->xcolormap.new= value; break;
-    default: croak("Can't access XEvent.new for type=%d", event->type);
-    }
-
-Bool
-_get_override_redirect(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ConfigureNotify:
-      RETVAL = event->xconfigure.override_redirect; break;
-    case CreateNotify:
-      RETVAL = event->xcreatewindow.override_redirect; break;
-    case MapNotify:
-      RETVAL = event->xmap.override_redirect; break;
-    case ReparentNotify:
-      RETVAL = event->xreparent.override_redirect; break;
-    default: croak("Can't access XEvent.override_redirect for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_override_redirect(event, value)
-  XEvent *event
-  Bool value
-  CODE:
-    switch( event->type ) {
-    case ConfigureNotify:
-      event->xconfigure.override_redirect= value; break;
-    case CreateNotify:
-      event->xcreatewindow.override_redirect= value; break;
-    case MapNotify:
-      event->xmap.override_redirect= value; break;
-    case ReparentNotify:
-      event->xreparent.override_redirect= value; break;
-    default: croak("Can't access XEvent.override_redirect for type=%d", event->type);
-    }
-
-Window
-_get_owner(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case SelectionRequest:
-      RETVAL = event->xselectionrequest.owner; break;
-    default: croak("Can't access XEvent.owner for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_owner(event, value)
-  XEvent *event
-  Window value
-  CODE:
-    switch( event->type ) {
-    case SelectionRequest:
-      event->xselectionrequest.owner= value; break;
-    default: croak("Can't access XEvent.owner for type=%d", event->type);
-    }
-
-void
-_get_pad(event)
-  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
   PPCODE:
-    switch( event->type ) {
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case GraphicsExpose:
+      if (value) { event->xgraphicsexpose.major_code = c_value; } else { c_value= event->xgraphicsexpose.major_code; } break;
+    case NoExpose:
+      if (value) { event->xnoexpose.major_code = c_value; } else { c_value= event->xnoexpose.major_code; } break;
+    default: croak("Can't access XEvent.major_code for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_message_type(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Atom c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case ClientMessage:
+      if (value) { event->xclient.message_type = c_value; } else { c_value= event->xclient.message_type; } break;
+    default: croak("Can't access XEvent.message_type for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_minor_code(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case GraphicsExpose:
+      if (value) { event->xgraphicsexpose.minor_code = c_value; } else { c_value= event->xgraphicsexpose.minor_code; } break;
+    case NoExpose:
+      if (value) { event->xnoexpose.minor_code = c_value; } else { c_value= event->xnoexpose.minor_code; } break;
+    default: croak("Can't access XEvent.minor_code for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_mode(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case EnterNotify:
+    case LeaveNotify:
+      if (value) { event->xcrossing.mode = c_value; } else { c_value= event->xcrossing.mode; } break;
+    case FocusIn:
+    case FocusOut:
+      if (value) { event->xfocus.mode = c_value; } else { c_value= event->xfocus.mode; } break;
+    default: croak("Can't access XEvent.mode for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_new(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Bool c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case ColormapNotify:
+      if (value) { event->xcolormap.new = c_value; } else { c_value= event->xcolormap.new; } break;
+    default: croak("Can't access XEvent.new for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_override_redirect(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Bool c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case ConfigureNotify:
+      if (value) { event->xconfigure.override_redirect = c_value; } else { c_value= event->xconfigure.override_redirect; } break;
+    case CreateNotify:
+      if (value) { event->xcreatewindow.override_redirect = c_value; } else { c_value= event->xcreatewindow.override_redirect; } break;
+    case MapNotify:
+      if (value) { event->xmap.override_redirect = c_value; } else { c_value= event->xmap.override_redirect; } break;
+    case ReparentNotify:
+      if (value) { event->xreparent.override_redirect = c_value; } else { c_value= event->xreparent.override_redirect; } break;
+    default: croak("Can't access XEvent.override_redirect for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_owner(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Window c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case SelectionRequest:
+      if (value) { event->xselectionrequest.owner = c_value; } else { c_value= event->xselectionrequest.owner; } break;
+    default: croak("Can't access XEvent.owner for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_pad(event, value=NULL)
+  XEvent *event
+  SV *value
+  PPCODE:
+    switch (event->type) {
     default: croak("Can't access XEvent.pad for type=%d", event->type);
     }
 
-
 void
-_set_pad(event, value)
+_parent(event, value=NULL)
   XEvent *event
-  SV* value
-  CODE:
-    switch( event->type ) {
-    default: croak("Can't access XEvent.pad for type=%d", event->type);
-    }
-
-Window
-_get_parent(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case CreateNotify:
-      RETVAL = event->xcreatewindow.parent; break;
-    case ReparentNotify:
-      RETVAL = event->xreparent.parent; break;
-    default: croak("Can't access XEvent.parent for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_parent(event, value)
-  XEvent *event
-  Window value
-  CODE:
-    switch( event->type ) {
-    case CreateNotify:
-      event->xcreatewindow.parent= value; break;
-    case ReparentNotify:
-      event->xreparent.parent= value; break;
-    default: croak("Can't access XEvent.parent for type=%d", event->type);
-    }
-
-int
-_get_place(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case CirculateNotify:
-      RETVAL = event->xcirculate.place; break;
-    default: croak("Can't access XEvent.place for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_place(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case CirculateNotify:
-      event->xcirculate.place= value; break;
-    default: croak("Can't access XEvent.place for type=%d", event->type);
-    }
-
-Atom
-_get_property(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case SelectionNotify:
-      RETVAL = event->xselection.property; break;
-    case SelectionRequest:
-      RETVAL = event->xselectionrequest.property; break;
-    default: croak("Can't access XEvent.property for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_property(event, value)
-  XEvent *event
-  Atom value
-  CODE:
-    switch( event->type ) {
-    case SelectionNotify:
-      event->xselection.property= value; break;
-    case SelectionRequest:
-      event->xselectionrequest.property= value; break;
-    default: croak("Can't access XEvent.property for type=%d", event->type);
-    }
-
-int
-_get_request(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case MappingNotify:
-      RETVAL = event->xmapping.request; break;
-    default: croak("Can't access XEvent.request for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_request(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case MappingNotify:
-      event->xmapping.request= value; break;
-    default: croak("Can't access XEvent.request for type=%d", event->type);
-    }
-
-Window
-_get_requestor(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case SelectionNotify:
-      RETVAL = event->xselection.requestor; break;
-    case SelectionRequest:
-      RETVAL = event->xselectionrequest.requestor; break;
-    default: croak("Can't access XEvent.requestor for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_requestor(event, value)
-  XEvent *event
-  Window value
-  CODE:
-    switch( event->type ) {
-    case SelectionNotify:
-      event->xselection.requestor= value; break;
-    case SelectionRequest:
-      event->xselectionrequest.requestor= value; break;
-    default: croak("Can't access XEvent.requestor for type=%d", event->type);
-    }
-
-Window
-_get_root(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      RETVAL = event->xbutton.root; break;
-    case EnterNotify:
-    case LeaveNotify:
-      RETVAL = event->xcrossing.root; break;
-    case KeyPress:
-    case KeyRelease:
-      RETVAL = event->xkey.root; break;
-    case MotionNotify:
-      RETVAL = event->xmotion.root; break;
-    default: croak("Can't access XEvent.root for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_root(event, value)
-  XEvent *event
-  Window value
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      event->xbutton.root= value; break;
-    case EnterNotify:
-    case LeaveNotify:
-      event->xcrossing.root= value; break;
-    case KeyPress:
-    case KeyRelease:
-      event->xkey.root= value; break;
-    case MotionNotify:
-      event->xmotion.root= value; break;
-    default: croak("Can't access XEvent.root for type=%d", event->type);
-    }
-
-void
-_get_s(event)
-  XEvent *event
+  SV *value
+  INIT:
+    Window c_value;
   PPCODE:
-    switch( event->type ) {
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case CirculateRequest:
+      if (value) { event->xcirculaterequest.parent = c_value; } else { c_value= event->xcirculaterequest.parent; } break;
+    case ConfigureRequest:
+      if (value) { event->xconfigurerequest.parent = c_value; } else { c_value= event->xconfigurerequest.parent; } break;
+    case CreateNotify:
+      if (value) { event->xcreatewindow.parent = c_value; } else { c_value= event->xcreatewindow.parent; } break;
+    case MapRequest:
+      if (value) { event->xmaprequest.parent = c_value; } else { c_value= event->xmaprequest.parent; } break;
+    case ReparentNotify:
+      if (value) { event->xreparent.parent = c_value; } else { c_value= event->xreparent.parent; } break;
+    default: croak("Can't access XEvent.parent for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_place(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case CirculateNotify:
+      if (value) { event->xcirculate.place = c_value; } else { c_value= event->xcirculate.place; } break;
+    case CirculateRequest:
+      if (value) { event->xcirculaterequest.place = c_value; } else { c_value= event->xcirculaterequest.place; } break;
+    default: croak("Can't access XEvent.place for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_property(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Atom c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case SelectionNotify:
+      if (value) { event->xselection.property = c_value; } else { c_value= event->xselection.property; } break;
+    case SelectionRequest:
+      if (value) { event->xselectionrequest.property = c_value; } else { c_value= event->xselectionrequest.property; } break;
+    default: croak("Can't access XEvent.property for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_request(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
+    case MappingNotify:
+      if (value) { event->xmapping.request = c_value; } else { c_value= event->xmapping.request; } break;
+    default: croak("Can't access XEvent.request for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_requestor(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Window c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case SelectionNotify:
+      if (value) { event->xselection.requestor = c_value; } else { c_value= event->xselection.requestor; } break;
+    case SelectionRequest:
+      if (value) { event->xselectionrequest.requestor = c_value; } else { c_value= event->xselectionrequest.requestor; } break;
+    default: croak("Can't access XEvent.requestor for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_root(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Window c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case ButtonPress:
+    case ButtonRelease:
+      if (value) { event->xbutton.root = c_value; } else { c_value= event->xbutton.root; } break;
+    case EnterNotify:
+    case LeaveNotify:
+      if (value) { event->xcrossing.root = c_value; } else { c_value= event->xcrossing.root; } break;
+    case KeyPress:
+    case KeyRelease:
+      if (value) { event->xkey.root = c_value; } else { c_value= event->xkey.root; } break;
+    case MotionNotify:
+      if (value) { event->xmotion.root = c_value; } else { c_value= event->xmotion.root; } break;
+    default: croak("Can't access XEvent.root for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_s(event, value=NULL)
+  XEvent *event
+  SV *value
+  PPCODE:
+    switch (event->type) {
     case ClientMessage:
-      PUSHs(sv_2mortal(newSVpvn((void*)event->xclient.data.s, sizeof(short)*10))); break;
+      if (value) { { if (!SvPOK(value) || SvCUR(value) != sizeof(short)*10)  croak("Expected scalar of length %d but got %d", sizeof(short)*10, SvCUR(value)); memcpy(event->xclient.data.s, SvPVX(value), sizeof(short)*10);} } else { PUSHs(sv_2mortal(newSVpvn((void*)event->xclient.data.s, sizeof(short)*10))); } break;
     default: croak("Can't access XEvent.s for type=%d", event->type);
     }
 
-
 void
-_set_s(event, value)
+_same_screen(event, value=NULL)
   XEvent *event
-  SV* value
-  CODE:
-    switch( event->type ) {
-    case ClientMessage:
-      { if (!SvPOK(value) || SvCUR(value) != sizeof(short)*10)  croak("Expected scalar of length %d but got %d", sizeof(short)*10, SvCUR(value)); memcpy(event->xclient.data.s, SvPVX(value), sizeof(short)*10);} break;
-    default: croak("Can't access XEvent.s for type=%d", event->type);
-    }
-
-Bool
-_get_same_screen(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      RETVAL = event->xbutton.same_screen; break;
-    case EnterNotify:
-    case LeaveNotify:
-      RETVAL = event->xcrossing.same_screen; break;
-    case KeyPress:
-    case KeyRelease:
-      RETVAL = event->xkey.same_screen; break;
-    case MotionNotify:
-      RETVAL = event->xmotion.same_screen; break;
-    default: croak("Can't access XEvent.same_screen for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_same_screen(event, value)
-  XEvent *event
-  Bool value
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      event->xbutton.same_screen= value; break;
-    case EnterNotify:
-    case LeaveNotify:
-      event->xcrossing.same_screen= value; break;
-    case KeyPress:
-    case KeyRelease:
-      event->xkey.same_screen= value; break;
-    case MotionNotify:
-      event->xmotion.same_screen= value; break;
-    default: croak("Can't access XEvent.same_screen for type=%d", event->type);
-    }
-
-Atom
-_get_selection(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case SelectionNotify:
-      RETVAL = event->xselection.selection; break;
-    case SelectionClear:
-      RETVAL = event->xselectionclear.selection; break;
-    case SelectionRequest:
-      RETVAL = event->xselectionrequest.selection; break;
-    default: croak("Can't access XEvent.selection for type=%d", event->type);
-    }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_selection(event, value)
-  XEvent *event
-  Atom value
-  CODE:
-    switch( event->type ) {
-    case SelectionNotify:
-      event->xselection.selection= value; break;
-    case SelectionClear:
-      event->xselectionclear.selection= value; break;
-    case SelectionRequest:
-      event->xselectionrequest.selection= value; break;
-    default: croak("Can't access XEvent.selection for type=%d", event->type);
-    }
-
-Bool
-_get_send_event(event)
-  XEvent *event
-  CODE:
-    RETVAL = event->xany.send_event;
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_send_event(event, value)
-  XEvent *event
-  Bool value
-  CODE:
-    event->xany.send_event= value;
-
-
-unsigned long
-_get_serial(event)
-  XEvent *event
-  CODE:
-    RETVAL = event->xany.serial;
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_serial(event, value)
-  XEvent *event
-  unsigned long value
-  CODE:
-    event->xany.serial= value;
-
-
-void
-_get_state(event)
-  XEvent *event
+  SV *value
+  INIT:
+    Bool c_value;
   PPCODE:
-    switch( event->type ) {
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
     case ButtonPress:
     case ButtonRelease:
-      PUSHs(sv_2mortal(newSVuv(event->xbutton.state))); break;
-    case ColormapNotify:
-      PUSHs(sv_2mortal(newSViv(event->xcolormap.state))); break;
+      if (value) { event->xbutton.same_screen = c_value; } else { c_value= event->xbutton.same_screen; } break;
     case EnterNotify:
     case LeaveNotify:
-      PUSHs(sv_2mortal(newSVuv(event->xcrossing.state))); break;
+      if (value) { event->xcrossing.same_screen = c_value; } else { c_value= event->xcrossing.same_screen; } break;
     case KeyPress:
     case KeyRelease:
-      PUSHs(sv_2mortal(newSVuv(event->xkey.state))); break;
+      if (value) { event->xkey.same_screen = c_value; } else { c_value= event->xkey.same_screen; } break;
     case MotionNotify:
-      PUSHs(sv_2mortal(newSVuv(event->xmotion.state))); break;
+      if (value) { event->xmotion.same_screen = c_value; } else { c_value= event->xmotion.same_screen; } break;
+    default: croak("Can't access XEvent.same_screen for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
+
+void
+_selection(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    Atom c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case SelectionNotify:
+      if (value) { event->xselection.selection = c_value; } else { c_value= event->xselection.selection; } break;
+    case SelectionClear:
+      if (value) { event->xselectionclear.selection = c_value; } else { c_value= event->xselectionclear.selection; } break;
+    case SelectionRequest:
+      if (value) { event->xselectionrequest.selection = c_value; } else { c_value= event->xselectionrequest.selection; } break;
+    default: croak("Can't access XEvent.selection for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+send_event(event, value=NULL)
+  XEvent *event
+  SV *value
+  PPCODE:
+    if (value) {
+      event->xany.send_event= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(event->xany.send_event)));
+    }
+
+void
+serial(event, value=NULL)
+  XEvent *event
+  SV *value
+  PPCODE:
+    if (value) {
+      event->xany.serial= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(event->xany.serial)));
+    }
+
+void
+_state(event, value=NULL)
+  XEvent *event
+  SV *value
+  PPCODE:
+    switch (event->type) {
+    case ButtonPress:
+    case ButtonRelease:
+      if (value) { event->xbutton.state= SvUV(value); } else { PUSHs(sv_2mortal(newSVuv(event->xbutton.state))); } break;
+    case ColormapNotify:
+      if (value) { event->xcolormap.state= SvIV(value); } else { PUSHs(sv_2mortal(newSViv(event->xcolormap.state))); } break;
+    case EnterNotify:
+    case LeaveNotify:
+      if (value) { event->xcrossing.state= SvUV(value); } else { PUSHs(sv_2mortal(newSVuv(event->xcrossing.state))); } break;
+    case KeyPress:
+    case KeyRelease:
+      if (value) { event->xkey.state= SvUV(value); } else { PUSHs(sv_2mortal(newSVuv(event->xkey.state))); } break;
+    case MotionNotify:
+      if (value) { event->xmotion.state= SvUV(value); } else { PUSHs(sv_2mortal(newSVuv(event->xmotion.state))); } break;
     case PropertyNotify:
-      PUSHs(sv_2mortal(newSViv(event->xproperty.state))); break;
+      if (value) { event->xproperty.state= SvIV(value); } else { PUSHs(sv_2mortal(newSViv(event->xproperty.state))); } break;
     case VisibilityNotify:
-      PUSHs(sv_2mortal(newSViv(event->xvisibility.state))); break;
+      if (value) { event->xvisibility.state= SvIV(value); } else { PUSHs(sv_2mortal(newSViv(event->xvisibility.state))); } break;
     default: croak("Can't access XEvent.state for type=%d", event->type);
     }
 
-
 void
-_set_state(event, value)
+_subwindow(event, value=NULL)
   XEvent *event
-  SV* value
-  CODE:
-    switch( event->type ) {
+  SV *value
+  INIT:
+    Window c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
     case ButtonPress:
     case ButtonRelease:
-      event->xbutton.state= SvUV(value); break;
-    case ColormapNotify:
-      event->xcolormap.state= SvIV(value); break;
+      if (value) { event->xbutton.subwindow = c_value; } else { c_value= event->xbutton.subwindow; } break;
     case EnterNotify:
     case LeaveNotify:
-      event->xcrossing.state= SvUV(value); break;
+      if (value) { event->xcrossing.subwindow = c_value; } else { c_value= event->xcrossing.subwindow; } break;
     case KeyPress:
     case KeyRelease:
-      event->xkey.state= SvUV(value); break;
+      if (value) { event->xkey.subwindow = c_value; } else { c_value= event->xkey.subwindow; } break;
     case MotionNotify:
-      event->xmotion.state= SvUV(value); break;
-    case PropertyNotify:
-      event->xproperty.state= SvIV(value); break;
-    case VisibilityNotify:
-      event->xvisibility.state= SvIV(value); break;
-    default: croak("Can't access XEvent.state for type=%d", event->type);
-    }
-
-Window
-_get_subwindow(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      RETVAL = event->xbutton.subwindow; break;
-    case EnterNotify:
-    case LeaveNotify:
-      RETVAL = event->xcrossing.subwindow; break;
-    case KeyPress:
-    case KeyRelease:
-      RETVAL = event->xkey.subwindow; break;
-    case MotionNotify:
-      RETVAL = event->xmotion.subwindow; break;
+      if (value) { event->xmotion.subwindow = c_value; } else { c_value= event->xmotion.subwindow; } break;
     default: croak("Can't access XEvent.subwindow for type=%d", event->type);
     }
-  OUTPUT:
-    RETVAL
-
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
 
 void
-_set_subwindow(event, value)
+_target(event, value=NULL)
   XEvent *event
-  Window value
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      event->xbutton.subwindow= value; break;
-    case EnterNotify:
-    case LeaveNotify:
-      event->xcrossing.subwindow= value; break;
-    case KeyPress:
-    case KeyRelease:
-      event->xkey.subwindow= value; break;
-    case MotionNotify:
-      event->xmotion.subwindow= value; break;
-    default: croak("Can't access XEvent.subwindow for type=%d", event->type);
-    }
-
-Atom
-_get_target(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
+  SV *value
+  INIT:
+    Atom c_value;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
     case SelectionNotify:
-      RETVAL = event->xselection.target; break;
+      if (value) { event->xselection.target = c_value; } else { c_value= event->xselection.target; } break;
     case SelectionRequest:
-      RETVAL = event->xselectionrequest.target; break;
+      if (value) { event->xselectionrequest.target = c_value; } else { c_value= event->xselectionrequest.target; } break;
     default: croak("Can't access XEvent.target for type=%d", event->type);
     }
-  OUTPUT:
-    RETVAL
-
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
 
 void
-_set_target(event, value)
+_time(event, value=NULL)
   XEvent *event
-  Atom value
-  CODE:
-    switch( event->type ) {
-    case SelectionNotify:
-      event->xselection.target= value; break;
-    case SelectionRequest:
-      event->xselectionrequest.target= value; break;
-    default: croak("Can't access XEvent.target for type=%d", event->type);
-    }
-
-Time
-_get_time(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
+  SV *value
+  INIT:
+    Time c_value;
+  PPCODE:
+    if (value) { c_value= SvUV(value); }
+    switch (event->type) {
     case ButtonPress:
     case ButtonRelease:
-      RETVAL = event->xbutton.time; break;
+      if (value) { event->xbutton.time = c_value; } else { c_value= event->xbutton.time; } break;
     case EnterNotify:
     case LeaveNotify:
-      RETVAL = event->xcrossing.time; break;
+      if (value) { event->xcrossing.time = c_value; } else { c_value= event->xcrossing.time; } break;
     case KeyPress:
     case KeyRelease:
-      RETVAL = event->xkey.time; break;
+      if (value) { event->xkey.time = c_value; } else { c_value= event->xkey.time; } break;
     case MotionNotify:
-      RETVAL = event->xmotion.time; break;
+      if (value) { event->xmotion.time = c_value; } else { c_value= event->xmotion.time; } break;
     case PropertyNotify:
-      RETVAL = event->xproperty.time; break;
+      if (value) { event->xproperty.time = c_value; } else { c_value= event->xproperty.time; } break;
     case SelectionNotify:
-      RETVAL = event->xselection.time; break;
+      if (value) { event->xselection.time = c_value; } else { c_value= event->xselection.time; } break;
     case SelectionClear:
-      RETVAL = event->xselectionclear.time; break;
+      if (value) { event->xselectionclear.time = c_value; } else { c_value= event->xselectionclear.time; } break;
     case SelectionRequest:
-      RETVAL = event->xselectionrequest.time; break;
+      if (value) { event->xselectionrequest.time = c_value; } else { c_value= event->xselectionrequest.time; } break;
     default: croak("Can't access XEvent.time for type=%d", event->type);
     }
-  OUTPUT:
-    RETVAL
-
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
 
 void
-_set_time(event, value)
+type(event, value=NULL)
   XEvent *event
-  Time value
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      event->xbutton.time= value; break;
-    case EnterNotify:
-    case LeaveNotify:
-      event->xcrossing.time= value; break;
-    case KeyPress:
-    case KeyRelease:
-      event->xkey.time= value; break;
-    case MotionNotify:
-      event->xmotion.time= value; break;
-    case PropertyNotify:
-      event->xproperty.time= value; break;
-    case SelectionNotify:
-      event->xselection.time= value; break;
-    case SelectionClear:
-      event->xselectionclear.time= value; break;
-    case SelectionRequest:
-      event->xselectionrequest.time= value; break;
-    default: croak("Can't access XEvent.time for type=%d", event->type);
+  SV *value
+  INIT:
+    const char *oldpkg, *newpkg;
+  PPCODE:
+    if (value) {
+      if (event->type != SvIV(value)) {
+        oldpkg= PerlXlib_xevent_pkg_for_type(event->type);
+        event->type= SvIV(value);
+        newpkg= PerlXlib_xevent_pkg_for_type(event->type);
+        if (oldpkg != newpkg) {
+          // re-initialize all fields in the area that changed
+          memset( ((char*)(void*)event) + sizeof(XAnyEvent), 0, sizeof(XEvent)-sizeof(XAnyEvent) );
+          // re-bless the object if the thing passed to us was actually an object
+          if (sv_derives_from(ST(0), "X11::Xlib::Struct::XEvent"))
+            sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
+        }
+      }
     }
-
-int
-_get_type(event)
-  XEvent *event
-  CODE:
-    RETVAL = event->xany.type;
-  OUTPUT:
-    RETVAL
-
+    PUSHs(sv_2mortal(newSViv(event->type)));
 
 void
-_set_type(event, value)
+_value_mask(event, value=NULL)
   XEvent *event
-  int value
-  CODE:
-    event->xany.type= value;
-
-
-unsigned long
-_get_value_mask(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
+  SV *value
+  INIT:
+    unsigned long c_value;
+  PPCODE:
+    if (value) { c_value= SvUV(value); }
+    switch (event->type) {
+    case ConfigureRequest:
+      if (value) { event->xconfigurerequest.value_mask = c_value; } else { c_value= event->xconfigurerequest.value_mask; } break;
     default: croak("Can't access XEvent.value_mask for type=%d", event->type);
     }
-  OUTPUT:
-    RETVAL
-
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
 
 void
-_set_value_mask(event, value)
+_width(event, value=NULL)
   XEvent *event
-  unsigned long value
-  CODE:
-    switch( event->type ) {
-    default: croak("Can't access XEvent.value_mask for type=%d", event->type);
-    }
-
-int
-_get_width(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
     case ConfigureNotify:
-      RETVAL = event->xconfigure.width; break;
+      if (value) { event->xconfigure.width = c_value; } else { c_value= event->xconfigure.width; } break;
+    case ConfigureRequest:
+      if (value) { event->xconfigurerequest.width = c_value; } else { c_value= event->xconfigurerequest.width; } break;
     case CreateNotify:
-      RETVAL = event->xcreatewindow.width; break;
+      if (value) { event->xcreatewindow.width = c_value; } else { c_value= event->xcreatewindow.width; } break;
     case Expose:
-      RETVAL = event->xexpose.width; break;
+      if (value) { event->xexpose.width = c_value; } else { c_value= event->xexpose.width; } break;
     case GraphicsExpose:
-      RETVAL = event->xgraphicsexpose.width; break;
+      if (value) { event->xgraphicsexpose.width = c_value; } else { c_value= event->xgraphicsexpose.width; } break;
     case ResizeRequest:
-      RETVAL = event->xresizerequest.width; break;
+      if (value) { event->xresizerequest.width = c_value; } else { c_value= event->xresizerequest.width; } break;
     default: croak("Can't access XEvent.width for type=%d", event->type);
     }
-  OUTPUT:
-    RETVAL
-
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
 
 void
-_set_width(event, value)
+window(event, value=NULL)
   XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case ConfigureNotify:
-      event->xconfigure.width= value; break;
-    case CreateNotify:
-      event->xcreatewindow.width= value; break;
-    case Expose:
-      event->xexpose.width= value; break;
-    case GraphicsExpose:
-      event->xgraphicsexpose.width= value; break;
-    case ResizeRequest:
-      event->xresizerequest.width= value; break;
-    default: croak("Can't access XEvent.width for type=%d", event->type);
+  SV *value
+  PPCODE:
+    if (value) {
+      event->xany.window= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(event->xany.window)));
     }
 
-Window
-_get_window(event)
-  XEvent *event
-  CODE:
-    RETVAL = event->xany.window;
-  OUTPUT:
-    RETVAL
-
-
 void
-_set_window(event, value)
+_x(event, value=NULL)
   XEvent *event
-  Window value
-  CODE:
-    event->xany.window= value;
-
-
-int
-_get_x(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
     case ButtonPress:
     case ButtonRelease:
-      RETVAL = event->xbutton.x; break;
+      if (value) { event->xbutton.x = c_value; } else { c_value= event->xbutton.x; } break;
     case ConfigureNotify:
-      RETVAL = event->xconfigure.x; break;
+      if (value) { event->xconfigure.x = c_value; } else { c_value= event->xconfigure.x; } break;
+    case ConfigureRequest:
+      if (value) { event->xconfigurerequest.x = c_value; } else { c_value= event->xconfigurerequest.x; } break;
     case CreateNotify:
-      RETVAL = event->xcreatewindow.x; break;
+      if (value) { event->xcreatewindow.x = c_value; } else { c_value= event->xcreatewindow.x; } break;
     case EnterNotify:
     case LeaveNotify:
-      RETVAL = event->xcrossing.x; break;
+      if (value) { event->xcrossing.x = c_value; } else { c_value= event->xcrossing.x; } break;
     case Expose:
-      RETVAL = event->xexpose.x; break;
+      if (value) { event->xexpose.x = c_value; } else { c_value= event->xexpose.x; } break;
     case GraphicsExpose:
-      RETVAL = event->xgraphicsexpose.x; break;
+      if (value) { event->xgraphicsexpose.x = c_value; } else { c_value= event->xgraphicsexpose.x; } break;
     case GravityNotify:
-      RETVAL = event->xgravity.x; break;
+      if (value) { event->xgravity.x = c_value; } else { c_value= event->xgravity.x; } break;
     case KeyPress:
     case KeyRelease:
-      RETVAL = event->xkey.x; break;
+      if (value) { event->xkey.x = c_value; } else { c_value= event->xkey.x; } break;
     case MotionNotify:
-      RETVAL = event->xmotion.x; break;
+      if (value) { event->xmotion.x = c_value; } else { c_value= event->xmotion.x; } break;
     case ReparentNotify:
-      RETVAL = event->xreparent.x; break;
+      if (value) { event->xreparent.x = c_value; } else { c_value= event->xreparent.x; } break;
     default: croak("Can't access XEvent.x for type=%d", event->type);
     }
-  OUTPUT:
-    RETVAL
-
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
 
 void
-_set_x(event, value)
+_x_root(event, value=NULL)
   XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
     case ButtonPress:
     case ButtonRelease:
-      event->xbutton.x= value; break;
-    case ConfigureNotify:
-      event->xconfigure.x= value; break;
-    case CreateNotify:
-      event->xcreatewindow.x= value; break;
+      if (value) { event->xbutton.x_root = c_value; } else { c_value= event->xbutton.x_root; } break;
     case EnterNotify:
     case LeaveNotify:
-      event->xcrossing.x= value; break;
-    case Expose:
-      event->xexpose.x= value; break;
-    case GraphicsExpose:
-      event->xgraphicsexpose.x= value; break;
-    case GravityNotify:
-      event->xgravity.x= value; break;
+      if (value) { event->xcrossing.x_root = c_value; } else { c_value= event->xcrossing.x_root; } break;
     case KeyPress:
     case KeyRelease:
-      event->xkey.x= value; break;
+      if (value) { event->xkey.x_root = c_value; } else { c_value= event->xkey.x_root; } break;
     case MotionNotify:
-      event->xmotion.x= value; break;
-    case ReparentNotify:
-      event->xreparent.x= value; break;
-    default: croak("Can't access XEvent.x for type=%d", event->type);
-    }
-
-int
-_get_x_root(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      RETVAL = event->xbutton.x_root; break;
-    case EnterNotify:
-    case LeaveNotify:
-      RETVAL = event->xcrossing.x_root; break;
-    case KeyPress:
-    case KeyRelease:
-      RETVAL = event->xkey.x_root; break;
-    case MotionNotify:
-      RETVAL = event->xmotion.x_root; break;
+      if (value) { event->xmotion.x_root = c_value; } else { c_value= event->xmotion.x_root; } break;
     default: croak("Can't access XEvent.x_root for type=%d", event->type);
     }
-  OUTPUT:
-    RETVAL
-
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
 
 void
-_set_x_root(event, value)
+_y(event, value=NULL)
   XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
     case ButtonPress:
     case ButtonRelease:
-      event->xbutton.x_root= value; break;
-    case EnterNotify:
-    case LeaveNotify:
-      event->xcrossing.x_root= value; break;
-    case KeyPress:
-    case KeyRelease:
-      event->xkey.x_root= value; break;
-    case MotionNotify:
-      event->xmotion.x_root= value; break;
-    default: croak("Can't access XEvent.x_root for type=%d", event->type);
-    }
-
-int
-_get_y(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      RETVAL = event->xbutton.y; break;
+      if (value) { event->xbutton.y = c_value; } else { c_value= event->xbutton.y; } break;
     case ConfigureNotify:
-      RETVAL = event->xconfigure.y; break;
+      if (value) { event->xconfigure.y = c_value; } else { c_value= event->xconfigure.y; } break;
+    case ConfigureRequest:
+      if (value) { event->xconfigurerequest.y = c_value; } else { c_value= event->xconfigurerequest.y; } break;
     case CreateNotify:
-      RETVAL = event->xcreatewindow.y; break;
+      if (value) { event->xcreatewindow.y = c_value; } else { c_value= event->xcreatewindow.y; } break;
     case EnterNotify:
     case LeaveNotify:
-      RETVAL = event->xcrossing.y; break;
+      if (value) { event->xcrossing.y = c_value; } else { c_value= event->xcrossing.y; } break;
     case Expose:
-      RETVAL = event->xexpose.y; break;
+      if (value) { event->xexpose.y = c_value; } else { c_value= event->xexpose.y; } break;
     case GraphicsExpose:
-      RETVAL = event->xgraphicsexpose.y; break;
+      if (value) { event->xgraphicsexpose.y = c_value; } else { c_value= event->xgraphicsexpose.y; } break;
     case GravityNotify:
-      RETVAL = event->xgravity.y; break;
+      if (value) { event->xgravity.y = c_value; } else { c_value= event->xgravity.y; } break;
     case KeyPress:
     case KeyRelease:
-      RETVAL = event->xkey.y; break;
+      if (value) { event->xkey.y = c_value; } else { c_value= event->xkey.y; } break;
     case MotionNotify:
-      RETVAL = event->xmotion.y; break;
+      if (value) { event->xmotion.y = c_value; } else { c_value= event->xmotion.y; } break;
     case ReparentNotify:
-      RETVAL = event->xreparent.y; break;
+      if (value) { event->xreparent.y = c_value; } else { c_value= event->xreparent.y; } break;
     default: croak("Can't access XEvent.y for type=%d", event->type);
     }
-  OUTPUT:
-    RETVAL
-
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
 
 void
-_set_y(event, value)
+_y_root(event, value=NULL)
   XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
+  SV *value
+  INIT:
+    int c_value;
+  PPCODE:
+    if (value) { c_value= SvIV(value); }
+    switch (event->type) {
     case ButtonPress:
     case ButtonRelease:
-      event->xbutton.y= value; break;
-    case ConfigureNotify:
-      event->xconfigure.y= value; break;
-    case CreateNotify:
-      event->xcreatewindow.y= value; break;
+      if (value) { event->xbutton.y_root = c_value; } else { c_value= event->xbutton.y_root; } break;
     case EnterNotify:
     case LeaveNotify:
-      event->xcrossing.y= value; break;
-    case Expose:
-      event->xexpose.y= value; break;
-    case GraphicsExpose:
-      event->xgraphicsexpose.y= value; break;
-    case GravityNotify:
-      event->xgravity.y= value; break;
+      if (value) { event->xcrossing.y_root = c_value; } else { c_value= event->xcrossing.y_root; } break;
     case KeyPress:
     case KeyRelease:
-      event->xkey.y= value; break;
+      if (value) { event->xkey.y_root = c_value; } else { c_value= event->xkey.y_root; } break;
     case MotionNotify:
-      event->xmotion.y= value; break;
-    case ReparentNotify:
-      event->xreparent.y= value; break;
-    default: croak("Can't access XEvent.y for type=%d", event->type);
-    }
-
-int
-_get_y_root(event)
-  XEvent *event
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      RETVAL = event->xbutton.y_root; break;
-    case EnterNotify:
-    case LeaveNotify:
-      RETVAL = event->xcrossing.y_root; break;
-    case KeyPress:
-    case KeyRelease:
-      RETVAL = event->xkey.y_root; break;
-    case MotionNotify:
-      RETVAL = event->xmotion.y_root; break;
+      if (value) { event->xmotion.y_root = c_value; } else { c_value= event->xmotion.y_root; } break;
     default: croak("Can't access XEvent.y_root for type=%d", event->type);
     }
-  OUTPUT:
-    RETVAL
-
-
-void
-_set_y_root(event, value)
-  XEvent *event
-  int value
-  CODE:
-    switch( event->type ) {
-    case ButtonPress:
-    case ButtonRelease:
-      event->xbutton.y_root= value; break;
-    case EnterNotify:
-    case LeaveNotify:
-      event->xcrossing.y_root= value; break;
-    case KeyPress:
-    case KeyRelease:
-      event->xkey.y_root= value; break;
-    case MotionNotify:
-      event->xmotion.y_root= value; break;
-    default: croak("Can't access XEvent.y_root for type=%d", event->type);
-    }
+    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
 
 # END GENERATED X11_Xlib_XEvent
 # ----------------------------------------------------------------------------
@@ -2118,6 +1597,14 @@ _unpack(s, fields)
     HV *fields
     PPCODE:
         PerlXlib_XVisualInfo_unpack(s, fields);
+
+int
+_sizeof(ignored=NULL)
+    SV* ignored;
+    CODE:
+        RETVAL = sizeof(XVisualInfo);
+    OUTPUT:
+        RETVAL
 
 Visual *
 _get_visual(st)
@@ -2270,6 +1757,251 @@ _set_class(st, val)
         st->class= val;
 
 # END GENERATED X11_Xlib_XVisualInfo
+# ----------------------------------------------------------------------------
+# BEGIN GENERATED X11_Xlib_XSetWindowAttributes
+
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::XSetWindowAttributes
+
+void
+_pack(s, fields)
+    XSetWindowAttributes *s
+    HV *fields
+    PPCODE:
+        PerlXlib_XSetWindowAttributes_pack(s, fields);
+
+void
+_unpack(s, fields)
+    XSetWindowAttributes *s
+    HV *fields
+    PPCODE:
+        PerlXlib_XSetWindowAttributes_unpack(s, fields);
+
+int
+_get_bit_gravity(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->bit_gravity;
+    OUTPUT:
+        RETVAL
+
+void
+_set_bit_gravity(st, val)
+    XSetWindowAttributes *st
+    int val
+    CODE:
+        st->bit_gravity= val;
+
+Colormap
+_get_colormap(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->colormap;
+    OUTPUT:
+        RETVAL
+
+void
+_set_colormap(st, val)
+    XSetWindowAttributes *st
+    Colormap val
+    CODE:
+        st->colormap= val;
+
+Bool
+_get_override_redirect(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->override_redirect;
+    OUTPUT:
+        RETVAL
+
+void
+_set_override_redirect(st, val)
+    XSetWindowAttributes *st
+    Bool val
+    CODE:
+        st->override_redirect= val;
+
+Cursor
+_get_cursor(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->cursor;
+    OUTPUT:
+        RETVAL
+
+void
+_set_cursor(st, val)
+    XSetWindowAttributes *st
+    Cursor val
+    CODE:
+        st->cursor= val;
+
+int
+_get_win_gravity(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->win_gravity;
+    OUTPUT:
+        RETVAL
+
+void
+_set_win_gravity(st, val)
+    XSetWindowAttributes *st
+    int val
+    CODE:
+        st->win_gravity= val;
+
+long
+_get_do_not_propagate_mask(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->do_not_propagate_mask;
+    OUTPUT:
+        RETVAL
+
+void
+_set_do_not_propagate_mask(st, val)
+    XSetWindowAttributes *st
+    long val
+    CODE:
+        st->do_not_propagate_mask= val;
+
+unsigned long
+_get_backing_planes(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->backing_planes;
+    OUTPUT:
+        RETVAL
+
+void
+_set_backing_planes(st, val)
+    XSetWindowAttributes *st
+    unsigned long val
+    CODE:
+        st->backing_planes= val;
+
+int
+_get_backing_store(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->backing_store;
+    OUTPUT:
+        RETVAL
+
+void
+_set_backing_store(st, val)
+    XSetWindowAttributes *st
+    int val
+    CODE:
+        st->backing_store= val;
+
+unsigned long
+_get_border_pixel(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->border_pixel;
+    OUTPUT:
+        RETVAL
+
+void
+_set_border_pixel(st, val)
+    XSetWindowAttributes *st
+    unsigned long val
+    CODE:
+        st->border_pixel= val;
+
+Pixmap
+_get_border_pixmap(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->border_pixmap;
+    OUTPUT:
+        RETVAL
+
+void
+_set_border_pixmap(st, val)
+    XSetWindowAttributes *st
+    Pixmap val
+    CODE:
+        st->border_pixmap= val;
+
+unsigned long
+_get_background_pixel(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->background_pixel;
+    OUTPUT:
+        RETVAL
+
+void
+_set_background_pixel(st, val)
+    XSetWindowAttributes *st
+    unsigned long val
+    CODE:
+        st->background_pixel= val;
+
+Bool
+_get_save_under(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->save_under;
+    OUTPUT:
+        RETVAL
+
+void
+_set_save_under(st, val)
+    XSetWindowAttributes *st
+    Bool val
+    CODE:
+        st->save_under= val;
+
+Pixmap
+_get_background_pixmap(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->background_pixmap;
+    OUTPUT:
+        RETVAL
+
+void
+_set_background_pixmap(st, val)
+    XSetWindowAttributes *st
+    Pixmap val
+    CODE:
+        st->background_pixmap= val;
+
+unsigned long
+_get_backing_pixel(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->backing_pixel;
+    OUTPUT:
+        RETVAL
+
+void
+_set_backing_pixel(st, val)
+    XSetWindowAttributes *st
+    unsigned long val
+    CODE:
+        st->backing_pixel= val;
+
+long
+_get_event_mask(st)
+    XSetWindowAttributes *st
+    CODE:
+        RETVAL = st->event_mask;
+    OUTPUT:
+        RETVAL
+
+void
+_set_event_mask(st, val)
+    XSetWindowAttributes *st
+    long val
+    CODE:
+        st->event_mask= val;
+
+# END GENERATED X11_Xlib_XSetWindowAttributes
 # ----------------------------------------------------------------------------
 
 BOOT:

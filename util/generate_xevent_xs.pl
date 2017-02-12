@@ -107,10 +107,13 @@ my %type_to_struct= qw(
 	PropertyNotify   XPropertyEvent
 	ResizeRequest    XResizeRequestEvent
 	CirculateNotify  XCirculateEvent
+    CirculateRequest XCirculateRequestEvent
 	ConfigureNotify	 XConfigureEvent
+    ConfigureRequest XConfigureRequestEvent
 	DestroyNotify    XDestroyWindowEvent
 	GravityNotify    XGravityEvent
 	MapNotify        XMapEvent
+    MapRequest       XMapRequestEvent
 	ReparentNotify   XReparentEvent
 	UnmapNotify      XUnmapEvent
 	CreateNotify     XCreateWindowEvent
@@ -120,6 +123,7 @@ my %type_to_struct= qw(
 	SelectionNotify  XSelectionEvent
 	SelectionRequest XSelectionRequestEvent
 	VisibilityNotify XVisibilityEvent
+    GenericEvent     XGenericEvent
 );
 my %struct_to_field;
 for (keys %{ $types{$goal}{fields} }) {
@@ -192,12 +196,14 @@ my %distinct_leaf=
 
 my %int_types= map { $_ => 1 } qw( int long Bool char );
 my %unsigned_types= map { $_ => 1 } 'unsigned', 'unsigned int', 'unsigned long',
-	qw( Window Drawable Colormap Atom Pixmap Time );
+	qw( Time );
+my %xid_types= map { $_ => 1 } qw( Window Drawable Colormap Atom Pixmap );
 
 sub sv_read {
 	my ($type, $access, $svname)= @_;
 	return "$access= SvIV($svname);" if $int_types{$type};
 	return "$access= SvUV($svname);" if $unsigned_types{$type};
+    return "$access= PerlXlib_sv_to_xid($svname);" if $xid_types{$type};
 	return "$access= PerlXlib_sv_to_display($svname);" if $type eq 'Display *';
 	return "{"
 		." if (!SvPOK($svname) || SvCUR($svname) != sizeof($1)*$2)"
@@ -209,7 +215,7 @@ sub sv_read {
 sub sv_create {
 	my ($type, $value)= @_;
 	return "newSViv($value)" if $int_types{$type};
-	return "newSVuv($value)" if $unsigned_types{$type};
+	return "newSVuv($value)" if $unsigned_types{$type} or $xid_types{$type};
 	return "($value? sv_setref_pv(newSV(0), \"X11::Xlib\", (void*)$value) : &PL_sv_undef)" if $type eq 'Display *';
 	return "newSVpvn((void*)$value, sizeof($1)*$2)"
 		if $type =~ /^(\w+) \[ (\d+) \]$/;
@@ -217,107 +223,177 @@ sub sv_create {
 }
 
 sub generate_xs_accessors {
-	my $fieldname= shift;
-	my @variations= sort grep { $_ =~ /(^|\.)$fieldname$/ } keys %members;
-	my ($return, $output, $c2perl, $perl2c, $input_type);
-	# Do they all agree on return type?
-	my %distinct_type= map { $members{$_} => 1 } @variations;
-	my ($via_xany)= grep { $_ =~ /^xany/ } @variations;
-	if ($via_xany or keys %distinct_type == 1) {
-		$return= $via_xany? $members{$via_xany} : $members{$variations[0]};
-		$input_type= $return;
-		$output= "  OUTPUT:\n    RETVAL\n";
-		$c2perl= sub { 'RETVAL = ' . $_[1] . ';' };
-		$perl2c= sub { $_[1] . '= value;' };
-	}
-	# If more than one type, or if it is an array type, we need to
-	# declare the XS method to allow us to manipulate the stack directly.
-	if (!$return or $return =~ /\w+ \[ \d+ \]/) {
-		#warn "$fieldname has multiple types: ".join(', ', keys %distinct_type);
-		$return= "void";
-		$input_type= 'SV*';
-		$output= '';
-		$c2perl= sub { "PUSHs(sv_2mortal(" . sv_create(@_) . "));" };
-		$perl2c= sub { sv_read(@_, 'value'); };
-	}
-	my ($reader, $writer);
-	# If it is part of "xany", skip the switch statement
-	if ($via_xany) {
-		my $access= 'event->'.$via_xany;
-		my $type= $members{$via_xany};
-		$reader=
-		    "$return\n"
-		  . "_get_$fieldname(event)\n"
-		  . "  XEvent *event\n"
-		  . "  ".($output? 'CODE':'PPCODE').":\n"
-		  . "    ".$c2perl->($type, $access)."\n"
-		  . $output."\n";
-		$writer=
-		    "void\n"
-		  . "_set_$fieldname(event, value)\n"
-		  . "  XEvent *event\n"
-		  . "  $input_type value\n"
-		  . "  CODE:\n"
-		  . "    ".$perl2c->($type, $access)."\n"
-		  . "\n";
-	}
-	else {
-		$reader=
-		    "$return\n"
-		  . "_get_$fieldname(event)\n"
-		  . "  XEvent *event\n"
-		  . "  ".($output? 'CODE':'PPCODE').":\n"
-		  . "    switch( event->type ) {\n";
-		$writer=
-		    "void\n"
-		  . "_set_$fieldname(event, value)\n"
-		  . "  XEvent *event\n"
-		  . "  $input_type value\n"
-		  . "  CODE:\n"
-		  . "    switch( event->type ) {\n";
-		for (@variations) {
-			# Find any typecode that makes use of this field
-			my ($prefix)= ($_ =~ /^(\w+)/);
-			my $typecodes= $field_to_type{$prefix};
-			unless ($typecodes) {
-				warn "Ignoring $_ because no type code references it\n";
-				next;
-			}
-			$reader.= "    case $_:\n" for @$typecodes;
-			$reader.= "      ".$c2perl->($members{$_}, 'event->'.$_)." break;\n";
-			$writer.= "    case $_:\n" for @$typecodes;
-			$writer.= "      ".$perl2c->($members{$_}, 'event->'.$_)." break;\n";
-		}
-		$reader .=
-		    "    default: croak(\"Can't access XEvent.$fieldname for type=%d\", event->type);\n"
-		  . "    }\n"
-		  . $output."\n";
-		$writer .=
-		    "    default: croak(\"Can't access XEvent.$fieldname for type=%d\", event->type);\n"
-		  . "    }\n";
-	}
-	return ($reader, $writer);
+    my $fieldname= shift;
+    my @variations= sort grep { $_ =~ /(^|\.)$fieldname$/ } keys %members;
+    my ($type, $output, $c2perl, $perl2c);
+    # Do they all agree on return type?
+    my %distinct_type= map { $members{$_} => 1 } @variations;
+    my $common_type= 1 == keys %distinct_type ? (keys %distinct_type)[0] : undef;
+    my ($via_xany)= grep { $_ =~ /^xany/ } @variations;
+    
+    # Special case for 'type' field
+    my $xs;
+    if ($fieldname eq 'type') {
+        $xs= <<"@";
+void
+type(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    const char *oldpkg, *newpkg;
+  PPCODE:
+    if (value) {
+      if (event->type != SvIV(value)) {
+        oldpkg= PerlXlib_xevent_pkg_for_type(event->type);
+        event->type= SvIV(value);
+        newpkg= PerlXlib_xevent_pkg_for_type(event->type);
+        if (oldpkg != newpkg) {
+          // re-initialize all fields in the area that changed
+          memset( ((char*)(void*)event) + sizeof(XAnyEvent), 0, sizeof(XEvent)-sizeof(XAnyEvent) );
+          // re-bless the object if the thing passed to us was actually an object
+          if (sv_derives_from(ST(0), "X11::Xlib::Struct::XEvent"))
+            sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
+        }
+      }
+    }
+    PUSHs(sv_2mortal(newSViv(event->type)));
+
+@
+    }
+    # If it is part of "xany", skip the switch statement
+    elsif ($via_xany) {
+        my $access= 'event->'.$via_xany;
+        my $type= $members{$via_xany};
+        my $sv_read= sv_read($type, $access, 'value');
+        my $sv_create= sv_create($type, $access);
+        $xs= <<"@";
+void
+$fieldname(event, value=NULL)
+  XEvent *event
+  SV *value
+  PPCODE:
+    if (value) {
+      $sv_read
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal($sv_create));
+    }
+
+@
+    }
+    elsif ($common_type && !($common_type =~ /\[/)) {
+        my $sv_read= sv_read($common_type, 'c_value', 'value');
+        my $sv_create= sv_create($common_type, 'c_value');
+        $xs= <<"@";
+void
+_$fieldname(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    $common_type c_value;
+  PPCODE:
+    if (value) { $sv_read }
+    switch (event->type) {
+@
+        for (@variations) {
+            # Find any typecode that makes use of this field
+            my ($prefix)= ($_ =~ /^(\w+)/);
+            my $typecodes= $field_to_type{$prefix};
+            unless ($typecodes) {
+                warn "Ignoring $_ because no type code references it\n";
+                next;
+            }
+            $xs .= qq{    case $_:\n} for @$typecodes;
+            $xs .= qq{      if (value) { event->$_ = c_value; } else { c_value= event->$_; } break;\n}
+        }
+        $xs .= <<"@";
+    default: croak(\"Can't access XEvent.$fieldname for type=%d\", event->type);
+    }
+    PUSHs(value? value : sv_2mortal($sv_create));
+
+@
+    }
+    else {
+        $xs= <<"@";
+void
+_$fieldname(event, value=NULL)
+  XEvent *event
+  SV *value
+  PPCODE:
+    switch (event->type) {
+@
+        for (@variations) {
+            # Find any typecode that makes use of this field
+            my ($prefix)= ($_ =~ /^(\w+)/);
+            my $typecodes= $field_to_type{$prefix};
+            unless ($typecodes) {
+                warn "Ignoring $_ because no type code references it\n";
+                next;
+            }
+            my $access= "event->$_";
+            my $sv_read= sv_read($members{$_}, $access, 'value');
+            my $sv_create= sv_create($members{$_}, $access);
+            $xs .= qq{    case $_:\n} for @$typecodes;
+            $xs .= qq{      if (value) { $sv_read } else { PUSHs(sv_2mortal($sv_create)); } break;\n};
+        }
+        $xs .= <<"@";
+    default: croak(\"Can't access XEvent.$fieldname for type=%d\", event->type);
+    }
+
+@
+    }
+    return $xs;
 }
 
 sub generate_pack_c {
-	# First, pack type, then pack fields for XAnyEvent, then any fields known for that type
-	my $c= <<"@";
-void PerlXlib_${goal}_pack($goal *s, HV *fields) {
-    SV **fp;
-
-    memset(s, 0, sizeof(*s)); // wipe the struct
+    my $c= <<"@";
+const char* PerlXlib_xevent_pkg_for_type(int type) {
+  switch (type) {
 @
-    # First pack the XAnyEvent fields
+    $c .= qq{  case $_: return "X11::Xlib::Struct::XEvent::$type_to_struct{$_}";\n}
+        for keys %type_to_struct;
+    $c .= <<"@";
+  default: return "X11::Xlib::Struct::XEvent";
+  }
+}
+
+// First, pack type, then pack fields for XAnyEvent, then any fields known for that type
+void PerlXlib_${goal}_pack($goal *s, HV *fields, Bool consume) {
+    SV **fp;
+    int newtype;
+    const char *oldpkg, *newpkg;
+
+    // Type gets special handling
+    fp= hv_fetch(fields, "type", 4, 0);
+    if (fp && *fp) {
+      newtype= SvIV(*fp);
+      if (s->type != newtype) {
+        oldpkg= PerlXlib_xevent_pkg_for_type(s->type);
+        newpkg= PerlXlib_xevent_pkg_for_type(newtype);
+        s->type= newtype;
+        if (oldpkg != newpkg) {
+          // re-initialize all fields in the area that changed
+          memset( ((char*)(void*)s) + sizeof(XAnyEvent), 0, sizeof(XEvent)-sizeof(XAnyEvent) );
+        }
+      }
+      if (consume) hv_delete(fields, "type", 4, G_DISCARD);
+    }
+    
+@
+    # Next, pack the fields common to all
     my %have;
     for my $path (sort grep { $_ =~ /^xany/ } keys %members) {
         my $type= $members{$path};
         my ($name)= ($path =~ /([^.]+)$/);
+        my $name_len= length($name);
+        my $sv_read= sv_read($type, "s->$path", "*fp");
         ++$have{$name};
-        $c .= '      fp= hv_fetch(fields, "'.$name.'", '.length($name).", 0);\n"
-           .  '      if (fp && *fp) { '.sv_read($type, 's->'.$path, '*fp')." }\n";
+        $c .= <<"@";
+    fp= hv_fetch(fields, "$name", $name_len, 0);
+    if (fp && *fp) { $sv_read; if (consume) hv_delete(fields, "$name", $name_len, G_DISCARD); }
+@
     }
     $c .= "    switch( s->type ) {\n";
-
     # Now sort fields by the type that defines them, for the case statements
     for my $prefix (sort keys %field_to_type) {
         my $typecodes= $field_to_type{$prefix};
@@ -325,8 +401,12 @@ void PerlXlib_${goal}_pack($goal *s, HV *fields) {
         for my $path (sort grep { $_ =~ qr/^$prefix\./ and $_ !~ $ignore_re } keys %members) {
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
-            $c .= '      fp= hv_fetch(fields, "'.$name.'", '.length($name).", 0);\n"
-               .  '      if (fp && *fp) { '.sv_read($members{$path}, 's->'.$path, '*fp')." }\n\n";
+            my $name_len= length($name);
+            my $sv_read= sv_read($members{$path}, "s->$path", "*fp");
+            $c .= <<"@";
+      fp= hv_fetch(fields, "$name", $name_len, 0);
+      if (fp && *fp) { $sv_read; if (consume) hv_delete(fields, "$name", $name_len, G_DISCARD); }
+@
         }
         $c .= "      break;\n";
     }
@@ -388,54 +468,36 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
 }
 
 sub generate_subclasses {
-    my $pl= '';
-    # First expose the XAnyEvent fields at the top level
-    my %have;
-    for my $path (sort grep { $_ =~ /^xany/ } keys %members) {
-        my $type= $members{$path};
-        my ($name)= ($path =~ /([^.]+)$/);
-        ++$have{$name};
-
-        $pl .= <<"@";
-
-*get_$name= *_get_$name unless defined *get_${name}{CODE};
-*set_$name= *_set_$name unless defined *set_${name}{CODE};
-sub $name { \$_[0]->set_$name(\$_[1]) if \@_ > 1; \$_[0]->get_$name() }
-@
-    }
-
-    my $typecodemap= "our %_type_to_class= (\n";
     my $subclasses= '';
     my $pod= '';
+    my %have;
+    for my $path (sort grep { $_ =~ /^xany/ } keys %members) {
+        my ($name)= ($path =~ /([^.]+)$/);
+        ++$have{$name};
+    }
 
     for my $member_struct (sort keys %struct_to_field) {
         my $field= $struct_to_field{$member_struct};
         my $typecodes= $field_to_type{$field};
-        my @consts= map { "X11:Xlib::${_}()" } @$typecodes;
-        next unless @consts;
-        $typecodemap .= qq{  X11::Xlib::${_}() => "X11::Xlib::${goal}::$member_struct",\n}
-            for sort @$typecodes;
-        $pod .= "=head2 $member_struct\n\n";
-        $subclasses .= <<"@";
-
-package X11::Xlib::${goal}::$member_struct;
-\@X11::Xlib::${goal}::${member_struct}::ISA= ('X11::Xlib::${goal}');
-@
+        if (!$typecodes) {
+            warn "member_struct=$member_struct field=$field\n";
+#            use DDP; p %field_to_type;
+        }
+        next if $member_struct eq 'XAnyEvent' or !$typecodes or !@$typecodes;
+        $pod .= "=head2 $member_struct\n\n"
+            . "Used for event type: ".join(', ', @$typecodes)."\n\n";
+        $subclasses .= "\n\n\@X11::Xlib::Struct::${goal}::${member_struct}::ISA= ( __PACKAGE__ );\n";
         my $n;
         for my $path (sort grep { $_ =~ qr/^$field\./ and $_ !~ $ignore_re } keys %members) {
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
             ++$n;
             $pod .= "=head3 $name\n\n";
-            $subclasses .= <<"@";
-*get_${name}= *X11::Xlib::${goal}::_get_${name} unless defined *get_${name}{CODE};
-*set_${name}= *X11::Xlib::${goal}::_set_${name} unless defined *set_${name}{CODE};
-sub $name { \$_[0]->set_$name(\$_[1]) if \@_ > 1; \$_[0]->get_$name() }
-@
+            $subclasses .= "*X11::Xlib::Struct::${goal}::$name= *_$name;\n";
         }
     }
-    $pl .= $typecodemap . ");\n" . $subclasses . "\n" . $pod;
-    return $pl;
+    $pod .= "=cut\n\n";
+    return $subclasses . "\n" . $pod;
 }
 
 sub patch_file {
@@ -457,20 +519,56 @@ sub patch_file {
     rename($new, $fname) or die "rename: $!";
 }
 
-my $out_xs= "\n";
+my $out_xs= <<"@";
+void
+_initialize(e)
+    XEvent *e
+    PPCODE:
+        memset((void*) e, 0, sizeof(*e));
+
+int
+_sizeof(ignored)
+    SV *ignored
+    CODE:
+        RETVAL = sizeof(XEvent);
+    OUTPUT:
+        RETVAL
+
+void
+_pack(e, fields, consume)
+    XEvent *e
+    HV *fields
+    Bool consume
+    INIT:
+        const char *oldpkg, *newpkg;
+    PPCODE:
+        oldpkg= PerlXlib_xevent_pkg_for_type(e->type);
+        PerlXlib_XEvent_pack(e, fields, consume);
+        newpkg= PerlXlib_xevent_pkg_for_type(e->type);
+        // re-bless the object if the thing passed to us was actually an object
+        if (oldpkg != newpkg && sv_derives_from(ST(0), "X11::Xlib::Struct::XEvent"))
+            sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
+
+void
+_unpack(e, fields)
+    XEvent *e
+    HV *fields
+    PPCODE:
+        PerlXlib_XEvent_unpack(e, fields);
+
+@
+
 my $out_c=  "\n";
 my $out_pl= "\n";
 my $out_const= "";
 my $file_splice_token= "GENERATED X11_Xlib_${goal}";
 
 for my $leaf (sort keys %distinct_leaf) {
-	my ($get, $set)= generate_xs_accessors($leaf) or next;
-	$out_xs .= "$get\n$set\n";
+	my $xs= generate_xs_accessors($leaf) or next;
+	$out_xs .= $xs;
 }
 $out_c  .= generate_pack_c() . "\n" . generate_unpack_c() . "\n";
 $out_pl .= generate_subclasses();
-$out_const .= generate_constants();
 patch_file("Xlib.xs", $file_splice_token, $out_xs);
 patch_file("PerlXlib.c", $file_splice_token, $out_c);
-patch_file("lib/X11/Xlib/${goal}.pm", $file_splice_token, $out_pl);
-patch_file("PerlXlib_constants", $file_splice_token, $out_const);
+patch_file("lib/X11/Xlib/Struct/XEvent.pm", $file_splice_token, $out_pl);
