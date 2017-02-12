@@ -1584,20 +1584,6 @@ _y_root(event, value=NULL)
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::XVisualInfo
 
-void
-_pack(s, fields)
-    XVisualInfo *s
-    HV *fields
-    PPCODE:
-        PerlXlib_XVisualInfo_pack(s, fields);
-
-void
-_unpack(s, fields)
-    XVisualInfo *s
-    HV *fields
-    PPCODE:
-        PerlXlib_XVisualInfo_unpack(s, fields);
-
 int
 _sizeof(ignored=NULL)
     SV* ignored;
@@ -1606,155 +1592,146 @@ _sizeof(ignored=NULL)
     OUTPUT:
         RETVAL
 
-Visual *
-_get_visual(st)
-    XVisualInfo *st
-    CODE:
-        RETVAL = st->visual;
-    OUTPUT:
-        RETVAL
+void
+_initialize(s)
+    XVisualInfo *s
+    PPCODE:
+        memset((void*) s, 0, sizeof(*s));
 
 void
-_set_visual(st, val)
-    XVisualInfo *st
-    Visual * val
-    CODE:
-        st->visual= val;
+_pack(s, fields, consume=0)
+    XVisualInfo *s
+    HV *fields
+    Bool consume
+    PPCODE:
+        PerlXlib_XVisualInfo_pack(s, fields, consume);
+
+void
+_unpack(s, fields)
+    XVisualInfo *s
+    HV *fields
+    PPCODE:
+        PerlXlib_XVisualInfo_unpack(s, fields);
+
+Visual *
+visual(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      { if (!SvPOK(value) || SvCUR(value) != sizeof(Visual *))  croak("Expected scalar of length %d but got %d", sizeof(Visual *), SvCUR(value)); s->visual= * (Visual * *) SvPVX(value);}
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVpvn((void*) &s->visual, sizeof(Visual *))));
+    }
 
 unsigned long
-_get_green_mask(st)
-    XVisualInfo *st
-    CODE:
-        RETVAL = st->green_mask;
-    OUTPUT:
-        RETVAL
-
-void
-_set_green_mask(st, val)
-    XVisualInfo *st
-    unsigned long val
-    CODE:
-        st->green_mask= val;
+green_mask(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->green_mask= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->green_mask)));
+    }
 
 int
-_get_depth(st)
-    XVisualInfo *st
-    CODE:
-        RETVAL = st->depth;
-    OUTPUT:
-        RETVAL
-
-void
-_set_depth(st, val)
-    XVisualInfo *st
-    int val
-    CODE:
-        st->depth= val;
+depth(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->depth= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->depth)));
+    }
 
 int
-_get_bits_per_rgb(st)
-    XVisualInfo *st
-    CODE:
-        RETVAL = st->bits_per_rgb;
-    OUTPUT:
-        RETVAL
-
-void
-_set_bits_per_rgb(st, val)
-    XVisualInfo *st
-    int val
-    CODE:
-        st->bits_per_rgb= val;
+bits_per_rgb(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->bits_per_rgb= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->bits_per_rgb)));
+    }
 
 VisualID
-_get_visualid(st)
-    XVisualInfo *st
-    CODE:
-        RETVAL = st->visualid;
-    OUTPUT:
-        RETVAL
-
-void
-_set_visualid(st, val)
-    XVisualInfo *st
-    VisualID val
-    CODE:
-        st->visualid= val;
+visualid(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->visualid= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->visualid)));
+    }
 
 unsigned long
-_get_blue_mask(st)
-    XVisualInfo *st
-    CODE:
-        RETVAL = st->blue_mask;
-    OUTPUT:
-        RETVAL
-
-void
-_set_blue_mask(st, val)
-    XVisualInfo *st
-    unsigned long val
-    CODE:
-        st->blue_mask= val;
+blue_mask(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->blue_mask= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->blue_mask)));
+    }
 
 int
-_get_colormap_size(st)
-    XVisualInfo *st
-    CODE:
-        RETVAL = st->colormap_size;
-    OUTPUT:
-        RETVAL
-
-void
-_set_colormap_size(st, val)
-    XVisualInfo *st
-    int val
-    CODE:
-        st->colormap_size= val;
+colormap_size(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->colormap_size= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->colormap_size)));
+    }
 
 int
-_get_screen(st)
-    XVisualInfo *st
-    CODE:
-        RETVAL = st->screen;
-    OUTPUT:
-        RETVAL
-
-void
-_set_screen(st, val)
-    XVisualInfo *st
-    int val
-    CODE:
-        st->screen= val;
+screen(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->screen= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->screen)));
+    }
 
 unsigned long
-_get_red_mask(st)
-    XVisualInfo *st
-    CODE:
-        RETVAL = st->red_mask;
-    OUTPUT:
-        RETVAL
-
-void
-_set_red_mask(st, val)
-    XVisualInfo *st
-    unsigned long val
-    CODE:
-        st->red_mask= val;
+red_mask(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->red_mask= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->red_mask)));
+    }
 
 int
-_get_class(st)
-    XVisualInfo *st
-    CODE:
-        RETVAL = st->class;
-    OUTPUT:
-        RETVAL
-
-void
-_set_class(st, val)
-    XVisualInfo *st
-    int val
-    CODE:
-        st->class= val;
+class(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->class= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->class)));
+    }
 
 # END GENERATED X11_Xlib_XVisualInfo
 # ----------------------------------------------------------------------------
@@ -1762,12 +1739,27 @@ _set_class(st, val)
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::XSetWindowAttributes
 
+int
+_sizeof(ignored=NULL)
+    SV* ignored;
+    CODE:
+        RETVAL = sizeof(XSetWindowAttributes);
+    OUTPUT:
+        RETVAL
+
 void
-_pack(s, fields)
+_initialize(s)
+    XSetWindowAttributes *s
+    PPCODE:
+        memset((void*) s, 0, sizeof(*s));
+
+void
+_pack(s, fields, consume=0)
     XSetWindowAttributes *s
     HV *fields
+    Bool consume
     PPCODE:
-        PerlXlib_XSetWindowAttributes_pack(s, fields);
+        PerlXlib_XSetWindowAttributes_pack(s, fields, consume);
 
 void
 _unpack(s, fields)
@@ -1777,229 +1769,184 @@ _unpack(s, fields)
         PerlXlib_XSetWindowAttributes_unpack(s, fields);
 
 int
-_get_bit_gravity(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->bit_gravity;
-    OUTPUT:
-        RETVAL
-
-void
-_set_bit_gravity(st, val)
-    XSetWindowAttributes *st
-    int val
-    CODE:
-        st->bit_gravity= val;
+bit_gravity(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->bit_gravity= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->bit_gravity)));
+    }
 
 Colormap
-_get_colormap(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->colormap;
-    OUTPUT:
-        RETVAL
-
-void
-_set_colormap(st, val)
-    XSetWindowAttributes *st
-    Colormap val
-    CODE:
-        st->colormap= val;
+colormap(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->colormap= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->colormap)));
+    }
 
 Bool
-_get_override_redirect(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->override_redirect;
-    OUTPUT:
-        RETVAL
-
-void
-_set_override_redirect(st, val)
-    XSetWindowAttributes *st
-    Bool val
-    CODE:
-        st->override_redirect= val;
+override_redirect(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->override_redirect= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->override_redirect)));
+    }
 
 Cursor
-_get_cursor(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->cursor;
-    OUTPUT:
-        RETVAL
-
-void
-_set_cursor(st, val)
-    XSetWindowAttributes *st
-    Cursor val
-    CODE:
-        st->cursor= val;
+cursor(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->cursor= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->cursor)));
+    }
 
 int
-_get_win_gravity(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->win_gravity;
-    OUTPUT:
-        RETVAL
-
-void
-_set_win_gravity(st, val)
-    XSetWindowAttributes *st
-    int val
-    CODE:
-        st->win_gravity= val;
+win_gravity(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->win_gravity= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->win_gravity)));
+    }
 
 long
-_get_do_not_propagate_mask(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->do_not_propagate_mask;
-    OUTPUT:
-        RETVAL
-
-void
-_set_do_not_propagate_mask(st, val)
-    XSetWindowAttributes *st
-    long val
-    CODE:
-        st->do_not_propagate_mask= val;
+do_not_propagate_mask(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->do_not_propagate_mask= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->do_not_propagate_mask)));
+    }
 
 unsigned long
-_get_backing_planes(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->backing_planes;
-    OUTPUT:
-        RETVAL
-
-void
-_set_backing_planes(st, val)
-    XSetWindowAttributes *st
-    unsigned long val
-    CODE:
-        st->backing_planes= val;
+backing_planes(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->backing_planes= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->backing_planes)));
+    }
 
 int
-_get_backing_store(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->backing_store;
-    OUTPUT:
-        RETVAL
-
-void
-_set_backing_store(st, val)
-    XSetWindowAttributes *st
-    int val
-    CODE:
-        st->backing_store= val;
+backing_store(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->backing_store= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->backing_store)));
+    }
 
 unsigned long
-_get_border_pixel(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->border_pixel;
-    OUTPUT:
-        RETVAL
-
-void
-_set_border_pixel(st, val)
-    XSetWindowAttributes *st
-    unsigned long val
-    CODE:
-        st->border_pixel= val;
+border_pixel(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->border_pixel= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->border_pixel)));
+    }
 
 Pixmap
-_get_border_pixmap(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->border_pixmap;
-    OUTPUT:
-        RETVAL
-
-void
-_set_border_pixmap(st, val)
-    XSetWindowAttributes *st
-    Pixmap val
-    CODE:
-        st->border_pixmap= val;
+border_pixmap(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->border_pixmap= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->border_pixmap)));
+    }
 
 unsigned long
-_get_background_pixel(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->background_pixel;
-    OUTPUT:
-        RETVAL
-
-void
-_set_background_pixel(st, val)
-    XSetWindowAttributes *st
-    unsigned long val
-    CODE:
-        st->background_pixel= val;
+background_pixel(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->background_pixel= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->background_pixel)));
+    }
 
 Bool
-_get_save_under(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->save_under;
-    OUTPUT:
-        RETVAL
-
-void
-_set_save_under(st, val)
-    XSetWindowAttributes *st
-    Bool val
-    CODE:
-        st->save_under= val;
+save_under(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->save_under= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->save_under)));
+    }
 
 Pixmap
-_get_background_pixmap(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->background_pixmap;
-    OUTPUT:
-        RETVAL
-
-void
-_set_background_pixmap(st, val)
-    XSetWindowAttributes *st
-    Pixmap val
-    CODE:
-        st->background_pixmap= val;
+background_pixmap(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->background_pixmap= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->background_pixmap)));
+    }
 
 unsigned long
-_get_backing_pixel(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->backing_pixel;
-    OUTPUT:
-        RETVAL
-
-void
-_set_backing_pixel(st, val)
-    XSetWindowAttributes *st
-    unsigned long val
-    CODE:
-        st->backing_pixel= val;
+backing_pixel(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->backing_pixel= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->backing_pixel)));
+    }
 
 long
-_get_event_mask(st)
-    XSetWindowAttributes *st
-    CODE:
-        RETVAL = st->event_mask;
-    OUTPUT:
-        RETVAL
-
-void
-_set_event_mask(st, val)
-    XSetWindowAttributes *st
-    long val
-    CODE:
-        st->event_mask= val;
+event_mask(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->event_mask= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->event_mask)));
+    }
 
 # END GENERATED X11_Xlib_XSetWindowAttributes
 # ----------------------------------------------------------------------------

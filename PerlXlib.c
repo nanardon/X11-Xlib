@@ -849,31 +849,38 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
 //----------------------------------------------------------------------------
 // BEGIN GENERATED X11_Xlib_XVisualInfo
 
-void PerlXlib_XVisualInfo_pack(XVisualInfo *s, HV *fields) {
+void PerlXlib_XVisualInfo_pack(XVisualInfo *s, HV *fields, Bool consume) {
     SV **fp;
 
-    memset(s, 0, sizeof(*s)); // wipe the struct
     fp= hv_fetch(fields, "bits_per_rgb", 12, 0);
-    if (fp && *fp) { s->bits_per_rgb= SvIV(*fp); }
-    fp= hv_fetch(fields, "blue_mask", 9, 0);
-    if (fp && *fp) { s->blue_mask= SvUV(*fp); }
-    fp= hv_fetch(fields, "class", 5, 0);
-    if (fp && *fp) { s->class= SvIV(*fp); }
-    fp= hv_fetch(fields, "colormap_size", 13, 0);
-    if (fp && *fp) { s->colormap_size= SvIV(*fp); }
-    fp= hv_fetch(fields, "depth", 5, 0);
-    if (fp && *fp) { s->depth= SvIV(*fp); }
-    fp= hv_fetch(fields, "green_mask", 10, 0);
-    if (fp && *fp) { s->green_mask= SvUV(*fp); }
-    fp= hv_fetch(fields, "red_mask", 8, 0);
-    if (fp && *fp) { s->red_mask= SvUV(*fp); }
-    fp= hv_fetch(fields, "screen", 6, 0);
-    if (fp && *fp) { s->screen= SvIV(*fp); }
-    fp= hv_fetch(fields, "visual", 6, 0);
-    if (fp && *fp) { { if (!SvPOK(*fp) || SvCUR(*fp) != sizeof(Visual *))  croak("Expected scalar of length %d but got %d", sizeof(Visual *), SvCUR(*fp)); s->visual= * (Visual * *) SvPVX(*fp);} }
-    fp= hv_fetch(fields, "visualid", 8, 0);
-    if (fp && *fp) { s->visualid= SvUV(*fp); }
+    if (fp && *fp) { s->bits_per_rgb= SvIV(*fp); if (consume) hv_delete(fields, "bits_per_rgb", 12, G_DISCARD); }
 
+    fp= hv_fetch(fields, "blue_mask", 9, 0);
+    if (fp && *fp) { s->blue_mask= SvUV(*fp); if (consume) hv_delete(fields, "blue_mask", 9, G_DISCARD); }
+
+    fp= hv_fetch(fields, "class", 5, 0);
+    if (fp && *fp) { s->class= SvIV(*fp); if (consume) hv_delete(fields, "class", 5, G_DISCARD); }
+
+    fp= hv_fetch(fields, "colormap_size", 13, 0);
+    if (fp && *fp) { s->colormap_size= SvIV(*fp); if (consume) hv_delete(fields, "colormap_size", 13, G_DISCARD); }
+
+    fp= hv_fetch(fields, "depth", 5, 0);
+    if (fp && *fp) { s->depth= SvIV(*fp); if (consume) hv_delete(fields, "depth", 5, G_DISCARD); }
+
+    fp= hv_fetch(fields, "green_mask", 10, 0);
+    if (fp && *fp) { s->green_mask= SvUV(*fp); if (consume) hv_delete(fields, "green_mask", 10, G_DISCARD); }
+
+    fp= hv_fetch(fields, "red_mask", 8, 0);
+    if (fp && *fp) { s->red_mask= SvUV(*fp); if (consume) hv_delete(fields, "red_mask", 8, G_DISCARD); }
+
+    fp= hv_fetch(fields, "screen", 6, 0);
+    if (fp && *fp) { s->screen= SvIV(*fp); if (consume) hv_delete(fields, "screen", 6, G_DISCARD); }
+
+    fp= hv_fetch(fields, "visual", 6, 0);
+    if (fp && *fp) { { if (!SvPOK(*fp) || SvCUR(*fp) != sizeof(Visual *))  croak("Expected scalar of length %d but got %d", sizeof(Visual *), SvCUR(*fp)); s->visual= * (Visual * *) SvPVX(*fp);} if (consume) hv_delete(fields, "visual", 6, G_DISCARD); }
+
+    fp= hv_fetch(fields, "visualid", 8, 0);
+    if (fp && *fp) { s->visualid= SvUV(*fp); if (consume) hv_delete(fields, "visualid", 8, G_DISCARD); }
 }
 
 void PerlXlib_XVisualInfo_unpack(XVisualInfo *s, HV *fields) {
@@ -900,41 +907,53 @@ void PerlXlib_XVisualInfo_unpack(XVisualInfo *s, HV *fields) {
 //----------------------------------------------------------------------------
 // BEGIN GENERATED X11_Xlib_XSetWindowAttributes
 
-void PerlXlib_XSetWindowAttributes_pack(XSetWindowAttributes *s, HV *fields) {
+void PerlXlib_XSetWindowAttributes_pack(XSetWindowAttributes *s, HV *fields, Bool consume) {
     SV **fp;
 
-    memset(s, 0, sizeof(*s)); // wipe the struct
     fp= hv_fetch(fields, "background_pixel", 16, 0);
-    if (fp && *fp) { s->background_pixel= SvUV(*fp); }
-    fp= hv_fetch(fields, "background_pixmap", 17, 0);
-    if (fp && *fp) { s->background_pixmap= SvUV(*fp); }
-    fp= hv_fetch(fields, "backing_pixel", 13, 0);
-    if (fp && *fp) { s->backing_pixel= SvUV(*fp); }
-    fp= hv_fetch(fields, "backing_planes", 14, 0);
-    if (fp && *fp) { s->backing_planes= SvUV(*fp); }
-    fp= hv_fetch(fields, "backing_store", 13, 0);
-    if (fp && *fp) { s->backing_store= SvIV(*fp); }
-    fp= hv_fetch(fields, "bit_gravity", 11, 0);
-    if (fp && *fp) { s->bit_gravity= SvIV(*fp); }
-    fp= hv_fetch(fields, "border_pixel", 12, 0);
-    if (fp && *fp) { s->border_pixel= SvUV(*fp); }
-    fp= hv_fetch(fields, "border_pixmap", 13, 0);
-    if (fp && *fp) { s->border_pixmap= SvUV(*fp); }
-    fp= hv_fetch(fields, "colormap", 8, 0);
-    if (fp && *fp) { s->colormap= SvUV(*fp); }
-    fp= hv_fetch(fields, "cursor", 6, 0);
-    if (fp && *fp) { s->cursor= SvUV(*fp); }
-    fp= hv_fetch(fields, "do_not_propagate_mask", 21, 0);
-    if (fp && *fp) { s->do_not_propagate_mask= SvIV(*fp); }
-    fp= hv_fetch(fields, "event_mask", 10, 0);
-    if (fp && *fp) { s->event_mask= SvIV(*fp); }
-    fp= hv_fetch(fields, "override_redirect", 17, 0);
-    if (fp && *fp) { s->override_redirect= SvIV(*fp); }
-    fp= hv_fetch(fields, "save_under", 10, 0);
-    if (fp && *fp) { s->save_under= SvIV(*fp); }
-    fp= hv_fetch(fields, "win_gravity", 11, 0);
-    if (fp && *fp) { s->win_gravity= SvIV(*fp); }
+    if (fp && *fp) { s->background_pixel= SvUV(*fp); if (consume) hv_delete(fields, "background_pixel", 16, G_DISCARD); }
 
+    fp= hv_fetch(fields, "background_pixmap", 17, 0);
+    if (fp && *fp) { s->background_pixmap= PerlXlib_sv_to_xid(*fp); if (consume) hv_delete(fields, "background_pixmap", 17, G_DISCARD); }
+
+    fp= hv_fetch(fields, "backing_pixel", 13, 0);
+    if (fp && *fp) { s->backing_pixel= SvUV(*fp); if (consume) hv_delete(fields, "backing_pixel", 13, G_DISCARD); }
+
+    fp= hv_fetch(fields, "backing_planes", 14, 0);
+    if (fp && *fp) { s->backing_planes= SvUV(*fp); if (consume) hv_delete(fields, "backing_planes", 14, G_DISCARD); }
+
+    fp= hv_fetch(fields, "backing_store", 13, 0);
+    if (fp && *fp) { s->backing_store= SvIV(*fp); if (consume) hv_delete(fields, "backing_store", 13, G_DISCARD); }
+
+    fp= hv_fetch(fields, "bit_gravity", 11, 0);
+    if (fp && *fp) { s->bit_gravity= SvIV(*fp); if (consume) hv_delete(fields, "bit_gravity", 11, G_DISCARD); }
+
+    fp= hv_fetch(fields, "border_pixel", 12, 0);
+    if (fp && *fp) { s->border_pixel= SvUV(*fp); if (consume) hv_delete(fields, "border_pixel", 12, G_DISCARD); }
+
+    fp= hv_fetch(fields, "border_pixmap", 13, 0);
+    if (fp && *fp) { s->border_pixmap= PerlXlib_sv_to_xid(*fp); if (consume) hv_delete(fields, "border_pixmap", 13, G_DISCARD); }
+
+    fp= hv_fetch(fields, "colormap", 8, 0);
+    if (fp && *fp) { s->colormap= PerlXlib_sv_to_xid(*fp); if (consume) hv_delete(fields, "colormap", 8, G_DISCARD); }
+
+    fp= hv_fetch(fields, "cursor", 6, 0);
+    if (fp && *fp) { s->cursor= PerlXlib_sv_to_xid(*fp); if (consume) hv_delete(fields, "cursor", 6, G_DISCARD); }
+
+    fp= hv_fetch(fields, "do_not_propagate_mask", 21, 0);
+    if (fp && *fp) { s->do_not_propagate_mask= SvIV(*fp); if (consume) hv_delete(fields, "do_not_propagate_mask", 21, G_DISCARD); }
+
+    fp= hv_fetch(fields, "event_mask", 10, 0);
+    if (fp && *fp) { s->event_mask= SvIV(*fp); if (consume) hv_delete(fields, "event_mask", 10, G_DISCARD); }
+
+    fp= hv_fetch(fields, "override_redirect", 17, 0);
+    if (fp && *fp) { s->override_redirect= SvIV(*fp); if (consume) hv_delete(fields, "override_redirect", 17, G_DISCARD); }
+
+    fp= hv_fetch(fields, "save_under", 10, 0);
+    if (fp && *fp) { s->save_under= SvIV(*fp); if (consume) hv_delete(fields, "save_under", 10, G_DISCARD); }
+
+    fp= hv_fetch(fields, "win_gravity", 11, 0);
+    if (fp && *fp) { s->win_gravity= SvIV(*fp); if (consume) hv_delete(fields, "win_gravity", 11, G_DISCARD); }
 }
 
 void PerlXlib_XSetWindowAttributes_unpack(XSetWindowAttributes *s, HV *fields) {

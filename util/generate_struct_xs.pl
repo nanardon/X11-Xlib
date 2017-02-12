@@ -111,15 +111,14 @@ delete $members{c_class};
 
 my %int_types= map { $_ => 1 } qw( int long Bool char );
 my %unsigned_types= map { $_ => 1 } 'unsigned', 'unsigned int', 'unsigned long',
-    qw( Window Drawable Colormap Atom Pixmap Time VisualID );
-
-# This is redundant with the typemap, but don't know how to
-# invoke the real one from outside.
+	qw( Time VisualID );
+my %xid_types= map { $_ => 1 } qw( Window Drawable Colormap Cursor Atom Pixmap );
 
 sub sv_read {
     my ($type, $access, $svname)= @_;
     return "$access= SvIV($svname);" if $int_types{$type};
     return "$access= SvUV($svname);" if $unsigned_types{$type};
+    return "$access= PerlXlib_sv_to_xid($svname);" if $xid_types{$type};
     return "$access= PerlXlib_sv_to_display($svname);" if $type eq 'Display *';
     return "{"
         ." if (!SvPOK($svname) || SvCUR($svname) != sizeof($type))"
@@ -136,7 +135,7 @@ sub sv_read {
 sub sv_create {
     my ($type, $value)= @_;
     return "newSViv($value)" if $int_types{$type};
-    return "newSVuv($value)" if $unsigned_types{$type};
+    return "newSVuv($value)" if $unsigned_types{$type} or $xid_types{$type};
     return "($value? sv_setref_pv(newSV(0), \"X11::Xlib\", (void*)$value) : &PL_sv_undef)" if $type eq 'Display *';
     return "newSVpvn((void*) &$value, sizeof($type))"
         if $type =~ /^(\w+) \*$/;
@@ -147,40 +146,42 @@ sub sv_create {
 
 sub generate_xs_accessor {
     my $fieldname= shift;
+    my $sv_read= sv_read($members{$fieldname}, "s->$fieldname", "value");
+    my $sv_create= sv_create($members{$fieldname}, "s->$fieldname");
     return <<"@";
 $members{$fieldname}
-_get_${fieldname}(st)
-    ${goal} *st
-    CODE:
-        RETVAL = st->${fieldname};
-    OUTPUT:
-        RETVAL
-
-void
-_set_${fieldname}(st, val)
-    ${goal} *st
-    $members{$fieldname} val
-    CODE:
-        st->${fieldname}= val;
+${fieldname}(s, value=NULL)
+    ${goal} *s
+    SV *value
+  PPCODE:
+    if (value) {
+      $sv_read
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal($sv_create));
+    }
 
 @
 }
 
 sub generate_pack_c {
     my $c= <<"@";
-void PerlXlib_${goal}_pack($goal *s, HV *fields) {
+void PerlXlib_${goal}_pack($goal *s, HV *fields, Bool consume) {
     SV **fp;
-
-    memset(s, 0, sizeof(*s)); // wipe the struct
 @
     for my $path (sort keys %members) {
         my $type= $members{$path};
         my ($name)= ($path =~ /([^.]+)$/);
-        $c .= '    fp= hv_fetch(fields, "'.$name.'", '.length($name).", 0);\n"
-           .  '    if (fp && *fp) { '.sv_read($type, 's->'.$path, '*fp')." }\n";
+        my $sv_read= sv_read($type, "s->$path", "*fp");
+        my $name_len= length($name);
+        $c .= <<"@";
+
+    fp= hv_fetch(fields, "$name", $name_len, 0);
+    if (fp && *fp) { $sv_read if (consume) hv_delete(fields, "$name", $name_len, G_DISCARD); }
+@
     }
 
-    return $c . "\n}\n";
+    return $c . "}\n";
 }
 
 sub generate_unpack_c {
@@ -231,12 +232,27 @@ my $out_xs= <<"@";
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::${goal}
 
+int
+_sizeof(ignored=NULL)
+    SV* ignored;
+    CODE:
+        RETVAL = sizeof(${goal});
+    OUTPUT:
+        RETVAL
+
 void
-_pack(s, fields)
+_initialize(s)
+    ${goal} *s
+    PPCODE:
+        memset((void*) s, 0, sizeof(*s));
+
+void
+_pack(s, fields, consume=0)
     ${goal} *s
     HV *fields
+    Bool consume
     PPCODE:
-        PerlXlib_${goal}_pack(s, fields);
+        PerlXlib_${goal}_pack(s, fields, consume);
 
 void
 _unpack(s, fields)
@@ -253,7 +269,6 @@ my $out_const= "";
 
 my $file_splice_token= "GENERATED X11_Xlib_${goal}";
 
-my $out_c=  "\n";
-$out_c  .= generate_pack_c() . "\n" . generate_unpack_c() . "\n";
+my $out_c=  "\n" . generate_pack_c() . "\n" . generate_unpack_c() . "\n";
 patch_file("Xlib.xs", $file_splice_token, $out_xs);
 patch_file("PerlXlib.c", $file_splice_token, $out_c);

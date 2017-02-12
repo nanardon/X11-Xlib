@@ -1,18 +1,20 @@
 TYPEMAP
 DisplayNotNull        O_X11_XlibNotNull
 Display *             O_X11_Xlib
+Visual *              O_X11_Xlib_Opaque
+GC                    O_X11_Xlib_Opaque
 XEvent *              O_X11_Xlib_Struct
 XVisualInfo *         O_X11_Xlib_Struct
+XSetWindowAttributes* O_X11_Xlib_Struct
 Window                O_X11_Xlib_XID
 Pixmap                O_X11_Xlib_XID
+Cursor                O_X11_Xlib_XID
 Colormap              O_X11_Xlib_XID
 Drawable              O_X11_Xlib_XID
 VisualID              O_X11_Xlib_XID
-GC                    O_X11_Xlib_Opaque
 Atom                  T_UV
 Time                  T_UV
 Bool                  T_BOOL
-Visual *              O_X11_Xlib_Opaque
 
 INPUT
 O_X11_XlibNotNull
@@ -57,4 +59,5 @@ O_X11_Xlib_Opaque
 
 OUTPUT
 O_X11_Xlib_Opaque
-    sv_setref_pv($arg, \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\", (void*) $var);
+    sv_setref_pv($arg, NULL, (void*) $var);
+    # \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\"

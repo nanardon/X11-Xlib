@@ -61,3 +61,20 @@ const_visual
 const_cmap
  i AllocAll
  i AllocNone
+const_wndattr
+ i CWBackPixmap
+ i CWBackPixel
+ i CWBorderPixmap
+ i CWBorderPixel
+ i CWBitGravity
+ i CWWinGravity
+ i CWBackingStore
+ i CWBackingPlanes
+ i CWBackingPixel
+ i CWOverrideRedirect
+ i CWSaveUnder
+ i CWEventMask
+ i CWDontPropagate
+ i CWColormap
+ i CWCursor
+
