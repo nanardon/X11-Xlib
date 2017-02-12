@@ -103,7 +103,7 @@ XID PerlXlib_sv_to_xid(SV *sv) {
 
     if (!SvROK(sv) || !(SvTYPE(SvRV(sv)) == SVt_PVHV)
         || !(xid_field= hv_fetch((HV*)SvRV(sv), "xid", 3, 0))
-        || !*xid_field || !SvUOK(*xid_field))
+        || !*xid_field || !(SvIOK(*xid_field) || SvUOK(*xid_field)))
         croak("Invalid XID (Window, etc); must be an unsigned int, or an instance of X11::Xlib::XID");
 
     return (XID) SvUV(*xid_field);

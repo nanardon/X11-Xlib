@@ -59,5 +59,4 @@ O_X11_Xlib_Opaque
 
 OUTPUT
 O_X11_Xlib_Opaque
-    sv_setref_pv($arg, NULL, (void*) $var);
-    # \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\"
+    sv_setref_pv($arg, \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\", (void*) $var);

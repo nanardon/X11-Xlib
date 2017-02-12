@@ -61,7 +61,11 @@ const_visual
 const_cmap
  i AllocAll
  i AllocNone
-const_wndattr
+const_win
+ i InputOutput
+ i InputOnly
+ i CopyFromParent
+const_winattr
  i CWBackPixmap
  i CWBackPixel
  i CWBorderPixmap

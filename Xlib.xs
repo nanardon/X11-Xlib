@@ -376,6 +376,43 @@ XCreateSimpleWindow(dpy, parent, x, y, w, h, border_width, border_color, backgro
     int border_color
     int background_color
 
+void
+XMapWindow(dpy, wnd)
+    DisplayNotNull dpy
+    Window wnd
+
+void
+XUnmapWindow(dpy, wnd)
+    DisplayNotNull dpy
+    Window wnd
+
+int
+XGetGeometry(dpy, wnd, root_out=NULL, x_out=NULL, y_out=NULL, width_out=NULL, height_out=NULL, border_out=NULL, depth_out=NULL)
+    DisplayNotNull dpy
+    Window wnd
+    SV *root_out
+    SV *x_out
+    SV *y_out
+    SV *width_out
+    SV *height_out
+    SV *border_out
+    SV *depth_out
+    INIT:
+        Window root;
+        int x, y;
+        unsigned int w, h, bw, d;
+    CODE:
+        RETVAL = XGetGeometry(dpy, wnd, &root, &x, &y, &w, &h, &bw, &d);
+        if (root_out)   sv_setuv(root_out, root);
+        if (x_out)      sv_setiv(x_out, x);
+        if (y_out)      sv_setiv(y_out, y);
+        if (width_out)  sv_setuv(width_out, w);
+        if (height_out) sv_setuv(height_out, h);
+        if (border_out) sv_setuv(border_out, bw);
+        if (depth_out)  sv_setuv(depth_out, d);
+    OUTPUT:
+        RETVAL
+    
 # XTest Functions (fn_xtest) -------------------------------------------------
 
 int
@@ -2013,5 +2050,23 @@ BOOT:
   newCONSTSUB(stash, "VisualAllMask", newSViv(VisualAllMask));
   newCONSTSUB(stash, "AllocAll", newSViv(AllocAll));
   newCONSTSUB(stash, "AllocNone", newSViv(AllocNone));
+  newCONSTSUB(stash, "InputOutput", newSViv(InputOutput));
+  newCONSTSUB(stash, "InputOnly", newSViv(InputOnly));
+  newCONSTSUB(stash, "CopyFromParent", newSViv(CopyFromParent));
+  newCONSTSUB(stash, "CWBackPixmap", newSViv(CWBackPixmap));
+  newCONSTSUB(stash, "CWBackPixel", newSViv(CWBackPixel));
+  newCONSTSUB(stash, "CWBorderPixmap", newSViv(CWBorderPixmap));
+  newCONSTSUB(stash, "CWBorderPixel", newSViv(CWBorderPixel));
+  newCONSTSUB(stash, "CWBitGravity", newSViv(CWBitGravity));
+  newCONSTSUB(stash, "CWWinGravity", newSViv(CWWinGravity));
+  newCONSTSUB(stash, "CWBackingStore", newSViv(CWBackingStore));
+  newCONSTSUB(stash, "CWBackingPlanes", newSViv(CWBackingPlanes));
+  newCONSTSUB(stash, "CWBackingPixel", newSViv(CWBackingPixel));
+  newCONSTSUB(stash, "CWOverrideRedirect", newSViv(CWOverrideRedirect));
+  newCONSTSUB(stash, "CWSaveUnder", newSViv(CWSaveUnder));
+  newCONSTSUB(stash, "CWEventMask", newSViv(CWEventMask));
+  newCONSTSUB(stash, "CWDontPropagate", newSViv(CWDontPropagate));
+  newCONSTSUB(stash, "CWColormap", newSViv(CWColormap));
+  newCONSTSUB(stash, "CWCursor", newSViv(CWCursor));
 # END GENERATED BOOT CONSTANTS
 #

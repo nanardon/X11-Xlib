@@ -30,6 +30,11 @@ my %_constants= (
   const_visual => [qw( VisualAllMask VisualBitsPerRGBMask VisualBlueMaskMask
     VisualClassMask VisualColormapSizeMask VisualDepthMask VisualGreenMaskMask
     VisualIDMask VisualRedMaskMask VisualScreenMask )],
+  const_win => [qw( CopyFromParent InputOnly InputOutput )],
+  const_winattr => [qw( CWBackPixel CWBackPixmap CWBackingPixel CWBackingPlanes
+    CWBackingStore CWBitGravity CWBorderPixel CWBorderPixmap CWColormap
+    CWCursor CWDontPropagate CWEventMask CWOverrideRedirect CWSaveUnder
+    CWWinGravity )],
 # END GENERATED XS CONSTANT LIST
 );
 my %_functions= (
@@ -42,23 +47,26 @@ my %_functions= (
   fn_key => [qw( IsFunctionKey IsKeypadKey IsMiscFunctionKey IsModifierKey
     IsPFKey IsPrivateKeypadKey XGetKeyboardMapping XKeysymToKeycode
     XKeysymToString XStringToKeysym )],
+  fn_pix => [qw( XCreateBitmapFromData XCreatePixmap
+    XCreatePixmapFromBitmapData XFreePixmap )],
   fn_screen => [qw( DefaultColormap DefaultDepth DefaultGC DefaultVisual
     DisplayHeight DisplayHeightMM DisplayWidth DisplayWidthMM RootWindow
     ScreenCount )],
   fn_vis => [qw( XCreateColormap XFreeColormap XGetVisualInfo XMatchVisualInfo
     XVisualIDFromVisual )],
-  fn_window => [qw(  )],
+  fn_win => [qw( XCreateSimpleWindow XCreateWindow XGetGeometry XMapWindow
+    XUnmapWindow )],
   fn_xtest => [qw( XBell XQueryKeymap XTestFakeButtonEvent XTestFakeKeyEvent
     XTestFakeMotionEvent )],
 # END GENERATED XS FUNCTION LIST
 );
-our @EXPORT_OK;
+our @EXPORT_OK= map { @$_ } values %_constants, values %_functions;
 our %EXPORT_TAGS= (
     %_constants,
     %_functions,
     constants => [ map { @$_ } values %_constants ],
     functions => [ map { @$_ } values %_functions ],
-    all => \(@EXPORT_OK= map { @$_ } values %_constants, values %_functions ),
+    all => \@EXPORT_OK,
 );
 our @EXPORT= @{ $EXPORT_TAGS{fn_key} };
 
@@ -82,7 +90,7 @@ sub on_error {
     $on_error_cb= $_[-1];
     X11::Xlib::_install_error_handlers(1,1);
 }
-# called by XS, if installed
+# called by XS, if error handler is installed
 sub _error_nonfatal {
     my $event= shift;
     my $dpy= $event->display;
@@ -95,7 +103,7 @@ sub _error_nonfatal {
         catch { warn $_; };
     }
 }
-# called by XS, if installed
+# called by XS, if error handler is installed
 sub _error_fatal {
     my $conn= shift;
     $conn->_mark_dead; # this connection is dead immediately

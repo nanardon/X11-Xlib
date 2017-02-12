@@ -89,12 +89,6 @@ sub new {
     return $self;
 }
 
-sub RootWindow {
-    my $self= shift;
-    my $ret= $self->SUPER::RootWindow(@_);
-    return X11::Xlib::Window->new({ dpy => $self, xid => $ret });
-}
-
 sub default_visual_id {
     my ($self, $id)= @_;
     X11::Xlib::XVisualIDFromVisual($self->DefaultVisual);
