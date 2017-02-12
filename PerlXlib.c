@@ -1,5 +1,5 @@
 // This file is included directly by Xlib.xs and is not intended to be
-// externally usable.  I mostly separated it for the syntax hilighting :-)
+// externally usable.  I mostly separated it for the syntax highlighting :-)
 
 void PerlXlib_XEvent_pack(XEvent *e, HV *fields);
 void PerlXlib_XEvent_unpack(XEvent *e, HV *fields);
@@ -71,19 +71,15 @@ void PerlXlib_sv_from_display(SV *dest, Display *dpy) {
         fp= hv_fetch(get_hv("X11::Xlib::_connections", GV_ADD), (void*) &dpy, sizeof(dpy), 1);
         // Return existing object if we have one for this Display* already
         if (!fp) croak("failed to add item to hash (tied?)");
-        if (*fp && SvOK(*fp))
+        if (*fp && SvOK(*fp)) {
             sv_setsv(dest, *fp);
-        // else create a new one, and register it in the _connections
+        }
+        // else it is probably a bogus value from a modified struct byte buffer
         else {
-            // Always create instance of X11::Xlib.  X11::Xlib::Display can override this as needed.
-            conn.dpy= dpy;
-            conn.state= PerlXlib_CONN_LIVE;
-            conn.foreign= 0;
-            sv_setref_pvn(dest, "X11::Xlib", (void*)&conn, sizeof(conn));
-            // Save a weakref for later
-            if (!*fp) *fp= newRV(SvRV(dest));
-            else sv_setsv(*fp, dest);
-            sv_rvweaken(*fp);
+            warn("Encountered unknown Display pointer, returning as plain scalar."
+                " If you want use X11 connections created by other libraries,"
+                " use 'X11::Xlib::import_connection");
+            sv_setpvn(dest, (void*) &dpy, sizeof(dpy));
         }
     }
 }
@@ -95,8 +91,6 @@ void PerlXlib_conn_mark_closed(PerlXlib_conn_t *conn) {
         // It's a weak reference, but if we leave it there then a new Display*
         // could get created at the same address and cause confusion.
         hv_delete(get_hv("X11::Xlib::_connections", GV_ADD),
-            (void*) &(conn->dpy), sizeof(Display*), 0);
-        hv_delete(get_hv("X11::Xlib::Display::_displays", GV_ADD),
             (void*) &(conn->dpy), sizeof(Display*), 0);
         conn->dpy= NULL;
     }

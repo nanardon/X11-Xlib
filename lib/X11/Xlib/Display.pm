@@ -7,11 +7,6 @@ use Carp;
 
 require X11::Xlib::Window;
 
-# Weak-ref to every active display.  Hash key is the *binary value* of the
-# Xlib Display pointer.  This is used to map from Display* to the active
-# object instance.  Mostly for the error handler.
-our %_displays;
-
 =head1 ATTRIBUTES
 
 =head2 connection
@@ -79,9 +74,9 @@ sub new {
     my $conn= $args->{connection};
     if ($conn && ref $conn && ref($conn)->isa('X11::Xlib')) {
         # Check if object already exists for this connection
-        if (defined ($self= $_displays{$conn->_pointer_value})) {
+        if (ref($X11::Xlib::_connections{$conn->_pointer_value})->isa(__PACKAGE__)) {
             carp "re-using existing Display object for this connection";
-            return $self;
+            return $X11::Xlib::_connections{$conn->_pointer_value};
         }
     }
     else {
@@ -89,7 +84,8 @@ sub new {
             or croak "Unable to connect to X11 server";
     }
     $self= bless $args, $class;
-    Scalar::Util::weaken( $_displays{$self->{connection}->_pointer_value}= $self );
+    my $key= $self->{connection}->_pointer_value;
+    Scalar::Util::weaken( $X11::Xlib::_connections{$key}= $self );
     return $self;
 }
 

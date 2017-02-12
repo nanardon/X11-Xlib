@@ -12,15 +12,41 @@ MODULE = X11::Xlib                PACKAGE = X11::Xlib
 
 # Connection Functions (fn_conn) ---------------------------------------------
 
-Display *
+void
 XOpenDisplay(connection_string = NULL)
     char * connection_string
-    CODE:
+    INIT:
+        Display *dpy;
+        PerlXlib_conn_t conn;
+        SV **fp, *dest;
+    PPCODE:
         if (SvTRUE(get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD)))
             croak("Cannot call further Xlib functions after fatal Xlib error");
-        RETVAL = XOpenDisplay(connection_string);
-    OUTPUT:
-        RETVAL
+        dpy = XOpenDisplay(connection_string);
+        if (!dpy)
+            PUSHs(&PL_sv_undef);
+        else {
+            // create the hash entry where we will ref this connection
+            fp= hv_fetch(get_hv("X11::Xlib::_connections", GV_ADD), (void*) &dpy, sizeof(dpy), 1);
+            if (!fp) {
+                XCloseDisplay(dpy);
+                croak("Can't create hash entry (tied?)");
+            }
+
+            // Wrap the Display* in our own struct to attach extra flags.
+            conn.dpy= dpy;
+            conn.state= PerlXlib_CONN_LIVE;
+            conn.foreign= 0;
+
+            // Always create instance of X11::Xlib.  X11::Xlib::Display can wrap this as needed.
+            sv_setref_pvn(dest= newSV(0), "X11::Xlib", (void*)&conn, sizeof(conn));
+            PUSHs(sv_2mortal(dest));
+
+            // Save a weakref for later
+            if (!*fp) *fp= newRV(SvRV(dest));
+            else sv_setsv(*fp, dest);
+            sv_rvweaken(*fp);
+        }
 
 void
 _pointer_value(connsv)

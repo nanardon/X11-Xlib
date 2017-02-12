@@ -105,8 +105,8 @@ sub _error_fatal {
         catch { warn $_; };
     }
     # also call a user callback in any Display object
-    for my $dpy (values %X11::Xlib::_displays) {
-        next unless defined $dpy && defined $dpy->on_error_cb;
+    for my $dpy (values %X11::Xlib::_connections) {
+        next unless defined $dpy && $dpy->can('on_error_cb') && defined $dpy->on_error_cb;
         try { $dpy->on_error_cb->($dpy); }
         catch { warn $_; };
     }
