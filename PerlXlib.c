@@ -98,7 +98,7 @@ void PerlXlib_conn_mark_closed(PerlXlib_conn_t *conn) {
 XID PerlXlib_sv_to_xid(SV *sv) {
     SV **xid_field;
 
-    if (SvUOK(sv))
+    if (SvUOK(sv) || SvIOK(sv))
         return (XID) SvUV(sv);
 
     if (!SvROK(sv) || !(SvTYPE(SvRV(sv)) == SVt_PVHV)

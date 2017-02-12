@@ -103,236 +103,250 @@ L<official documentation|https://www.x.org/releases/X11R7.7/doc/libX11/libX11/li
 
 =cut
 
-# ----------------------------------------------------------------------------
-# The code below is auto-generated.
+sub pack {
+    my $self= shift;
+    # As a special case, convert type enum codes into numeric values
+    if (my $type= $_[0]{type}) {
+        unless ($type =~ /^[0-9]+$/) {
+            # Look up the symbolic constant
+            if (grep { $_ eq $type } @{ $X11::Xlib::EXPORT_TAGS{const_event} }) {
+                $_[0]{type}= X11::Xlib->$type();
+            } else {
+                Carp::croak "Unknown XEvent type '$type'";
+            }
+        }
+    }
+    $self->SUPER::pack(@_);
+}
 
+# ----------------------------------------------------------------------------
 # BEGIN GENERATED X11_Xlib_XEvent
 
 
 
 @X11::Xlib::Struct::XEvent::XButtonEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::button= *_button;
-*X11::Xlib::Struct::XEvent::root= *_root;
-*X11::Xlib::Struct::XEvent::same_screen= *_same_screen;
-*X11::Xlib::Struct::XEvent::state= *_state;
-*X11::Xlib::Struct::XEvent::subwindow= *_subwindow;
-*X11::Xlib::Struct::XEvent::time= *_time;
-*X11::Xlib::Struct::XEvent::x= *_x;
-*X11::Xlib::Struct::XEvent::x_root= *_x_root;
-*X11::Xlib::Struct::XEvent::y= *_y;
-*X11::Xlib::Struct::XEvent::y_root= *_y_root;
+*X11::Xlib::Struct::XEvent::XButtonEvent::button= *_button;
+*X11::Xlib::Struct::XEvent::XButtonEvent::root= *_root;
+*X11::Xlib::Struct::XEvent::XButtonEvent::same_screen= *_same_screen;
+*X11::Xlib::Struct::XEvent::XButtonEvent::state= *_state;
+*X11::Xlib::Struct::XEvent::XButtonEvent::subwindow= *_subwindow;
+*X11::Xlib::Struct::XEvent::XButtonEvent::time= *_time;
+*X11::Xlib::Struct::XEvent::XButtonEvent::x= *_x;
+*X11::Xlib::Struct::XEvent::XButtonEvent::x_root= *_x_root;
+*X11::Xlib::Struct::XEvent::XButtonEvent::y= *_y;
+*X11::Xlib::Struct::XEvent::XButtonEvent::y_root= *_y_root;
 
 
 @X11::Xlib::Struct::XEvent::XCirculateEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::event= *_event;
-*X11::Xlib::Struct::XEvent::place= *_place;
+*X11::Xlib::Struct::XEvent::XCirculateEvent::event= *_event;
+*X11::Xlib::Struct::XEvent::XCirculateEvent::place= *_place;
 
 
 @X11::Xlib::Struct::XEvent::XCirculateRequestEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::parent= *_parent;
-*X11::Xlib::Struct::XEvent::place= *_place;
+*X11::Xlib::Struct::XEvent::XCirculateRequestEvent::parent= *_parent;
+*X11::Xlib::Struct::XEvent::XCirculateRequestEvent::place= *_place;
 
 
 @X11::Xlib::Struct::XEvent::XClientMessageEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::b= *_b;
-*X11::Xlib::Struct::XEvent::l= *_l;
-*X11::Xlib::Struct::XEvent::s= *_s;
-*X11::Xlib::Struct::XEvent::format= *_format;
-*X11::Xlib::Struct::XEvent::message_type= *_message_type;
+*X11::Xlib::Struct::XEvent::XClientMessageEvent::b= *_b;
+*X11::Xlib::Struct::XEvent::XClientMessageEvent::l= *_l;
+*X11::Xlib::Struct::XEvent::XClientMessageEvent::s= *_s;
+*X11::Xlib::Struct::XEvent::XClientMessageEvent::format= *_format;
+*X11::Xlib::Struct::XEvent::XClientMessageEvent::message_type= *_message_type;
 
 
 @X11::Xlib::Struct::XEvent::XColormapEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::colormap= *_colormap;
-*X11::Xlib::Struct::XEvent::new= *_new;
-*X11::Xlib::Struct::XEvent::state= *_state;
+*X11::Xlib::Struct::XEvent::XColormapEvent::colormap= *_colormap;
+*X11::Xlib::Struct::XEvent::XColormapEvent::new= *_new;
+*X11::Xlib::Struct::XEvent::XColormapEvent::state= *_state;
 
 
 @X11::Xlib::Struct::XEvent::XConfigureEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::above= *_above;
-*X11::Xlib::Struct::XEvent::border_width= *_border_width;
-*X11::Xlib::Struct::XEvent::event= *_event;
-*X11::Xlib::Struct::XEvent::height= *_height;
-*X11::Xlib::Struct::XEvent::override_redirect= *_override_redirect;
-*X11::Xlib::Struct::XEvent::width= *_width;
-*X11::Xlib::Struct::XEvent::x= *_x;
-*X11::Xlib::Struct::XEvent::y= *_y;
+*X11::Xlib::Struct::XEvent::XConfigureEvent::above= *_above;
+*X11::Xlib::Struct::XEvent::XConfigureEvent::border_width= *_border_width;
+*X11::Xlib::Struct::XEvent::XConfigureEvent::event= *_event;
+*X11::Xlib::Struct::XEvent::XConfigureEvent::height= *_height;
+*X11::Xlib::Struct::XEvent::XConfigureEvent::override_redirect= *_override_redirect;
+*X11::Xlib::Struct::XEvent::XConfigureEvent::width= *_width;
+*X11::Xlib::Struct::XEvent::XConfigureEvent::x= *_x;
+*X11::Xlib::Struct::XEvent::XConfigureEvent::y= *_y;
 
 
 @X11::Xlib::Struct::XEvent::XConfigureRequestEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::above= *_above;
-*X11::Xlib::Struct::XEvent::border_width= *_border_width;
-*X11::Xlib::Struct::XEvent::detail= *_detail;
-*X11::Xlib::Struct::XEvent::height= *_height;
-*X11::Xlib::Struct::XEvent::parent= *_parent;
-*X11::Xlib::Struct::XEvent::value_mask= *_value_mask;
-*X11::Xlib::Struct::XEvent::width= *_width;
-*X11::Xlib::Struct::XEvent::x= *_x;
-*X11::Xlib::Struct::XEvent::y= *_y;
+*X11::Xlib::Struct::XEvent::XConfigureRequestEvent::above= *_above;
+*X11::Xlib::Struct::XEvent::XConfigureRequestEvent::border_width= *_border_width;
+*X11::Xlib::Struct::XEvent::XConfigureRequestEvent::detail= *_detail;
+*X11::Xlib::Struct::XEvent::XConfigureRequestEvent::height= *_height;
+*X11::Xlib::Struct::XEvent::XConfigureRequestEvent::parent= *_parent;
+*X11::Xlib::Struct::XEvent::XConfigureRequestEvent::value_mask= *_value_mask;
+*X11::Xlib::Struct::XEvent::XConfigureRequestEvent::width= *_width;
+*X11::Xlib::Struct::XEvent::XConfigureRequestEvent::x= *_x;
+*X11::Xlib::Struct::XEvent::XConfigureRequestEvent::y= *_y;
 
 
 @X11::Xlib::Struct::XEvent::XCreateWindowEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::border_width= *_border_width;
-*X11::Xlib::Struct::XEvent::height= *_height;
-*X11::Xlib::Struct::XEvent::override_redirect= *_override_redirect;
-*X11::Xlib::Struct::XEvent::parent= *_parent;
-*X11::Xlib::Struct::XEvent::width= *_width;
-*X11::Xlib::Struct::XEvent::x= *_x;
-*X11::Xlib::Struct::XEvent::y= *_y;
+*X11::Xlib::Struct::XEvent::XCreateWindowEvent::border_width= *_border_width;
+*X11::Xlib::Struct::XEvent::XCreateWindowEvent::height= *_height;
+*X11::Xlib::Struct::XEvent::XCreateWindowEvent::override_redirect= *_override_redirect;
+*X11::Xlib::Struct::XEvent::XCreateWindowEvent::parent= *_parent;
+*X11::Xlib::Struct::XEvent::XCreateWindowEvent::width= *_width;
+*X11::Xlib::Struct::XEvent::XCreateWindowEvent::x= *_x;
+*X11::Xlib::Struct::XEvent::XCreateWindowEvent::y= *_y;
 
 
 @X11::Xlib::Struct::XEvent::XCrossingEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::detail= *_detail;
-*X11::Xlib::Struct::XEvent::focus= *_focus;
-*X11::Xlib::Struct::XEvent::mode= *_mode;
-*X11::Xlib::Struct::XEvent::root= *_root;
-*X11::Xlib::Struct::XEvent::same_screen= *_same_screen;
-*X11::Xlib::Struct::XEvent::state= *_state;
-*X11::Xlib::Struct::XEvent::subwindow= *_subwindow;
-*X11::Xlib::Struct::XEvent::time= *_time;
-*X11::Xlib::Struct::XEvent::x= *_x;
-*X11::Xlib::Struct::XEvent::x_root= *_x_root;
-*X11::Xlib::Struct::XEvent::y= *_y;
-*X11::Xlib::Struct::XEvent::y_root= *_y_root;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::detail= *_detail;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::focus= *_focus;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::mode= *_mode;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::root= *_root;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::same_screen= *_same_screen;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::state= *_state;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::subwindow= *_subwindow;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::time= *_time;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::x= *_x;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::x_root= *_x_root;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::y= *_y;
+*X11::Xlib::Struct::XEvent::XCrossingEvent::y_root= *_y_root;
 
 
 @X11::Xlib::Struct::XEvent::XDestroyWindowEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::event= *_event;
+*X11::Xlib::Struct::XEvent::XDestroyWindowEvent::event= *_event;
 
 
 @X11::Xlib::Struct::XEvent::XExposeEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::count= *_count;
-*X11::Xlib::Struct::XEvent::height= *_height;
-*X11::Xlib::Struct::XEvent::width= *_width;
-*X11::Xlib::Struct::XEvent::x= *_x;
-*X11::Xlib::Struct::XEvent::y= *_y;
+*X11::Xlib::Struct::XEvent::XExposeEvent::count= *_count;
+*X11::Xlib::Struct::XEvent::XExposeEvent::height= *_height;
+*X11::Xlib::Struct::XEvent::XExposeEvent::width= *_width;
+*X11::Xlib::Struct::XEvent::XExposeEvent::x= *_x;
+*X11::Xlib::Struct::XEvent::XExposeEvent::y= *_y;
 
 
 @X11::Xlib::Struct::XEvent::XFocusChangeEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::detail= *_detail;
-*X11::Xlib::Struct::XEvent::mode= *_mode;
+*X11::Xlib::Struct::XEvent::XFocusChangeEvent::detail= *_detail;
+*X11::Xlib::Struct::XEvent::XFocusChangeEvent::mode= *_mode;
 
 
 @X11::Xlib::Struct::XEvent::XGenericEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::evtype= *_evtype;
-*X11::Xlib::Struct::XEvent::extension= *_extension;
+*X11::Xlib::Struct::XEvent::XGenericEvent::evtype= *_evtype;
+*X11::Xlib::Struct::XEvent::XGenericEvent::extension= *_extension;
 
 
 @X11::Xlib::Struct::XEvent::XGraphicsExposeEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::count= *_count;
-*X11::Xlib::Struct::XEvent::drawable= *_drawable;
-*X11::Xlib::Struct::XEvent::height= *_height;
-*X11::Xlib::Struct::XEvent::major_code= *_major_code;
-*X11::Xlib::Struct::XEvent::minor_code= *_minor_code;
-*X11::Xlib::Struct::XEvent::width= *_width;
-*X11::Xlib::Struct::XEvent::x= *_x;
-*X11::Xlib::Struct::XEvent::y= *_y;
+*X11::Xlib::Struct::XEvent::XGraphicsExposeEvent::count= *_count;
+*X11::Xlib::Struct::XEvent::XGraphicsExposeEvent::drawable= *_drawable;
+*X11::Xlib::Struct::XEvent::XGraphicsExposeEvent::height= *_height;
+*X11::Xlib::Struct::XEvent::XGraphicsExposeEvent::major_code= *_major_code;
+*X11::Xlib::Struct::XEvent::XGraphicsExposeEvent::minor_code= *_minor_code;
+*X11::Xlib::Struct::XEvent::XGraphicsExposeEvent::width= *_width;
+*X11::Xlib::Struct::XEvent::XGraphicsExposeEvent::x= *_x;
+*X11::Xlib::Struct::XEvent::XGraphicsExposeEvent::y= *_y;
 
 
 @X11::Xlib::Struct::XEvent::XGravityEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::event= *_event;
-*X11::Xlib::Struct::XEvent::x= *_x;
-*X11::Xlib::Struct::XEvent::y= *_y;
+*X11::Xlib::Struct::XEvent::XGravityEvent::event= *_event;
+*X11::Xlib::Struct::XEvent::XGravityEvent::x= *_x;
+*X11::Xlib::Struct::XEvent::XGravityEvent::y= *_y;
 
 
 @X11::Xlib::Struct::XEvent::XKeyEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::keycode= *_keycode;
-*X11::Xlib::Struct::XEvent::root= *_root;
-*X11::Xlib::Struct::XEvent::same_screen= *_same_screen;
-*X11::Xlib::Struct::XEvent::state= *_state;
-*X11::Xlib::Struct::XEvent::subwindow= *_subwindow;
-*X11::Xlib::Struct::XEvent::time= *_time;
-*X11::Xlib::Struct::XEvent::x= *_x;
-*X11::Xlib::Struct::XEvent::x_root= *_x_root;
-*X11::Xlib::Struct::XEvent::y= *_y;
-*X11::Xlib::Struct::XEvent::y_root= *_y_root;
+*X11::Xlib::Struct::XEvent::XKeyEvent::keycode= *_keycode;
+*X11::Xlib::Struct::XEvent::XKeyEvent::root= *_root;
+*X11::Xlib::Struct::XEvent::XKeyEvent::same_screen= *_same_screen;
+*X11::Xlib::Struct::XEvent::XKeyEvent::state= *_state;
+*X11::Xlib::Struct::XEvent::XKeyEvent::subwindow= *_subwindow;
+*X11::Xlib::Struct::XEvent::XKeyEvent::time= *_time;
+*X11::Xlib::Struct::XEvent::XKeyEvent::x= *_x;
+*X11::Xlib::Struct::XEvent::XKeyEvent::x_root= *_x_root;
+*X11::Xlib::Struct::XEvent::XKeyEvent::y= *_y;
+*X11::Xlib::Struct::XEvent::XKeyEvent::y_root= *_y_root;
 
 
 @X11::Xlib::Struct::XEvent::XKeymapEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::key_vector= *_key_vector;
+*X11::Xlib::Struct::XEvent::XKeymapEvent::key_vector= *_key_vector;
 
 
 @X11::Xlib::Struct::XEvent::XMapEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::event= *_event;
-*X11::Xlib::Struct::XEvent::override_redirect= *_override_redirect;
+*X11::Xlib::Struct::XEvent::XMapEvent::event= *_event;
+*X11::Xlib::Struct::XEvent::XMapEvent::override_redirect= *_override_redirect;
 
 
 @X11::Xlib::Struct::XEvent::XMapRequestEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::parent= *_parent;
+*X11::Xlib::Struct::XEvent::XMapRequestEvent::parent= *_parent;
 
 
 @X11::Xlib::Struct::XEvent::XMappingEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::count= *_count;
-*X11::Xlib::Struct::XEvent::first_keycode= *_first_keycode;
-*X11::Xlib::Struct::XEvent::request= *_request;
+*X11::Xlib::Struct::XEvent::XMappingEvent::count= *_count;
+*X11::Xlib::Struct::XEvent::XMappingEvent::first_keycode= *_first_keycode;
+*X11::Xlib::Struct::XEvent::XMappingEvent::request= *_request;
 
 
 @X11::Xlib::Struct::XEvent::XMotionEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::is_hint= *_is_hint;
-*X11::Xlib::Struct::XEvent::root= *_root;
-*X11::Xlib::Struct::XEvent::same_screen= *_same_screen;
-*X11::Xlib::Struct::XEvent::state= *_state;
-*X11::Xlib::Struct::XEvent::subwindow= *_subwindow;
-*X11::Xlib::Struct::XEvent::time= *_time;
-*X11::Xlib::Struct::XEvent::x= *_x;
-*X11::Xlib::Struct::XEvent::x_root= *_x_root;
-*X11::Xlib::Struct::XEvent::y= *_y;
-*X11::Xlib::Struct::XEvent::y_root= *_y_root;
+*X11::Xlib::Struct::XEvent::XMotionEvent::is_hint= *_is_hint;
+*X11::Xlib::Struct::XEvent::XMotionEvent::root= *_root;
+*X11::Xlib::Struct::XEvent::XMotionEvent::same_screen= *_same_screen;
+*X11::Xlib::Struct::XEvent::XMotionEvent::state= *_state;
+*X11::Xlib::Struct::XEvent::XMotionEvent::subwindow= *_subwindow;
+*X11::Xlib::Struct::XEvent::XMotionEvent::time= *_time;
+*X11::Xlib::Struct::XEvent::XMotionEvent::x= *_x;
+*X11::Xlib::Struct::XEvent::XMotionEvent::x_root= *_x_root;
+*X11::Xlib::Struct::XEvent::XMotionEvent::y= *_y;
+*X11::Xlib::Struct::XEvent::XMotionEvent::y_root= *_y_root;
 
 
 @X11::Xlib::Struct::XEvent::XNoExposeEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::drawable= *_drawable;
-*X11::Xlib::Struct::XEvent::major_code= *_major_code;
-*X11::Xlib::Struct::XEvent::minor_code= *_minor_code;
+*X11::Xlib::Struct::XEvent::XNoExposeEvent::drawable= *_drawable;
+*X11::Xlib::Struct::XEvent::XNoExposeEvent::major_code= *_major_code;
+*X11::Xlib::Struct::XEvent::XNoExposeEvent::minor_code= *_minor_code;
 
 
 @X11::Xlib::Struct::XEvent::XPropertyEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::atom= *_atom;
-*X11::Xlib::Struct::XEvent::state= *_state;
-*X11::Xlib::Struct::XEvent::time= *_time;
+*X11::Xlib::Struct::XEvent::XPropertyEvent::atom= *_atom;
+*X11::Xlib::Struct::XEvent::XPropertyEvent::state= *_state;
+*X11::Xlib::Struct::XEvent::XPropertyEvent::time= *_time;
 
 
 @X11::Xlib::Struct::XEvent::XReparentEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::event= *_event;
-*X11::Xlib::Struct::XEvent::override_redirect= *_override_redirect;
-*X11::Xlib::Struct::XEvent::parent= *_parent;
-*X11::Xlib::Struct::XEvent::x= *_x;
-*X11::Xlib::Struct::XEvent::y= *_y;
+*X11::Xlib::Struct::XEvent::XReparentEvent::event= *_event;
+*X11::Xlib::Struct::XEvent::XReparentEvent::override_redirect= *_override_redirect;
+*X11::Xlib::Struct::XEvent::XReparentEvent::parent= *_parent;
+*X11::Xlib::Struct::XEvent::XReparentEvent::x= *_x;
+*X11::Xlib::Struct::XEvent::XReparentEvent::y= *_y;
 
 
 @X11::Xlib::Struct::XEvent::XResizeRequestEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::height= *_height;
-*X11::Xlib::Struct::XEvent::width= *_width;
+*X11::Xlib::Struct::XEvent::XResizeRequestEvent::height= *_height;
+*X11::Xlib::Struct::XEvent::XResizeRequestEvent::width= *_width;
 
 
 @X11::Xlib::Struct::XEvent::XSelectionClearEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::selection= *_selection;
-*X11::Xlib::Struct::XEvent::time= *_time;
+*X11::Xlib::Struct::XEvent::XSelectionClearEvent::selection= *_selection;
+*X11::Xlib::Struct::XEvent::XSelectionClearEvent::time= *_time;
 
 
 @X11::Xlib::Struct::XEvent::XSelectionEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::property= *_property;
-*X11::Xlib::Struct::XEvent::requestor= *_requestor;
-*X11::Xlib::Struct::XEvent::selection= *_selection;
-*X11::Xlib::Struct::XEvent::target= *_target;
-*X11::Xlib::Struct::XEvent::time= *_time;
+*X11::Xlib::Struct::XEvent::XSelectionEvent::property= *_property;
+*X11::Xlib::Struct::XEvent::XSelectionEvent::requestor= *_requestor;
+*X11::Xlib::Struct::XEvent::XSelectionEvent::selection= *_selection;
+*X11::Xlib::Struct::XEvent::XSelectionEvent::target= *_target;
+*X11::Xlib::Struct::XEvent::XSelectionEvent::time= *_time;
 
 
 @X11::Xlib::Struct::XEvent::XSelectionRequestEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::owner= *_owner;
-*X11::Xlib::Struct::XEvent::property= *_property;
-*X11::Xlib::Struct::XEvent::requestor= *_requestor;
-*X11::Xlib::Struct::XEvent::selection= *_selection;
-*X11::Xlib::Struct::XEvent::target= *_target;
-*X11::Xlib::Struct::XEvent::time= *_time;
+*X11::Xlib::Struct::XEvent::XSelectionRequestEvent::owner= *_owner;
+*X11::Xlib::Struct::XEvent::XSelectionRequestEvent::property= *_property;
+*X11::Xlib::Struct::XEvent::XSelectionRequestEvent::requestor= *_requestor;
+*X11::Xlib::Struct::XEvent::XSelectionRequestEvent::selection= *_selection;
+*X11::Xlib::Struct::XEvent::XSelectionRequestEvent::target= *_target;
+*X11::Xlib::Struct::XEvent::XSelectionRequestEvent::time= *_time;
 
 
 @X11::Xlib::Struct::XEvent::XUnmapEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::event= *_event;
-*X11::Xlib::Struct::XEvent::from_configure= *_from_configure;
+*X11::Xlib::Struct::XEvent::XUnmapEvent::event= *_event;
+*X11::Xlib::Struct::XEvent::XUnmapEvent::from_configure= *_from_configure;
 
 
 @X11::Xlib::Struct::XEvent::XVisibilityEvent::ISA= ( __PACKAGE__ );
-*X11::Xlib::Struct::XEvent::state= *_state;
+*X11::Xlib::Struct::XEvent::XVisibilityEvent::state= *_state;
 
 =head2 XButtonEvent
 

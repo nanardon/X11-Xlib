@@ -16,12 +16,12 @@ is( $blank_event->type,    0,     'type=0' );
 is( $blank_event->display, undef, 'display=undef' );
 is( $blank_event->window,  0,     'window=0' );
 is( $blank_event->serial,  0,     'serial=0' );
-is( $blank_event->send_event, '', 'send_event=0' );
+is( $blank_event->send_event, 0,  'send_event=0' );
 
 # Any method from other subtypes should not exist
 like( err{ $blank_event->x }, qr/locate object method "x"/, 'subtype methods don\'t exist on root event class' );
 # The XS version should also throw an exception after checking the type
-like( err{ $blank_event->_get_x }, qr/XEvent\.x/, 'XS refuses to fetch subtype fields' );
+like( err{ $blank_event->_x }, qr/XEvent\.x/, 'XS refuses to fetch subtype fields' );
 
 # Create an XEvent with constructor arguments
 my $bp_ev;

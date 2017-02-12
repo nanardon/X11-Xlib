@@ -580,7 +580,7 @@ _pack(e, fields, consume)
         PerlXlib_XEvent_pack(e, fields, consume);
         newpkg= PerlXlib_xevent_pkg_for_type(e->type);
         // re-bless the object if the thing passed to us was actually an object
-        if (oldpkg != newpkg && sv_derives_from(ST(0), "X11::Xlib::Struct::XEvent"))
+        if (oldpkg != newpkg && sv_derived_from(ST(0), "X11::Xlib::Struct::XEvent"))
             sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
 
 void
@@ -1395,7 +1395,7 @@ type(event, value=NULL)
           // re-initialize all fields in the area that changed
           memset( ((char*)(void*)event) + sizeof(XAnyEvent), 0, sizeof(XEvent)-sizeof(XAnyEvent) );
           // re-bless the object if the thing passed to us was actually an object
-          if (sv_derives_from(ST(0), "X11::Xlib::Struct::XEvent"))
+          if (sv_derived_from(ST(0), "X11::Xlib::Struct::XEvent"))
             sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
         }
       }

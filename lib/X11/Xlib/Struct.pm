@@ -26,11 +26,10 @@ fields names.
 
 sub new {
     my $class= shift;
+    $class= ref $class if ref $class;
     my $buffer;
     my $self= bless \$buffer, $class;
-    warn "before init";
     $self->_initialize;
-    warn "before apply";
     $self->apply(@_) if @_; # If arguments, then initialize using apply
     $self;
 }
