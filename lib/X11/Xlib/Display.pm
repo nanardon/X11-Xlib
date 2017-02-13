@@ -34,14 +34,26 @@ sub connection_fh {
 }
 
 sub _xid_cache { $_[0]{_xid_cache} }
-sub _get_cached_xid {
-    my ($self, $xid, $class)= @_;
+sub _get_cached_xobj {
+    my ($self, $xid, $class, $autofree)= @_;
     my $obj;
     return $self->{_xid_cache}{$xid} || do {
-        $obj= $class->new(display => $self, xid => $xid, autofree => 0);
+        $obj= $class->new(display => $self, xid => $xid, autofree => $autofree);
         Scalar::Util::weaken( $self->{_xid_cache}{$xid}= $obj );
         $obj;
     };
+}
+sub _get_cached_colormap {
+    my ($self, $xid, $autofree)= @_;
+    $self->_get_cached_xobj($xid, 'X11::Xlib::Colormap', $autofree);
+}
+sub _get_cached_pixmap {
+    my ($self, $xid, $autofree)= @_;
+    $self->_get_cached_xobj($xid, 'X11::Xlib::Pixmap', $autofree);
+}
+sub _get_cached_window {
+    my ($self, $xid, $autofree)= @_;
+    $self->_get_cached_xobj($xid, 'X11::Xlib::Window', $autofree);
 }
 
 =head3 screen_count
@@ -431,14 +443,13 @@ C<$allocFlag> defaults to C<AllocNone>.
 =cut
 
 sub new_colormap {
-    my $self= shift;
-    my $cmap_xid= $self->XCreateColormap(@_)
-        or croak "XCreateColormap failed"; # actually this is asynchronous
-    return X11::Xlib::Colormap->new(
-        display  => $self,
-        xid      => $cmap_xid,
-        autofree => 1
-    );
+    shift->XCreateColormap(@_);
+}
+sub DefaultColormap {
+    $_[0]->_get_cached_colormap(X11::Xlib::DefaultColormap(@_));
+}
+sub XCreateColormap {
+    $_[0]->_get_cached_colormap(X11::Xlib::XCreateColormap(@_), 1);
 }
 
 =head3 new_pixmap
@@ -459,13 +470,17 @@ sub new_pixmap {
     my ($self, $drawable, $width, $height, $depth)= @_;
     $drawable= $drawable->root_window
         if ref $drawable && $drawable->isa('X11::Xlib::Screen');
-    my $pix_xid= $self->XCreatePixmap($drawable, $width, $height, $depth)
-        or croak "XCreatePixmap failed";
-    return X11::Xlib::Pixmap->new(
-        display  => $self,
-        xid      => $pix_xid,
-        autofree => 1
-    );
+    $self->XCreatePixmap($drawable, $width, $height, $depth);
+}
+
+sub XCreatePixmap {
+    $_[0]->_get_cached_pixmap(X11::Xlib::XCreatePixmap(@_), 1);
+}
+sub XCreateBitmapFromData {
+    $_[0]->_get_cached_pixmap(X11::Xlib::XCreateBitmapFromData(@_), 1)
+}
+sub XCreatePixmapFromBitmapData {
+    $_[0]->_get_cached_pixmap(X11::Xlib::XCreatePixmapFromBitmapData(!_), 1);
 }
 
 =head3 new_window
@@ -559,7 +574,7 @@ sub new_window {
     croak("Unknown attributes passed to new_window: ".join(',', keys %args))
         if keys %args;
 
-    my $xid= $self->XCreateWindow(
+    my $wnd= $self->XCreateWindow(
         $args{parent} || $self->root_window,
         $x, $y, $w, $h,
         $border || 0,
@@ -568,15 +583,26 @@ sub new_window {
         $visual || $self->visual,
         $attrflags, \%attrs
     );
-    my $wnd= X11::Xlib::Window->new( display => $self, xid => $xid, autofree => 1 );
 
     if (keys %sizehints) {
         # XSizeHints->pack will set its own flags for the fields that are present.
         @sizehints{qw( x y width height )}= ($x, $y, $w, $h);
         $self->XSetWMNormalHints(\%sizehints)
     }
-    
+
     return $wnd;
+}
+
+sub RootWindow {
+    $_[0]->_get_cached_window(X11::Xlib::RootWindow(@_));
+}
+
+sub XCreateWindow {
+    $_[0]->_get_cached_window(X11::Xlib::XCreateWindow(@_), 1);
+}
+
+sub XCreateSimpleWindow {
+    $_[0]->_get_cached_window(X11::Xlib::XCreateSimpleWindow(@_), 1);
 }
 
 =head2 INPUT STATE/CONTROL

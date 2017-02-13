@@ -18,6 +18,6 @@ is(XStringToKeysym('a'), 0x61, "Can get keysym from string");
 my @keysym = $display->XGetKeyboardMapping(54);
 ok(@keysym, "can get the keyboard mapping");
 
-ok(my $rootwindow = $display->root_window, "Can get root window");
+ok(my $rootwindow = $display->RootWindow(0), "Can get root window");
 isa_ok($rootwindow, 'X11::Xlib::Window');
 ok($rootwindow->id, "Can get window id");

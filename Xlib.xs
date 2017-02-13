@@ -300,7 +300,7 @@ XCreateColormap(dpy, wnd=RootWindow(dpy, DefaultScreen(dpy)), visual=DefaultVisu
     Visual *visual
     int alloc
 
-Colormap
+void
 XFreeColormap(dpy, cmap)
     DisplayNotNull dpy
     int cmap

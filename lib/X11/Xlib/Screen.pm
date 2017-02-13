@@ -31,13 +31,15 @@ The L<X11::Xlib::Window> object for the root window of this screen
 
 sub root_window_xid {
     my $self= shift;
-    $self->{root_window_xid} ||= $self->display->RootWindow($self->{screen_number});
+    $self->{root_window_xid} ||=
+        X11::Xlib::RootWindow($self->{display}, $self->{screen_number});
 }
 
 sub root_window {
     my $self= shift;
     # Allow strong ref to root window, since it isn't going anywhere
-    $self->{root_window} ||= $self->{display}->_get_cached_xid($self->root_window_xid, 'X11::Xlib::Window');
+    $self->{root_window} ||=
+        $self->{display}->_get_cached_xid($self->root_window_xid, 'X11::Xlib::Window');
 }
 
 =head2 visual
