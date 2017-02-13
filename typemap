@@ -6,6 +6,7 @@ GC                    O_X11_Xlib_Opaque
 XEvent *              O_X11_Xlib_Struct
 XVisualInfo *         O_X11_Xlib_Struct
 XSetWindowAttributes* O_X11_Xlib_Struct
+XSizeHints *          O_X11_Xlib_Struct
 Window                O_X11_Xlib_XID
 Pixmap                O_X11_Xlib_XID
 Cursor                O_X11_Xlib_XID

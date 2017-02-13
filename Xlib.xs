@@ -204,6 +204,10 @@ _wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
 # Screen Functions (fn_screen) -----------------------------------------------
 
 int
+DefaultScreen(dpy)
+    DisplayNotNull dpy
+
+int
 ScreenCount(dpy)
     DisplayNotNull dpy
 
@@ -412,7 +416,49 @@ XGetGeometry(dpy, wnd, root_out=NULL, x_out=NULL, y_out=NULL, width_out=NULL, he
         if (depth_out)  sv_setuv(depth_out, d);
     OUTPUT:
         RETVAL
-    
+
+int
+XGetWMSizeHints(dpy, wnd, hints_out, supplied_out, property)
+    DisplayNotNull dpy
+    Window wnd
+    XSizeHints *hints_out
+    SV *supplied_out
+    Atom property
+    INIT:
+        long supplied;
+    CODE:
+        RETVAL = XGetWMSizeHints(dpy, wnd, hints_out, &supplied, property);
+        sv_setiv(supplied_out, supplied);
+    OUTPUT:
+        RETVAL
+
+void
+XSetWMSizeHints(dpy, wnd, hints, property)
+    DisplayNotNull dpy
+    Window wnd
+    XSizeHints *hints
+    Atom property
+
+int
+XGetWMNormalHints(dpy, wnd, hints_out, supplied_out)
+    DisplayNotNull dpy
+    Window wnd
+    XSizeHints *hints_out
+    SV *supplied_out
+    INIT:
+        long supplied;
+    CODE:
+        RETVAL = XGetWMNormalHints(dpy, wnd, hints_out, &supplied);
+        sv_setiv(supplied_out, supplied);
+    OUTPUT:
+        RETVAL
+
+void
+XSetWMNormalHints(dpy, wnd, hints)
+    DisplayNotNull dpy
+    Window wnd
+    XSizeHints *hints
+
 # XTest Functions (fn_xtest) -------------------------------------------------
 
 int
@@ -1987,6 +2033,257 @@ event_mask(s, value=NULL)
 
 # END GENERATED X11_Xlib_XSetWindowAttributes
 # ----------------------------------------------------------------------------
+# BEGIN GENERATED X11_Xlib_XSizeHints
+
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::XSizeHints
+
+int
+_sizeof(ignored=NULL)
+    SV* ignored;
+    CODE:
+        RETVAL = sizeof(XSizeHints);
+    OUTPUT:
+        RETVAL
+
+void
+_initialize(s)
+    XSizeHints *s
+    PPCODE:
+        memset((void*) s, 0, sizeof(*s));
+
+void
+_pack(s, fields, consume=0)
+    XSizeHints *s
+    HV *fields
+    Bool consume
+    PPCODE:
+        PerlXlib_XSizeHints_pack(s, fields, consume);
+
+void
+_unpack(s, fields)
+    XSizeHints *s
+    HV *fields
+    PPCODE:
+        PerlXlib_XSizeHints_unpack(s, fields);
+
+int
+base_height(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->base_height= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->base_height)));
+    }
+
+int
+base_width(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->base_width= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->base_width)));
+    }
+
+long
+flags(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->flags= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->flags)));
+    }
+
+int
+height(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->height= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->height)));
+    }
+
+int
+height_inc(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->height_inc= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->height_inc)));
+    }
+
+int
+max_aspect_x(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->max_aspect.x= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->max_aspect.x)));
+    }
+
+int
+max_aspect_y(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->max_aspect.y= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->max_aspect.y)));
+    }
+
+int
+max_height(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->max_height= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->max_height)));
+    }
+
+int
+max_width(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->max_width= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->max_width)));
+    }
+
+int
+min_aspect_x(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->min_aspect.x= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->min_aspect.x)));
+    }
+
+int
+min_aspect_y(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->min_aspect.y= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->min_aspect.y)));
+    }
+
+int
+min_height(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->min_height= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->min_height)));
+    }
+
+int
+min_width(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->min_width= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->min_width)));
+    }
+
+int
+width(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->width= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->width)));
+    }
+
+int
+width_inc(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->width_inc= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->width_inc)));
+    }
+
+int
+win_gravity(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->win_gravity= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->win_gravity)));
+    }
+
+int
+x(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->x= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->x)));
+    }
+
+int
+y(s, value=NULL)
+    XSizeHints *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->y= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->y)));
+    }
+
+# END GENERATED X11_Xlib_XSizeHints
+# ----------------------------------------------------------------------------
 
 BOOT:
 # BEGIN GENERATED BOOT CONSTANTS
@@ -2068,5 +2365,15 @@ BOOT:
   newCONSTSUB(stash, "CWDontPropagate", newSViv(CWDontPropagate));
   newCONSTSUB(stash, "CWColormap", newSViv(CWColormap));
   newCONSTSUB(stash, "CWCursor", newSViv(CWCursor));
+  newCONSTSUB(stash, "USPosition", newSViv(USPosition));
+  newCONSTSUB(stash, "USSize", newSViv(USSize));
+  newCONSTSUB(stash, "PPosition", newSViv(PPosition));
+  newCONSTSUB(stash, "PSize", newSViv(PSize));
+  newCONSTSUB(stash, "PMinSize", newSViv(PMinSize));
+  newCONSTSUB(stash, "PMaxSize", newSViv(PMaxSize));
+  newCONSTSUB(stash, "PResizeInc", newSViv(PResizeInc));
+  newCONSTSUB(stash, "PAspect", newSViv(PAspect));
+  newCONSTSUB(stash, "PBaseSize", newSViv(PBaseSize));
+  newCONSTSUB(stash, "PWinGravity", newSViv(PWinGravity));
 # END GENERATED BOOT CONSTANTS
 #

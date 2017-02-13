@@ -14,6 +14,7 @@ our $VERSION = '0.03';
 XSLoader::load(__PACKAGE__, $VERSION);
 
 require X11::Xlib::Struct;
+require X11::Xlib::Visual;
 
 my %_constants= (
 # BEGIN GENERATED XS CONSTANT LIST
@@ -27,6 +28,8 @@ my %_constants= (
     KeymapNotify LeaveNotify MapNotify MappingNotify MotionNotify NoExpose
     PropertyNotify ReparentNotify ResizeRequest SelectionClear SelectionNotify
     SelectionRequest UnmapNotify VisibilityNotify )],
+  const_sizehint => [qw( PAspect PBaseSize PMaxSize PMinSize PPosition
+    PResizeInc PSize PWinGravity USPosition USSize )],
   const_visual => [qw( VisualAllMask VisualBitsPerRGBMask VisualBlueMaskMask
     VisualClassMask VisualColormapSizeMask VisualDepthMask VisualGreenMaskMask
     VisualIDMask VisualRedMaskMask VisualScreenMask )],
@@ -49,13 +52,14 @@ my %_functions= (
     XKeysymToString XStringToKeysym )],
   fn_pix => [qw( XCreateBitmapFromData XCreatePixmap
     XCreatePixmapFromBitmapData XFreePixmap )],
-  fn_screen => [qw( DefaultColormap DefaultDepth DefaultGC DefaultVisual
-    DisplayHeight DisplayHeightMM DisplayWidth DisplayWidthMM RootWindow
-    ScreenCount )],
+  fn_screen => [qw( DefaultColormap DefaultDepth DefaultGC DefaultScreen
+    DefaultVisual DisplayHeight DisplayHeightMM DisplayWidth DisplayWidthMM
+    RootWindow ScreenCount )],
   fn_vis => [qw( XCreateColormap XFreeColormap XGetVisualInfo XMatchVisualInfo
     XVisualIDFromVisual )],
-  fn_win => [qw( XCreateSimpleWindow XCreateWindow XGetGeometry XMapWindow
-    XUnmapWindow )],
+  fn_win => [qw( XCreateSimpleWindow XCreateWindow XGetGeometry
+    XGetWMNormalHints XGetWMSizeHints XMapWindow XSetWMNormalHints
+    XSetWMSizeHints XUnmapWindow )],
   fn_xtest => [qw( XBell XQueryKeymap XTestFakeButtonEvent XTestFakeKeyEvent
     XTestFakeMotionEvent )],
 # END GENERATED XS FUNCTION LIST
@@ -86,9 +90,13 @@ our (
     $on_error_cb,               # application-supplied callback
 );
 sub on_error {
-    ref($_[-1]) eq 'CODE' or croak "Expected coderef";
-    $on_error_cb= $_[-1];
-    X11::Xlib::_install_error_handlers(1,1);
+    shift if $_[0] eq __PACKAGE__;
+    my $callback= shift;
+    if (defined $callback) {
+        ref($callback) eq 'CODE' or croak "Expected coderef";
+        X11::Xlib::_install_error_handlers(1,1);
+    }
+    $on_error_cb= $callback;
 }
 # called by XS, if error handler is installed
 sub _error_nonfatal {
@@ -541,6 +549,60 @@ This function basically creates a "child window", clipped to its parent, with
 all the same visual configuration.
 
 It is initially unmapped.  See L</XMapWindow>.
+
+=head3 XMapWindow
+
+  XMapWindow($display, $window);
+
+Ask the X server to show a window.  This call asynchronous and you should call
+XFlush if you want it to appear immediately.  The window will only appear if
+the parent window is also mapped.  The server sends back a MapNotify event if
+the Window event mask allows it, and if a variety of other conditions are met.
+It's really pretty complicated and you should read the offical docs.
+
+=head3 XGetGeometry
+
+  my ($root, $x, $y, $width, $height, $border_width, $color_depth);
+  XGetGeometry($display, $drawable, $root, $x, $y, $width, $height, $border_width, $color_depth)
+    or die "XGetGeometry failed";
+  # All vars declared above should now be defined
+
+This function loads the geometry of the window into the variables you supply.
+You may omit the ones you don't care about.
+
+=head3 XGetWMNormalHints
+
+  my ($hints_out, $supplied_fields_out);
+  XGetWMNormalHints($display, $window, $hints_out, $supplied_fields_out)
+    or warn "Doesn't have WM hints";
+
+If a window has Window Manager Normal Hints defined on it, this function will
+store them into the C<$hints_out> variable (which will become a L<X11::Xlib::XSizeHints>
+if it wasn't already).  It will also set the bits of C<$supplied_fields_out> to
+indicate which fields the X11 server knows about.  This is different from the
+bits in C<< $hints_out->flags >> that indicate which individual fields are defined
+for this window.
+
+=head3 XSetWMNormalHints
+
+  XSetWMNormalHints($display, $window, $hints);
+
+Set window manager hints for the specified window.  C<$hints> is an instance of
+L<X11::Xlib::XSizeHints>, or a hashref of its fields.  Note that the C<< ->flags >>
+member of this struct will be initialized for you if you pass a hashref, according
+to what fields are mentioned in the hashref.
+
+=head3 XUnmapWindow
+
+  XUnmapWindow($display, $window);
+
+Hide a window.
+
+=head3 XDestroyWindow
+
+  XDestroyWindow($display, $window);
+
+Unmap and destroy a window.
 
 =head2 XTEST INPUT SIMULATION
 

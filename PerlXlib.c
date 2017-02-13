@@ -109,6 +109,18 @@ XID PerlXlib_sv_to_xid(SV *sv) {
     return (XID) SvUV(*xid_field);
 }
 
+// Xlib warns that some structs might change size, and provide "XAllocFoo"
+//   functions.  However, this only solves the case of Xlib access violations
+//   from an old perl module on a new Xlib.  New perl modules on old Xlib would
+//   still write beyond the buffer (on the perl side) and corrupt memory.
+//   Annoyingly, Xlib doesn't seem to have any way to query the size of the struct,
+//   only allocate it.
+// Instead of using XAllocFoo sillyness (and the memory management hassle it
+//   would cause), just pad the struct with some extra bytes.
+// Perl modules will probably always be compiled fresh anyway.
+#ifndef X11_Xlib_Struct_Padding
+#define X11_Xlib_Struct_Padding 64
+#endif
 void* PerlXlib_get_struct_ptr(SV *sv, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer) {
     void* buf;
 
@@ -122,7 +134,7 @@ void* PerlXlib_get_struct_ptr(SV *sv, const char* pkg, int struct_size, PerlXlib
         else if (SvTYPE(SvRV(sv)) == SVt_PVHV) {
             // Need a buffer that lasts for the rest of our XS call stack.
             // Cheat by using a mortal SV :-)
-            buf= SvPVX(sv_2mortal(newSV(struct_size)));
+            buf= SvPVX(sv_2mortal(newSV(struct_size + X11_Xlib_Struct_Padding)));
             packer(buf, (HV*) SvRV(sv), 0);
             return buf;
         }
@@ -135,7 +147,7 @@ void* PerlXlib_get_struct_ptr(SV *sv, const char* pkg, int struct_size, PerlXlib
     
     if (!SvOK(sv)) {
         sv_setpvn(sv, "", 0);
-        sv_grow(sv, struct_size+1);
+        SvGROW(sv, struct_size+X11_Xlib_Struct_Padding);
         SvCUR_set(sv, struct_size);
         memset(SvPVX(sv), 0, struct_size+1);
     }
@@ -144,6 +156,8 @@ void* PerlXlib_get_struct_ptr(SV *sv, const char* pkg, int struct_size, PerlXlib
     else if (SvCUR(sv) < struct_size)
         croak("Scalars used as %s must be at least %d bytes long (got %d)",
             pkg, struct_size, SvCUR(sv));
+    // Make sure we have the padding even if the user tinkered with the buffer
+    SvGROW(sv, struct_size+X11_Xlib_Struct_Padding);
     return SvPVX(sv);
 }
 
@@ -982,4 +996,94 @@ void PerlXlib_XSetWindowAttributes_unpack(XSetWindowAttributes *s, HV *fields) {
 }
 
 // END GENERATED X11_Xlib_XSetWindowAttributes
+//----------------------------------------------------------------------------
+// BEGIN GENERATED X11_Xlib_XSizeHints
+
+void PerlXlib_XSizeHints_pack(XSizeHints *s, HV *fields, Bool consume) {
+    SV **fp;
+
+    fp= hv_fetch(fields, "base_height", 11, 0);
+    if (fp && *fp) { s->flags |= PBaseSize; s->base_height= SvIV(*fp); if (consume) hv_delete(fields, "base_height", 11, G_DISCARD); }
+
+    fp= hv_fetch(fields, "base_width", 10, 0);
+    if (fp && *fp) { s->flags |= PBaseSize; s->base_width= SvIV(*fp); if (consume) hv_delete(fields, "base_width", 10, G_DISCARD); }
+
+    fp= hv_fetch(fields, "flags", 5, 0);
+    if (fp && *fp) {  s->flags= SvIV(*fp); if (consume) hv_delete(fields, "flags", 5, G_DISCARD); }
+
+    fp= hv_fetch(fields, "height", 6, 0);
+    if (fp && *fp) { s->flags |= PSize; s->height= SvIV(*fp); if (consume) hv_delete(fields, "height", 6, G_DISCARD); }
+
+    fp= hv_fetch(fields, "height_inc", 10, 0);
+    if (fp && *fp) { s->flags |= PResizeInc; s->height_inc= SvIV(*fp); if (consume) hv_delete(fields, "height_inc", 10, G_DISCARD); }
+
+    fp= hv_fetch(fields, "max_aspect_x", 12, 0);
+    if (fp && *fp) { s->flags |= PAspect; s->max_aspect.x= SvIV(*fp); if (consume) hv_delete(fields, "max_aspect_x", 12, G_DISCARD); }
+
+    fp= hv_fetch(fields, "max_aspect_y", 12, 0);
+    if (fp && *fp) { s->flags |= PAspect; s->max_aspect.y= SvIV(*fp); if (consume) hv_delete(fields, "max_aspect_y", 12, G_DISCARD); }
+
+    fp= hv_fetch(fields, "max_height", 10, 0);
+    if (fp && *fp) { s->flags |= PMaxSize; s->max_height= SvIV(*fp); if (consume) hv_delete(fields, "max_height", 10, G_DISCARD); }
+
+    fp= hv_fetch(fields, "max_width", 9, 0);
+    if (fp && *fp) { s->flags |= PMaxSize; s->max_width= SvIV(*fp); if (consume) hv_delete(fields, "max_width", 9, G_DISCARD); }
+
+    fp= hv_fetch(fields, "min_aspect_x", 12, 0);
+    if (fp && *fp) { s->flags |= PAspect; s->min_aspect.x= SvIV(*fp); if (consume) hv_delete(fields, "min_aspect_x", 12, G_DISCARD); }
+
+    fp= hv_fetch(fields, "min_aspect_y", 12, 0);
+    if (fp && *fp) { s->flags |= PAspect; s->min_aspect.y= SvIV(*fp); if (consume) hv_delete(fields, "min_aspect_y", 12, G_DISCARD); }
+
+    fp= hv_fetch(fields, "min_height", 10, 0);
+    if (fp && *fp) { s->flags |= PMinSize; s->min_height= SvIV(*fp); if (consume) hv_delete(fields, "min_height", 10, G_DISCARD); }
+
+    fp= hv_fetch(fields, "min_width", 9, 0);
+    if (fp && *fp) { s->flags |= PMinSize; s->min_width= SvIV(*fp); if (consume) hv_delete(fields, "min_width", 9, G_DISCARD); }
+
+    fp= hv_fetch(fields, "width", 5, 0);
+    if (fp && *fp) { s->flags |= PSize; s->width= SvIV(*fp); if (consume) hv_delete(fields, "width", 5, G_DISCARD); }
+
+    fp= hv_fetch(fields, "width_inc", 9, 0);
+    if (fp && *fp) { s->flags |= PResizeInc; s->width_inc= SvIV(*fp); if (consume) hv_delete(fields, "width_inc", 9, G_DISCARD); }
+
+    fp= hv_fetch(fields, "win_gravity", 11, 0);
+    if (fp && *fp) { s->flags |= PWinGravity; s->win_gravity= SvIV(*fp); if (consume) hv_delete(fields, "win_gravity", 11, G_DISCARD); }
+
+    fp= hv_fetch(fields, "x", 1, 0);
+    if (fp && *fp) { s->flags |= PPosition; s->x= SvIV(*fp); if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
+
+    fp= hv_fetch(fields, "y", 1, 0);
+    if (fp && *fp) { s->flags |= PPosition; s->y= SvIV(*fp); if (consume) hv_delete(fields, "y", 1, G_DISCARD); }
+}
+
+void PerlXlib_XSizeHints_unpack(XSizeHints *s, HV *fields) {
+    // hv_store may return NULL if there is an error, or if the hash is tied.
+    // If it does, we need to clean up the value.
+    SV *sv= NULL;
+if (s->flags & PBaseSize) {     if (!hv_store(fields, "base_height", 11, (sv=newSViv(s->base_height)), 0)) goto store_fail;
+ }if (s->flags & PBaseSize) {     if (!hv_store(fields, "base_width", 10, (sv=newSViv(s->base_width)), 0)) goto store_fail;
+ }    if (!hv_store(fields, "flags"     ,  5, (sv=newSViv(s->flags)), 0)) goto store_fail;
+if (s->flags & PSize) {     if (!hv_store(fields, "height"    ,  6, (sv=newSViv(s->height)), 0)) goto store_fail;
+ }if (s->flags & PResizeInc) {     if (!hv_store(fields, "height_inc", 10, (sv=newSViv(s->height_inc)), 0)) goto store_fail;
+ }if (s->flags & PAspect) {     if (!hv_store(fields, "max_aspect_x", 12, (sv=newSViv(s->max_aspect.x)), 0)) goto store_fail;
+ }if (s->flags & PAspect) {     if (!hv_store(fields, "max_aspect_y", 12, (sv=newSViv(s->max_aspect.y)), 0)) goto store_fail;
+ }if (s->flags & PMaxSize) {     if (!hv_store(fields, "max_height", 10, (sv=newSViv(s->max_height)), 0)) goto store_fail;
+ }if (s->flags & PMaxSize) {     if (!hv_store(fields, "max_width" ,  9, (sv=newSViv(s->max_width)), 0)) goto store_fail;
+ }if (s->flags & PAspect) {     if (!hv_store(fields, "min_aspect_x", 12, (sv=newSViv(s->min_aspect.x)), 0)) goto store_fail;
+ }if (s->flags & PAspect) {     if (!hv_store(fields, "min_aspect_y", 12, (sv=newSViv(s->min_aspect.y)), 0)) goto store_fail;
+ }if (s->flags & PMinSize) {     if (!hv_store(fields, "min_height", 10, (sv=newSViv(s->min_height)), 0)) goto store_fail;
+ }if (s->flags & PMinSize) {     if (!hv_store(fields, "min_width" ,  9, (sv=newSViv(s->min_width)), 0)) goto store_fail;
+ }if (s->flags & PSize) {     if (!hv_store(fields, "width"     ,  5, (sv=newSViv(s->width)), 0)) goto store_fail;
+ }if (s->flags & PResizeInc) {     if (!hv_store(fields, "width_inc" ,  9, (sv=newSViv(s->width_inc)), 0)) goto store_fail;
+ }if (s->flags & PWinGravity) {     if (!hv_store(fields, "win_gravity", 11, (sv=newSViv(s->win_gravity)), 0)) goto store_fail;
+ }if (s->flags & PPosition) {     if (!hv_store(fields, "x"         ,  1, (sv=newSViv(s->x)), 0)) goto store_fail;
+ }if (s->flags & PPosition) {     if (!hv_store(fields, "y"         ,  1, (sv=newSViv(s->y)), 0)) goto store_fail;
+ }    return;
+    store_fail:
+        if (sv) sv_2mortal(sv);
+        croak("Can't store field in supplied hash (tied maybe?)");
+}
+
+// END GENERATED X11_Xlib_XSizeHints
 //----------------------------------------------------------------------------

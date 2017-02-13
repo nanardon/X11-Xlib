@@ -81,4 +81,14 @@ const_winattr
  i CWDontPropagate
  i CWColormap
  i CWCursor
-
+const_sizehint
+ i USPosition
+ i USSize
+ i PPosition
+ i PSize
+ i PMinSize
+ i PMaxSize
+ i PResizeInc
+ i PAspect
+ i PBaseSize
+ i PWinGravity

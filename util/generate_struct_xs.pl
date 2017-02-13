@@ -84,30 +84,67 @@ sub normalize_type {
     }
 }
 
+my %def_bits= (
+    XSizeHints => {
+        defined_field => 'flags',
+        defined_flag => {
+            PPosition  => [qw( x y )],
+            PSize      => [qw( width height )],
+            PMinSize   => [qw( min_width min_height )],
+            PMaxSize   => [qw( max_width max_height )],
+            PResizeInc => [qw( width_inc height_inc )],
+            PAspect    => [qw( min_aspect.x min_aspect.y max_aspect.x max_aspect.y )],
+            PBaseSize  => [qw( base_width base_height )],
+            PWinGravity=> [qw( win_gravity )],
+        },
+    },
+);
+
 #use DDP;
 #p %types;
 $types{$goal} or die "No type for $goal";
 
-# Traverse struct recursively building a flat list of foo.bar.baz => $type
-sub flatten_unions {
-    my ($result, $struct_name, $struct, $path)= @_;
-    ref $struct && ref $struct->{fields} eq 'HASH'
-        or die "Not a container type: $struct_name $path\n";
-    for my $fieldname (keys %{ $struct->{fields} || {} }) {
-        my $fieldtype= $struct->{fields}{$fieldname};
-        my $fieldstructtype= ref $fieldtype? $fieldtype : $types{$fieldtype};
-        if (ref $fieldstructtype && $fieldstructtype->{container_type} eq 'union') {
-            flatten_unions($result, $fieldtype, $fieldstructtype, "$path$fieldname.");
+# Traverse struct recursively building a flat list of c_name => { pl_name, c_name, ctype }
+sub flatten_fields {
+    my ($result, $type_name, $type_spec, $c_path, $pl_prefix)= @_;
+    ref $type_spec && ref $type_spec->{fields} eq 'HASH'
+        or die "Not a container type: $type_name $c_path\n";
+    for my $fieldname (keys %{ $type_spec->{fields} || {} }) {
+        my $fieldtype= $type_spec->{fields}{$fieldname};
+        # convert the type name to a type spec, in the case of typedefs
+        my $fieldtype_spec= ref $fieldtype? $fieldtype : $types{$fieldtype};
+        if (ref $fieldtype_spec && $fieldtype_spec->{container_type} eq 'union') {
+            flatten_fields($result, $fieldtype, $fieldtype_spec, "$c_path$fieldname.", $pl_prefix);
+        } elsif (ref $fieldtype_spec && $fieldtype_spec->{container_type} eq 'struct') {
+            flatten_fields($result, $fieldtype, $fieldtype_spec, "$c_path$fieldname.", "$pl_prefix${fieldname}_");
         } else {
-            $result->{"$path$fieldname"}= $fieldtype;
+            my $member= {
+                pl_name => "$pl_prefix$fieldname",
+                c_name  => "$c_path$fieldname",
+                c_type  => $fieldtype,
+            };
+            $result->{"$c_path$fieldname"}= $member;
         }
     }
 }
 
 my %members;
-flatten_unions(\%members, $goal, $types{$goal}, '');
+flatten_fields(\%members, $goal, $types{$goal}, '', '');
 delete $members{c_class};
-#p my $x= \%members;
+
+# Set values of "defined_field" and "defined_flag" for any struct which uses
+# bitflags to indicated which fields are defined.
+if ($def_bits{$goal}) {
+    for my $flag (keys %{ $def_bits{$goal}{defined_flag} }) {
+        my $fields= $def_bits{$goal}{defined_flag}{$flag};
+        for (@$fields) {
+            if ($members{$_}) {
+                $members{$_}{defined_flag}= $flag;
+                $members{$_}{defined_field}= $def_bits{$goal}{defined_field};
+            }
+        }
+    }
+}
 
 my %int_types= map { $_ => 1 } qw( int long Bool char );
 my %unsigned_types= map { $_ => 1 } 'unsigned', 'unsigned int', 'unsigned long',
@@ -145,12 +182,12 @@ sub sv_create {
 }
 
 sub generate_xs_accessor {
-    my $fieldname= shift;
-    my $sv_read= sv_read($members{$fieldname}, "s->$fieldname", "value");
-    my $sv_create= sv_create($members{$fieldname}, "s->$fieldname");
+    my $member= shift;
+    my $sv_read= sv_read($member->{c_type}, "s->$member->{c_name}", "value");
+    my $sv_create= sv_create($member->{c_type}, "s->$member->{c_name}");
     return <<"@";
-$members{$fieldname}
-${fieldname}(s, value=NULL)
+$member->{c_type}
+$member->{pl_name}(s, value=NULL)
     ${goal} *s
     SV *value
   PPCODE:
@@ -169,15 +206,16 @@ sub generate_pack_c {
 void PerlXlib_${goal}_pack($goal *s, HV *fields, Bool consume) {
     SV **fp;
 @
-    for my $path (sort keys %members) {
-        my $type= $members{$path};
-        my ($name)= ($path =~ /([^.]+)$/);
-        my $sv_read= sv_read($type, "s->$path", "*fp");
+    for my $c_name (sort keys %members) {
+        my $member= $members{$c_name};
+        my $name= $member->{pl_name};
+        my $sv_read= sv_read($member->{c_type}, "s->$member->{c_name}", "*fp");
         my $name_len= length($name);
+        my $mark_defined= $member->{defined_flag}? "s->$member->{defined_field} |= $member->{defined_flag};" : '';
         $c .= <<"@";
 
     fp= hv_fetch(fields, "$name", $name_len, 0);
-    if (fp && *fp) { $sv_read if (consume) hv_delete(fields, "$name", $name_len, G_DISCARD); }
+    if (fp && *fp) { $mark_defined $sv_read if (consume) hv_delete(fields, "$name", $name_len, G_DISCARD); }
 @
     }
 
@@ -192,11 +230,15 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
     // If it does, we need to clean up the value.
     SV *sv= NULL;
 @
-    for my $path (sort keys %members) {
-        my $type= $members{$path};
-        my ($name)= ($path =~ /([^.]+)$/);
-        $c .= sprintf "    if (!hv_store(fields, %-12s, %2d, (sv=%s), 0)) goto store_fail;\n",
-            qq{"$name"}, length($name), sv_create($type, 's->'.$path);
+    for my $c_name (sort keys %members) {
+        my $member= $members{$c_name};
+        my $name= $member->{pl_name};
+        my $code= sprintf "    if (!hv_store(fields, %-12s, %2d, (sv=%s), 0)) goto store_fail;\n",
+            qq{"$name"}, length($name), sv_create($member->{c_type}, "s->$member->{c_name}");
+        if ($member->{defined_field}) {
+            $code= "if (s->$member->{defined_field} & $member->{defined_flag}) { $code }";
+        }
+        $c .= $code;
     }
 
     $c .= <<'@';
@@ -262,7 +304,7 @@ _unpack(s, fields)
         PerlXlib_${goal}_unpack(s, fields);
 
 @
-$out_xs .= generate_xs_accessor($_) for keys %members;
+$out_xs .= generate_xs_accessor($_) for map { $members{$_} } sort keys %members;
 
 my $out_pl= "\n";
 my $out_const= "";

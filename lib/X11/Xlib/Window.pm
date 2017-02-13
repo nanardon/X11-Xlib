@@ -3,7 +3,11 @@ use strict;
 use warnings;
 use parent 'X11::Xlib::XID';
 
-our $VERSION = '0.01';
+sub DESTROY {
+    my $self= shift;
+    $self->display->XDestroyWindow($self->xid)
+        if $self->autofree;
+}
 
 1;
 
