@@ -9,7 +9,7 @@ use Carp;
 use Try::Tiny;
 use XSLoader;
 
-our $VERSION = '0.03';
+our $VERSION = '0.03_01';
 
 XSLoader::load(__PACKAGE__, $VERSION);
 
@@ -731,16 +731,23 @@ C<Display*> on which you can call methods.  These are represented by this
 package, C<X11::Xlib>.  The L<X11::Xlib::Display> package provides a more
 perl-ish interface and some helper methods to "DWIM".
 
-=head2 XEvent
+=head2 Screen
 
-A B<struct> that can hold any sort of message sent to/from the server.  The struct
-is a union of many other structs, which you can read about in L<X11::Xlib::XEvent>.
+The Xlib C<Screen*> is not exported by this module, since most methods that
+use a C<Screen*> have a matching method that uses a C<Display*>.
+If you are using the object-oriented L<Display|X11::Xlib::Display> you then
+get L<Screen|X11::Xlib::Screen> objects for convenience.
 
 =head2 Visual
 
 An B<opaque pointer> describing binary representation of pixels for some mode of
 the display.  There's probably only one in use on the entire display (i.e. RGBA)
 but Xlib makes you look it up and pass it around to various functions.
+
+=head2 XEvent
+
+A B<struct> that can hold any sort of message sent to/from the server.  The struct
+is a union of many other structs, which you can read about in L<X11::Xlib::XEvent>.
 
 =head2 XVisualInfo
 
@@ -749,11 +756,20 @@ A more useful B<struct> describing a Visual.  See L<X11::Xlib::XVisualInfo>.
 =head2 Colormap
 
 An B<XID> referencing what used to be a palette for 8-bit graphics but which is
-now mostly a useless appendage to be passed to L</XCreateWindow>.
+now mostly a useless appendage to be passed to L</XCreateWindow>.  When using
+the object-oriented C<Display>, these are wrapped by L<X11::Xlib::Colormap>.
+
+=head2 Pixmap
+
+An B<XID> referencing a rectangular pixel buffer.  Has dimensions and color
+depth and is bound to a L</Screen>.  Can be used for copying images, or tiling.
+When using the object-oriented C<Display>, these are wrapped by L<X11::Xlib::Pixmap>.
 
 =head2 Window
 
-An B<XID> referencing a Window.  See L<X11::Xlib::Window>.
+An B<XID> referencing a Window.  Used for painting, event/input delivery, and
+having data tagged to them.  Not abused nearly as much as the Win32 API abuses
+its Window structures.  See L<X11::Xlib::Window> for details.
 
 =head1 SYSTEM DEPENDENCIES
 
@@ -778,7 +794,7 @@ sudo yum install libXtst-devel
 
 =item L<X11::GUITest>
 
-This module provides the same functions but with a high level approach.
+This module provides a higher-level API for X input simulation and testing.
 
 =item L<Gtk2>
 
@@ -787,9 +803,10 @@ through the GTK API and perl objects.
 
 =back
 
-=head1 NOTES
+=head1 TODO
 
-This module is still incomplete, but patches are welcome :)
+This module still only covers a small fraction of the Xlib API.
+Patches are welcome :)
 
 =head1 AUTHOR
 
@@ -800,6 +817,8 @@ Michael Conrad, E<lt>mike@nrdvana.netE<gt>
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (C) 2009-2010 by Olivier Thauvin
+
+Copyright (C) 2017 by Michael Conrad
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,

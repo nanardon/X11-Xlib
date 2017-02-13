@@ -480,7 +480,7 @@ sub XCreateBitmapFromData {
     $_[0]->_get_cached_pixmap(X11::Xlib::XCreateBitmapFromData(@_), 1)
 }
 sub XCreatePixmapFromBitmapData {
-    $_[0]->_get_cached_pixmap(X11::Xlib::XCreatePixmapFromBitmapData(!_), 1);
+    $_[0]->_get_cached_pixmap(X11::Xlib::XCreatePixmapFromBitmapData(@_), 1);
 }
 
 =head3 new_window

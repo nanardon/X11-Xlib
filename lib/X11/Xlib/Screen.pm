@@ -4,6 +4,21 @@ use warnings;
 use X11::Xlib::Display;
 require Scalar::Util;
 
+=head1 DESCRIPTION
+
+In ancient history, a C<Screen> represented one physical graphics device
++ monitor.
+Now days there tends to be only one per system, with multiple monitors or
+displays aggregated into a single screen using Xinerama or XRandR.
+This was mostly caused by the annoying restriction that graphic resources
+(i.e. windows) are bound to a single screen.
+
+The short of that story is that C<< $display->screen_count >> and
+C<< $screen->width >> etc don't do what a person might expect them to do.
+If you want to know about the boundaries of physical monitors you'll need
+the yet-unwritten C<X11::Xlib::Monitor> objects provided by a future wrapper
+around Xinerama or XRandR.
+
 =head1 ATTRIBUTES
 
 =head2 display
@@ -14,10 +29,30 @@ Reference to L<X11::Xlib::Display>
 
 The integer identifying this screen.
 
+=head2 width
+
+Width in pixels
+
+=head2 height
+
+Height in pixels
+
+=head2 width_mm
+
+Physical width in millimeters.
+
+=head2 height_mm
+
+Physical height in millimeters.
+
 =cut
 
-sub display { $_[0]{display} }
+sub display   { $_[0]{display} }
 sub screen_number { $_[0]{screen_number} }
+sub width     { $_[0]{display}->DisplayWidth($_[0]{screen_number}) }
+sub height    { $_[0]{display}->DisplayHeight($_[0]{screen_number}) }
+sub width_mm  { $_[0]{display}->DisplayWidthMM($_[0]{screen_number}) }
+sub height_mm { $_[0]{display}->DisplayHeightMM($_[0]{screen_number}) }
 
 =head2 root_window_xid
 
@@ -84,11 +119,15 @@ sub visual_info {
 
 =head2 match_visual_info
 
-  my $vinfo= $screen->find_visual($depth, $class);
+  my $vinfo= $screen->match_visual_info($depth, $class);
 
 Like L<X11::Xlib::Display/match_visual_info> but without the C<$screen> argument.
 
 =cut
 
+sub match_visual_info {
+    my ($self, $depth, $class)= @_;
+    $self->display->match_visual_info($self, $depth, $class);
+}
 
 1;
