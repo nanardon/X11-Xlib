@@ -28,7 +28,10 @@ WriteMakefile(
     PREREQ_PM    => {},                   # e.g., Module::Name => 1.1
     ($] >= 5.005 ?                        ## Add these new keywords supported since 5.005
           (ABSTRACT_FROM => 'lib/X11/Xlib.pm',    # retrieve abstract from module
-            AUTHOR => 'Olivier Thauvin <nanardon@nanardon.zarb.org>') : ()),
+            AUTHOR => [
+              'Olivier Thauvin <nanardon@nanardon.zarb.org>',
+              'Michael Conrad <mike@nrdvana.net>'
+            ]) : ()),
     LIBS   => [ '-lX11 -lXtst -lXext' ],  # e.g., '-lm'
     DEFINE => '',                         # e.g., '-DHAVE_SOMETHING'
     INC    => '-I.',                      # e.g., '-I. -I/usr/include/other'
