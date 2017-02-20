@@ -43,4 +43,3 @@ and can be one of:
   PBaseSize    /* program specified base for incrementing */
   PWinGravity  /* program specified window gravity */
 
-=end

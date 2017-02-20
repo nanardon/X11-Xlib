@@ -107,7 +107,8 @@ Access the scalar holding the bytes of the struct.
 
 =cut
 
-sub buffer { ${$_[0]} }
+sub bytes { ${$_[0]} }
+*buffer= *bytes;
 
 # The struct code is all in XS, so all we need to do is declare the package
 # inheritence.  Except for XEvent, which is complicated.

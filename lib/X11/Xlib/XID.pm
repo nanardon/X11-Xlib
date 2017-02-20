@@ -12,9 +12,10 @@ sub new {
     bless \%args, $class;
 }
 
-sub dpy { shift->{dpy} }
+sub display { shift->{display} }
 sub xid { shift->{xid} }
-sub id  { shift->{xid} }
+*id= *xid;
+*dpy= *display;
 sub autofree { my $self= shift; $self->{autofree}= shift if @_; $self->{autofree} }
 
 1;
@@ -34,12 +35,28 @@ X11::Xlib::Window - Low-level access to X11 windows
 
 =head1 DESCRIPTION
 
-=cut
+=head1 ATTRIBUTES
+
+=head2 display
+
+The L<X11::Xlib::Display> where the resource is located.
+
+=head2 xid
+
+Return the X11 numeric ID for this window resource.
+
+=head2 autofree
+
+Whether this window object should control the lifespan of the remote resource,
+by calling XDestroyWindow if it goes out of scope.
 
 =head1 METHODS
 
-=head2 $window->id
+=head2 new
 
-Return the X11 numeric ID of the window.
+This is mostly meant to be called by L<Display|X11::Xlib::Display>, but you
+can wrap additional Window XIDs with:
+
+  my $wnd= X11::Xlib::Window->new(display => $dpy, xid => $xid)
 
 =cut
