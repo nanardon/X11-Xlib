@@ -5,8 +5,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/XTest.h>
-
-#include "PerlXlib.c"
+#include "PerlXlib.h"
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib
 
@@ -26,26 +25,12 @@ XOpenDisplay(connection_string = NULL)
         if (!dpy)
             PUSHs(&PL_sv_undef);
         else {
-            // create the hash entry where we will ref this connection
-            fp= hv_fetch(get_hv("X11::Xlib::_connections", GV_ADD), (void*) &dpy, sizeof(dpy), 1);
-            if (!fp) {
+            dest= sv_2mortal(newSV(0));
+            if (!PerlXlib_sv_assign_conn(dest, dpy, 0)) {
                 XCloseDisplay(dpy);
                 croak("Can't create hash entry (tied?)");
             }
-
-            // Wrap the Display* in our own struct to attach extra flags.
-            conn.dpy= dpy;
-            conn.state= PerlXlib_CONN_LIVE;
-            conn.foreign= 0;
-
-            // Always create instance of X11::Xlib.  X11::Xlib::Display can wrap this as needed.
-            sv_setref_pvn(dest= newSV(0), "X11::Xlib", (void*)&conn, sizeof(conn));
-            PUSHs(sv_2mortal(dest));
-
-            // Save a weakref for later
-            if (!*fp) *fp= newRV(SvRV(dest));
-            else sv_setsv(*fp, dest);
-            sv_rvweaken(*fp);
+            PUSHs(dest);
         }
 
 void
@@ -80,19 +65,19 @@ DESTROY(connsv)
 
 char *
 XServerVendor(dpy)
-    DisplayNotNull dpy
+    Display * dpy
 
 int
 XVendorRelease(dpy)
-    DisplayNotNull dpy
+    Display * dpy
 
 int
 ConnectionNumber(dpy)
-    DisplayNotNull dpy
+    Display * dpy
 
 void
 XSetCloseDownMode(dpy, close_mode)
-    DisplayNotNull dpy
+    Display * dpy
     int close_mode
     CODE:
         XSetCloseDownMode(dpy, close_mode);
@@ -111,38 +96,38 @@ XCloseDisplay(dpy)
 
 void
 XNextEvent(dpy, event)
-    DisplayNotNull dpy
+    Display * dpy
     XEvent *event
 
 Bool
 XCheckWindowEvent(dpy, wnd, event_mask, event_return)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
     int event_mask
     XEvent *event_return
 
 Bool
 XCheckTypedWindowEvent(dpy, wnd, event_type, event_return)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
     int event_type
     XEvent *event_return
 
 Bool
 XCheckMaskEvent(dpy, event_mask, event_return)
-    DisplayNotNull dpy
+    Display * dpy
     int event_mask
     XEvent *event_return
 
 Bool
 XCheckTypedEvent(dpy, event_type, event_return)
-    DisplayNotNull dpy
+    Display * dpy
     int event_type
     XEvent *event_return
 
 Bool
 XSendEvent(dpy, wnd, propagate, event_mask, event_send)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
     Bool propagate
     long event_mask
@@ -150,27 +135,27 @@ XSendEvent(dpy, wnd, propagate, event_mask, event_send)
 
 void
 XPutBackEvent(dpy, event)
-    DisplayNotNull dpy
+    Display * dpy
     XEvent *event
 
 void
 XFlush(dpy)
-    DisplayNotNull dpy
+    Display * dpy
 
 void
 XSync(dpy, discard=0)
-    DisplayNotNull  dpy
+    Display *  dpy
     int discard
 
 void
 XSelectInput(dpy, wnd, mask)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
     int mask
 
 Bool
 _wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
     int event_type
     int event_mask
@@ -205,15 +190,15 @@ _wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
 
 int
 DefaultScreen(dpy)
-    DisplayNotNull dpy
+    Display * dpy
 
 int
 ScreenCount(dpy)
-    DisplayNotNull dpy
+    Display * dpy
 
 Window
 RootWindow(dpy, screen=DefaultScreen(dpy))
-    DisplayNotNull  dpy
+    Display *  dpy
     int screen
     CODE:
         RETVAL = RootWindow(dpy, screen);
@@ -222,49 +207,49 @@ RootWindow(dpy, screen=DefaultScreen(dpy))
 
 Colormap
 DefaultColormap(dpy, screen=DefaultScreen(dpy))
-    DisplayNotNull dpy
+    Display * dpy
     int screen
 
 int
 DefaultDepth(dpy, screen=DefaultScreen(dpy))
-    DisplayNotNull dpy
+    Display * dpy
     int screen
 
 GC
 DefaultGC(dpy, screen=DefaultScreen(dpy))
-    DisplayNotNull dpy
+    Display * dpy
     int screen
 
 Visual *
 DefaultVisual(dpy, screen=DefaultScreen(dpy))
-    DisplayNotNull dpy
+    Display * dpy
     int screen
 
 int
 DisplayWidth(dpy, screen=DefaultScreen(dpy))
-    DisplayNotNull dpy
+    Display * dpy
     int screen
 
 int
 DisplayHeight(dpy, screen=DefaultScreen(dpy))
-    DisplayNotNull dpy
+    Display * dpy
     int screen
 
 int
 DisplayWidthMM(dpy, screen=DefaultScreen(dpy))
-    DisplayNotNull dpy
+    Display * dpy
     int screen
 
 int
 DisplayHeightMM(dpy, screen=DefaultScreen(dpy))
-    DisplayNotNull dpy
+    Display * dpy
     int screen
 
 # Visual Functions (fn_vis) --------------------------------------------------
 
 Bool
 XMatchVisualInfo(dpy, screen, depth, class, vis_return)
-    DisplayNotNull dpy
+    Display * dpy
     int screen
     int depth
     int class
@@ -272,7 +257,7 @@ XMatchVisualInfo(dpy, screen, depth, class, vis_return)
 
 void
 XGetVisualInfo(dpy, vinfo_mask, vinfo_template)
-    DisplayNotNull dpy
+    Display * dpy
     int vinfo_mask
     XVisualInfo *vinfo_template
     INIT:
@@ -295,21 +280,21 @@ XVisualIDFromVisual(vis)
 
 Colormap
 XCreateColormap(dpy, wnd=RootWindow(dpy, DefaultScreen(dpy)), visual=DefaultVisual(dpy, DefaultScreen(dpy)), alloc=AllocNone)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
     Visual *visual
     int alloc
 
 void
 XFreeColormap(dpy, cmap)
-    DisplayNotNull dpy
+    Display * dpy
     int cmap
 
 # Pixmap Functions (fn_pix) --------------------------------------------------
 
 Pixmap
 XCreatePixmap(dpy, drw, width, height, depth)
-    DisplayNotNull dpy
+    Display * dpy
     Drawable drw
     int width
     int height
@@ -317,12 +302,12 @@ XCreatePixmap(dpy, drw, width, height, depth)
 
 void
 XFreePixmap(dpy, pix)
-    DisplayNotNull dpy
+    Display * dpy
     Pixmap pix
 
 Pixmap
 XCreateBitmapFromData(dpy, drw, data, width, height)
-    DisplayNotNull dpy
+    Display * dpy
     Drawable drw
     SV * data
     int width
@@ -336,7 +321,7 @@ XCreateBitmapFromData(dpy, drw, data, width, height)
 
 Pixmap
 XCreatePixmapFromBitmapData(dpy, drw, data, width, height, fg, bg, depth)
-    DisplayNotNull dpy
+    Display * dpy
     Drawable drw
     SV * data
     int width
@@ -355,7 +340,7 @@ XCreatePixmapFromBitmapData(dpy, drw, data, width, height, fg, bg, depth)
 
 Window
 XCreateWindow(dpy, parent, x, y, w, h, border, depth, class, visual, attr_mask, attrs)
-    DisplayNotNull dpy
+    Display * dpy
     Window parent
     int x
     int y
@@ -370,7 +355,7 @@ XCreateWindow(dpy, parent, x, y, w, h, border, depth, class, visual, attr_mask, 
 
 Window
 XCreateSimpleWindow(dpy, parent, x, y, w, h, border_width, border_color, background_color)
-    DisplayNotNull dpy
+    Display * dpy
     Window parent
     int x
     int y
@@ -382,17 +367,17 @@ XCreateSimpleWindow(dpy, parent, x, y, w, h, border_width, border_color, backgro
 
 void
 XMapWindow(dpy, wnd)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
 
 void
 XUnmapWindow(dpy, wnd)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
 
 int
 XGetGeometry(dpy, wnd, root_out=NULL, x_out=NULL, y_out=NULL, width_out=NULL, height_out=NULL, border_out=NULL, depth_out=NULL)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
     SV *root_out
     SV *x_out
@@ -419,7 +404,7 @@ XGetGeometry(dpy, wnd, root_out=NULL, x_out=NULL, y_out=NULL, width_out=NULL, he
 
 int
 XGetWMSizeHints(dpy, wnd, hints_out, supplied_out, property)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
     XSizeHints *hints_out
     SV *supplied_out
@@ -434,14 +419,14 @@ XGetWMSizeHints(dpy, wnd, hints_out, supplied_out, property)
 
 void
 XSetWMSizeHints(dpy, wnd, hints, property)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
     XSizeHints *hints
     Atom property
 
 int
 XGetWMNormalHints(dpy, wnd, hints_out, supplied_out)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
     XSizeHints *hints_out
     SV *supplied_out
@@ -455,7 +440,7 @@ XGetWMNormalHints(dpy, wnd, hints_out, supplied_out)
 
 void
 XSetWMNormalHints(dpy, wnd, hints)
-    DisplayNotNull dpy
+    Display * dpy
     Window wnd
     XSizeHints *hints
 
@@ -463,7 +448,7 @@ XSetWMNormalHints(dpy, wnd, hints)
 
 int
 XTestFakeMotionEvent(dpy, screen, x, y, EventSendDelay = 10)
-    DisplayNotNull  dpy
+    Display *  dpy
     int screen
     int x
     int y
@@ -471,26 +456,26 @@ XTestFakeMotionEvent(dpy, screen, x, y, EventSendDelay = 10)
 
 int
 XTestFakeButtonEvent(dpy, button, pressed, EventSendDelay = 10);
-    DisplayNotNull  dpy
+    Display *  dpy
     int button
     int pressed
     int EventSendDelay
 
 int
 XTestFakeKeyEvent(dpy, kc, pressed, EventSendDelay = 10)
-    DisplayNotNull  dpy
+    Display *  dpy
     unsigned char kc
     int pressed
     int EventSendDelay
 
 void
 XBell(dpy, percent)
-    DisplayNotNull  dpy
+    Display *  dpy
     int percent
 
 void
 XQueryKeymap(dpy)
-    DisplayNotNull  dpy
+    Display *  dpy
     PREINIT:
         char keys_return[32];
         int i, j;
@@ -507,7 +492,7 @@ XQueryKeymap(dpy)
 
 unsigned long
 keyboard_leds(dpy)
-    DisplayNotNull  dpy;
+    Display *  dpy;
     PREINIT:
         XKeyboardState state;
     CODE:
@@ -518,7 +503,7 @@ keyboard_leds(dpy)
 
 void
 _auto_repeat(dpy)
-    DisplayNotNull  dpy;
+    Display *  dpy;
     PREINIT:
         XKeyboardState state;
         int i, j;
@@ -573,7 +558,7 @@ IsModifierKey(keysym)
 
 unsigned int
 XKeysymToKeycode(dpy, keysym)
-    DisplayNotNull dpy
+    Display * dpy
     unsigned long keysym
     CODE:
         RETVAL = XKeysymToKeycode(dpy, keysym);
@@ -582,7 +567,7 @@ XKeysymToKeycode(dpy, keysym)
 
 void
 XGetKeyboardMapping(dpy, fkeycode, count = 1)
-    DisplayNotNull dpy
+    Display * dpy
     unsigned int fkeycode
     int count
     PREINIT:

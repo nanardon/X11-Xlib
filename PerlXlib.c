@@ -1,25 +1,16 @@
-// This file is included directly by Xlib.xs and is not intended to be
-// externally usable.  I mostly separated it for the syntax highlighting :-)
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
 
-// unusual constants help identify our objects without an expensive check on class name
-#define PerlXlib_CONN_LIVE   0x7FEDCB01
-#define PerlXlib_CONN_DEAD   0x7FEDCB02
-#define PerlXlib_CONN_CLOSED 0x7FEDCB03
+#include <X11/Xlib.h>
+#include <X11/Xutil.h>
+#include <X11/extensions/XTest.h>
 
-// This object provides extra storage for flags associated with a Display*
-//  and is what the perl \X11::Xlib scalar ref actually holds.
-typedef struct PerlXlib_conn_s {
-    Display *dpy;
-    int state;
-    int foreign: 1;
-} PerlXlib_conn_t;
-
-typedef Display* DisplayNotNull; // Used by typemap for stricter conversion
-typedef void PerlXlib_struct_pack_fn(SV*, HV*, Bool consume);
+#include "PerlXlib.h"
 
 // Potentially hot method.
 // Allow either instance of X11::Xlib, or instance of X11::Xlib::Display
-PerlXlib_conn_t* PerlXlib_get_conn_from_sv(SV *sv, Bool require_live) {
+extern PerlXlib_conn_t* PerlXlib_get_conn_from_sv(SV *sv, Bool require_live) {
     SV **fp, *inner;
     PerlXlib_conn_t *conn;
 
@@ -52,14 +43,11 @@ PerlXlib_conn_t* PerlXlib_get_conn_from_sv(SV *sv, Bool require_live) {
     croak("Invalid Display handle; must be a X11::Xlib instance or X11::Xlib::Display instance");
     return NULL; // make compiler happy
 }
-//#define PerlXlib_sv_to_display(x) PerlXlib_get_conn_from_sv(x,1)->dpy
-#define PerlXlib_sv_to_display(x) (SvOK(x)? PerlXlib_get_conn_from_sv(x, 1)->dpy : NULL)
 
 // Converting a Display* to a \X11::Xlib is difficult because we want
 // to re-use the existing object.  We cache them in %X11::Xlib::_connections.
-void PerlXlib_sv_from_display(SV *dest, Display *dpy) {
+SV * PerlXlib_sv_from_display(SV *dest, Display *dpy) {
     SV **fp;
-    PerlXlib_conn_t conn;
     if (!dpy) {
         // Translate NULL to undef
         sv_setsv(dest, &PL_sv_undef);
@@ -79,6 +67,37 @@ void PerlXlib_sv_from_display(SV *dest, Display *dpy) {
             sv_setpvn(dest, (void*) &dpy, sizeof(dpy));
         }
     }
+    return dest;
+}
+
+SV * PerlXlib_sv_assign_conn(SV *dest, Display *dpy, bool foreign) {
+    PerlXlib_conn_t conn;
+    SV **fp;
+    
+    // Create the hash entry where we will cache this connection.
+    // If it already exists, we return the cached object.
+    fp= hv_fetch(get_hv("X11::Xlib::_connections", GV_ADD), (void*) &dpy, sizeof(dpy), 1);
+    if (!fp)
+        return NULL;
+
+    // If foreign, maybe return a cached copy.  Otherwise, overwrite any cached version.
+    if (*fp && foreign && sv_isobject(*fp))
+        sv_setsv(dest, *fp);
+    else {
+        // Wrap the Display* in our own struct to attach extra flags.
+        conn.dpy= dpy;
+        conn.state= PerlXlib_CONN_LIVE;
+        conn.foreign= foreign;
+
+        // Always create instance of X11::Xlib.  X11::Xlib::Display can wrap this as needed.
+        sv_setref_pvn(dest, "X11::Xlib", (void*)&conn, sizeof(conn));
+
+        // Save a weakref for later
+        if (!*fp) *fp= newRV(SvRV(dest));
+        else sv_setsv(*fp, dest);
+        sv_rvweaken(*fp);
+    }
+    return dest;
 }
 
 void PerlXlib_conn_mark_closed(PerlXlib_conn_t *conn) {
@@ -122,6 +141,7 @@ XID PerlXlib_sv_to_xid(SV *sv) {
 #define X11_Xlib_Struct_Padding 64
 #endif
 void* PerlXlib_get_struct_ptr(SV *sv, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer) {
+    SV *tmp;
     void* buf;
 
     if (SvROK(sv)) {
@@ -134,7 +154,8 @@ void* PerlXlib_get_struct_ptr(SV *sv, const char* pkg, int struct_size, PerlXlib
         else if (SvTYPE(SvRV(sv)) == SVt_PVHV) {
             // Need a buffer that lasts for the rest of our XS call stack.
             // Cheat by using a mortal SV :-)
-            buf= SvPVX(sv_2mortal(newSV(struct_size + X11_Xlib_Struct_Padding)));
+            tmp= sv_2mortal(newSV(struct_size + X11_Xlib_Struct_Padding));
+            buf= SvPVX(tmp);
             packer(buf, (HV*) SvRV(sv), 0);
             return buf;
         }

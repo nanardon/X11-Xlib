@@ -1,6 +1,6 @@
 TYPEMAP
-DisplayNotNull        O_X11_XlibNotNull
 Display *             O_X11_Xlib
+Display *             O_X11_XlibOrNull
 Visual *              O_X11_Xlib_Opaque
 GC                    O_X11_Xlib_Opaque
 XEvent *              O_X11_Xlib_Struct
@@ -18,19 +18,19 @@ Time                  T_UV
 Bool                  T_BOOL
 
 INPUT
-O_X11_XlibNotNull
+O_X11_Xlib
     $var = PerlXlib_get_conn_from_sv($arg, 1)->dpy;
 
 OUTPUT
-O_X11_XlibNotNull
+O_X11_Xlib
     PerlXlib_sv_from_display($arg, $var);
 
 INPUT
-O_X11_Xlib
+O_X11_XlibOrNull
     $var = SvOK($arg)? PerlXlib_get_conn_from_sv($arg, 1)->dpy : NULL;
 
 OUTPUT
-O_X11_Xlib
+O_X11_XlibOrNull
     if ( $var ) PerlXlib_sv_from_display($arg, $var);
     else sv_setsv($arg, &PL_sv_undef);
 

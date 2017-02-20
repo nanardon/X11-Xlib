@@ -1,6 +1,4 @@
 #!/usr/bin/env perl
-use Carp::Always;
-BEGIN { $Carp::Verbose= 1; }
 use strict;
 use warnings;
 use Test::More tests => 20;
