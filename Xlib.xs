@@ -618,6 +618,16 @@ _install_error_handlers(nonfatal,fatal)
     CODE:
         PerlXlib_install_error_handlers(nonfatal, fatal);
 
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::Visual
+
+int
+id(visual)
+    Visual *visual
+    CODE:
+        RETVAL = XVisualIDFromVisual(visual);
+    OUTPUT:
+        RETVAL
+
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::XEvent
 
 # ----------------------------------------------------------------------------

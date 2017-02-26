@@ -1,10 +1,6 @@
 package X11::Xlib::Visual;
 require X11::Xlib;
 
-sub id {
-    X11::Xlib::XVisualIDFromVisual(shift);
-}
-
 __END__
 
 =head1 DESCRIPTION
