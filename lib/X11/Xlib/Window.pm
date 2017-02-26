@@ -3,6 +3,12 @@ use strict;
 use warnings;
 use parent 'X11::Xlib::XID';
 
+sub get_w_h {
+    my $self= shift;
+    $self->display->XGetGeometry($self->xid, undef, undef, undef, my $w, my $h);
+    return $w, $h;
+}
+
 sub DESTROY {
     my $self= shift;
     $self->display->XDestroyWindow($self->xid)
@@ -26,13 +32,19 @@ X11::Xlib::Window - Low-level access to X11 windows
 
 =head1 DESCRIPTION
 
-=cut
+This class extends .
 
 =head1 METHODS
 
-=head2 $window->id
+(inherits from L<X11::Xlib::XID>)
 
-Return the X11 numeric ID of the window.
+=head2 get_w_h
+
+  my ($w, $h)= $window->get_w_h
+
+Return width and height of the window by calling XGetGeometry.  This means it
+always returns the current size of the window, which could have been altered
+since the time the window was created.
 
 =head1 SEE ALSO
 
