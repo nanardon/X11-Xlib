@@ -11,7 +11,7 @@ Object representing a Pixmap remote X11 resource.
 
 sub DESTROY {
     my $self= shift;
-    $self->display->XDestroyPixmap($self->xid)
+    $self->display->XFreePixmap($self->xid)
         if $self->autofree;
 }
 

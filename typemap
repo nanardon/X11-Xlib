@@ -53,7 +53,7 @@ O_X11_Xlib_Struct
 INPUT
 O_X11_Xlib_Opaque
     if (sv_isa($arg, \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\")) {
-        $var= ($type) SvPVX((SV*)SvRV($arg));
+        $var= ($type) SvIV((SV*)SvRV($arg));
     } else {
         croak( \"%s is not a %s\", \"$var\", \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\" );
     }
