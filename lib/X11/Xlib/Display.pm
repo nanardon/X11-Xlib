@@ -35,26 +35,23 @@ sub connection_fh {
 
 sub _xid_cache { $_[0]{_xid_cache} }
 sub get_cached_xobj {
-    my ($self, $xid, $class, $autofree)= @_;
+    my ($self, $xid)= (shift, shift);
     my $obj;
     return $self->{_xid_cache}{$xid} || do {
-        $class ||= 'X11::Xlib::XID';
-        $obj= $class->new(display => $self, xid => $xid, autofree => $autofree);
+        my $class= shift || 'X11::Xlib::XID';
+        $obj= $class->new(display => $self, xid => $xid, @_);
         Scalar::Util::weaken( $self->{_xid_cache}{$xid}= $obj );
         $obj;
     };
 }
 sub get_cached_colormap {
-    my ($self, $xid, $autofree)= @_;
-    $self->get_cached_xobj($xid, 'X11::Xlib::Colormap', $autofree);
+    shift->get_cached_xobj(shift, 'X11::Xlib::Colormap', @_);
 }
 sub get_cached_pixmap {
-    my ($self, $xid, $autofree)= @_;
-    $self->get_cached_xobj($xid, 'X11::Xlib::Pixmap', $autofree);
+    shift->get_cached_xobj(shift, 'X11::Xlib::Pixmap', @_);
 }
 sub get_cached_window {
-    my ($self, $xid, $autofree)= @_;
-    $self->get_cached_xobj($xid, 'X11::Xlib::Window', $autofree);
+    shift->get_cached_xobj(shift, 'X11::Xlib::Window', @_);
 }
 
 =head3 screen_count
@@ -447,10 +444,12 @@ sub new_colormap {
     shift->XCreateColormap(@_);
 }
 sub DefaultColormap {
-    $_[0]->get_cached_colormap(X11::Xlib::DefaultColormap(@_));
+    my $xid= X11::Xlib::DefaultColormap(@_);
+    $_[0]->get_cached_colormap($xid);
 }
 sub XCreateColormap {
-    $_[0]->get_cached_colormap(X11::Xlib::XCreateColormap(@_), 1);
+    my $xid= X11::Xlib::XCreateColormap(@_);
+    $_[0]->get_cached_colormap($xid, autofree => 1);
 }
 
 =head3 new_pixmap
@@ -477,17 +476,33 @@ sub new_pixmap {
 
 sub XCreatePixmap {
     my ($self, $drawable, $width, $height, $depth)= @_;
-    my $obj= $self->get_cached_pixmap(X11::Xlib::XCreatePixmap(@_), 1);
-    $obj->{width}= $width;  # I don't see any way to query the attributes later
-    $obj->{height}= $height;# so need to add them to the object here.
-    $obj->{depth}= $depth;
-    $obj;
+    my $xid= &X11::Xlib::XCreatePixmap;
+    return $self->get_cached_pixmap($xid,
+        width    => $width,
+        height   => $height,
+        depth    => $depth,
+        autofree => 1,
+    );
 }
 sub XCreateBitmapFromData {
-    $_[0]->get_cached_pixmap(X11::Xlib::XCreateBitmapFromData(@_), 1)
+    my ($self, $drawable, $data, $width, $height)= @_;
+    my $xid= &X11::Xlib::XCreateBitmapFromData;
+    $self->get_cached_pixmap($xid,
+        width    => $width,
+        height   => $height,
+        depth    => 1,
+        autofree => 1,
+    );
 }
 sub XCreatePixmapFromBitmapData {
-    $_[0]->get_cached_pixmap(X11::Xlib::XCreatePixmapFromBitmapData(@_), 1);
+    my ($self, $drawable, $data, $width, $height, $fg, $bg, $depth)= @_;
+    my $xid= &X11::Xlib::XCreatePixmapFromBitmapData;
+    $_[0]->get_cached_pixmap($xid,
+        width    => $width,
+        height   => $height,
+        depth    => $depth,
+        autofree => 1,
+    );
 }
 
 =head3 new_window
@@ -598,11 +613,11 @@ sub RootWindow {
 }
 
 sub XCreateWindow {
-    $_[0]->get_cached_window(X11::Xlib::XCreateWindow(@_), 1);
+    $_[0]->get_cached_window(X11::Xlib::XCreateWindow(@_), autofree => 1);
 }
 
 sub XCreateSimpleWindow {
-    $_[0]->get_cached_window(X11::Xlib::XCreateSimpleWindow(@_), 1);
+    $_[0]->get_cached_window(X11::Xlib::XCreateSimpleWindow(@_), autofree => 1);
 }
 
 =head2 INPUT STATE/CONTROL

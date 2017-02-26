@@ -18,6 +18,10 @@ Width, in pixels
 
 Height, in pixels
 
+=head2 depth
+
+Color depth, in bits.
+
 =head1 METHODS
 
 =head2 get_w_h
