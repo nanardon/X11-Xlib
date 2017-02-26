@@ -469,48 +469,42 @@ C<$width> C<$height> and C<$color_depth> should be self-explanatory.
 
 sub new_pixmap {
     my ($self, $drawable, $width, $height, $depth)= @_;
+    $drawable ||= $self->screen->root_window;
     $drawable= $drawable->root_window
         if ref $drawable && $drawable->isa('X11::Xlib::Screen');
     $self->XCreatePixmap($drawable, $width, $height, $depth);
 }
 
 sub XCreatePixmap {
-    $_[0]->_get_cached_pixmap(X11::Xlib::XCreatePixmap(@_), 1);
+    $_[0]->get_cached_pixmap(X11::Xlib::XCreatePixmap(@_), 1);
 }
 sub XCreateBitmapFromData {
-    $_[0]->_get_cached_pixmap(X11::Xlib::XCreateBitmapFromData(@_), 1)
+    $_[0]->get_cached_pixmap(X11::Xlib::XCreateBitmapFromData(@_), 1)
 }
 sub XCreatePixmapFromBitmapData {
-    $_[0]->_get_cached_pixmap(X11::Xlib::XCreatePixmapFromBitmapData(@_), 1);
+    $_[0]->get_cached_pixmap(X11::Xlib::XCreatePixmapFromBitmapData(@_), 1);
 }
 
 =head3 new_window
 
   my $win= $display->new_window(
-    parent                => $window,
-    x                     => $x,
-    y                     => $y,
-    width                 => $width,
-    height                => $height,
-    border_width          => $border_width,
-    depth                 => $color_depth,
-    class                 => $class,
-    visual                => $visual,
-    background_pixmap     => $pixmap,
-    background_pixel      => $color_int,
-    border_pixmap         => $pixmap,
-    border_pixel          => $color_int,
-    bit_gravity           => $val,
-    win_gravity           => $val,
-    backing_store         => $val,
-    backing_planes        => $n_planes,
-    backing_pixel         => $color_int,
-    save_under            => $bool,
-    event_mask            => $event_mask,
-    do_not_propagate_mask => $event_mask,
-    override_redirect     => $bool,
-    colormap              => $colormap,
-    cursor                => $cursor,
+    parent => $window,  class    => $input_type,
+    visual => $visual,  colormap => $colormap,  depth  => $color_depth,
+    event_mask => $mask,  do_not_propagate_mask => $mask,
+    override_redirect => $bool,
+    x => $x,  y => $y,  width => $n_pix,  height => $n_pix,
+    min_width         => $n_pix,      min_height       => $n_pix,
+    max_width         => $n_pix,      max_height       => $n_pix,
+    width_inc         => $n_pix,      height_inc       => $n_pix,
+    min_aspect_x      => $numerator,  min_aspect_y     => $denominator,
+    max_aspect_x      => $numerator,  max_aspect_y     => $denominator,
+    base_width        => $width,      base_height      => $height,
+    bit_gravity       => $val,        win_gravity      => $val,
+    cursor            => $cursor,     border_width     => $n_pix,
+    background_pixmap => $pixmap,     background_pixel => $color_int,
+    border_pixmap     => $pixmap,     border_pixel     => $color_int,
+    backing_store     => $val,        backing_planes   => $n_planes,
+    backing_pixel     => $color_int,  save_under       => $bool,
   );
 
 This method takes any argument to the XCreateWindow function and also any of
@@ -580,7 +574,7 @@ sub new_window {
         $x, $y, $w, $h,
         $border || 0,
         $depth || $self->depth,
-        $class || X11::Xlib::CopyFromParent,
+        (defined $class? $class : X11::Xlib::CopyFromParent),
         $visual || $self->visual,
         $attrflags, \%attrs
     );
