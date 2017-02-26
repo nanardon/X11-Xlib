@@ -12,8 +12,8 @@ sub new {
     bless \%args, $class;
 }
 
-sub display { shift->{display} }
-sub xid { shift->{xid} }
+sub display { croak "read-only" if @_ > 1; $_[0]{display} }
+sub xid     { croak "read-only" if @_ > 1; $_[0]{xid} }
 *id= *xid;
 *dpy= *display;
 sub autofree { my $self= shift; $self->{autofree}= shift if @_; $self->{autofree} }

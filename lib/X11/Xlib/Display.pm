@@ -472,11 +472,16 @@ sub new_pixmap {
     $drawable ||= $self->screen->root_window;
     $drawable= $drawable->root_window
         if ref $drawable && $drawable->isa('X11::Xlib::Screen');
-    $self->XCreatePixmap($drawable, $width, $height, $depth);
+    return $self->XCreatePixmap($drawable, $width, $height, $depth);
 }
 
 sub XCreatePixmap {
-    $_[0]->get_cached_pixmap(X11::Xlib::XCreatePixmap(@_), 1);
+    my ($self, $drawable, $width, $height, $depth)= @_;
+    my $obj= $self->get_cached_pixmap(X11::Xlib::XCreatePixmap(@_), 1);
+    $obj->{width}= $width;  # I don't see any way to query the attributes later
+    $obj->{height}= $height;# so need to add them to the object here.
+    $obj->{depth}= $depth;
+    $obj;
 }
 sub XCreateBitmapFromData {
     $_[0]->get_cached_pixmap(X11::Xlib::XCreateBitmapFromData(@_), 1)
