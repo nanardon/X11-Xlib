@@ -34,26 +34,27 @@ sub connection_fh {
 }
 
 sub _xid_cache { $_[0]{_xid_cache} }
-sub _get_cached_xobj {
+sub get_cached_xobj {
     my ($self, $xid, $class, $autofree)= @_;
     my $obj;
     return $self->{_xid_cache}{$xid} || do {
+        $class ||= 'X11::Xlib::XID';
         $obj= $class->new(display => $self, xid => $xid, autofree => $autofree);
         Scalar::Util::weaken( $self->{_xid_cache}{$xid}= $obj );
         $obj;
     };
 }
-sub _get_cached_colormap {
+sub get_cached_colormap {
     my ($self, $xid, $autofree)= @_;
-    $self->_get_cached_xobj($xid, 'X11::Xlib::Colormap', $autofree);
+    $self->get_cached_xobj($xid, 'X11::Xlib::Colormap', $autofree);
 }
-sub _get_cached_pixmap {
+sub get_cached_pixmap {
     my ($self, $xid, $autofree)= @_;
-    $self->_get_cached_xobj($xid, 'X11::Xlib::Pixmap', $autofree);
+    $self->get_cached_xobj($xid, 'X11::Xlib::Pixmap', $autofree);
 }
-sub _get_cached_window {
+sub get_cached_window {
     my ($self, $xid, $autofree)= @_;
-    $self->_get_cached_xobj($xid, 'X11::Xlib::Window', $autofree);
+    $self->get_cached_xobj($xid, 'X11::Xlib::Window', $autofree);
 }
 
 =head3 screen_count
@@ -446,10 +447,10 @@ sub new_colormap {
     shift->XCreateColormap(@_);
 }
 sub DefaultColormap {
-    $_[0]->_get_cached_colormap(X11::Xlib::DefaultColormap(@_));
+    $_[0]->get_cached_colormap(X11::Xlib::DefaultColormap(@_));
 }
 sub XCreateColormap {
-    $_[0]->_get_cached_colormap(X11::Xlib::XCreateColormap(@_), 1);
+    $_[0]->get_cached_colormap(X11::Xlib::XCreateColormap(@_), 1);
 }
 
 =head3 new_pixmap
@@ -594,15 +595,15 @@ sub new_window {
 }
 
 sub RootWindow {
-    $_[0]->_get_cached_window(X11::Xlib::RootWindow(@_));
+    $_[0]->get_cached_window(X11::Xlib::RootWindow(@_));
 }
 
 sub XCreateWindow {
-    $_[0]->_get_cached_window(X11::Xlib::XCreateWindow(@_), 1);
+    $_[0]->get_cached_window(X11::Xlib::XCreateWindow(@_), 1);
 }
 
 sub XCreateSimpleWindow {
-    $_[0]->_get_cached_window(X11::Xlib::XCreateSimpleWindow(@_), 1);
+    $_[0]->get_cached_window(X11::Xlib::XCreateSimpleWindow(@_), 1);
 }
 
 =head2 INPUT STATE/CONTROL
