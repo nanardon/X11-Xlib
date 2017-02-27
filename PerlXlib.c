@@ -912,7 +912,7 @@ void PerlXlib_XVisualInfo_pack(XVisualInfo *s, HV *fields, Bool consume) {
     if (fp && *fp) { s->screen= SvIV(*fp); if (consume) hv_delete(fields, "screen", 6, G_DISCARD); }
 
     fp= hv_fetch(fields, "visual", 6, 0);
-    if (fp && *fp) { { if (!SvPOK(*fp) || SvCUR(*fp) != sizeof(Visual *))  croak("Expected scalar of length %d but got %d", sizeof(Visual *), SvCUR(*fp)); s->visual= * (Visual * *) SvPVX(*fp);} if (consume) hv_delete(fields, "visual", 6, G_DISCARD); }
+    if (fp && *fp) { { if (SvOK(*fp) && !sv_isa(*fp, "X11::Xlib::Visual"))  croak("Expected X11::Xlib::Visual"); s->visual= SvOK(*fp)? (Visual *) SvIV((SV*)SvRV(*fp)) : NULL;} if (consume) hv_delete(fields, "visual", 6, G_DISCARD); }
 
     fp= hv_fetch(fields, "visualid", 8, 0);
     if (fp && *fp) { s->visualid= SvUV(*fp); if (consume) hv_delete(fields, "visualid", 8, G_DISCARD); }
@@ -930,7 +930,7 @@ void PerlXlib_XVisualInfo_unpack(XVisualInfo *s, HV *fields) {
     if (!hv_store(fields, "green_mask", 10, (sv=newSVuv(s->green_mask)), 0)) goto store_fail;
     if (!hv_store(fields, "red_mask"  ,  8, (sv=newSVuv(s->red_mask)), 0)) goto store_fail;
     if (!hv_store(fields, "screen"    ,  6, (sv=newSViv(s->screen)), 0)) goto store_fail;
-    if (!hv_store(fields, "visual"    ,  6, (sv=newSVpvn((void*) &s->visual, sizeof(Visual *))), 0)) goto store_fail;
+    if (!hv_store(fields, "visual"    ,  6, (sv=(s->visual? sv_setref_pv(newSV(0), "X11::Xlib::Visual", (void*) s->visual) : &PL_sv_undef)), 0)) goto store_fail;
     if (!hv_store(fields, "visualid"  ,  8, (sv=newSVuv(s->visualid)), 0)) goto store_fail;
     return;
     store_fail:

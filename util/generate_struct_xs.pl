@@ -158,10 +158,10 @@ sub sv_read {
     return "$access= PerlXlib_sv_to_xid($svname);" if $xid_types{$type};
     return "$access= PerlXlib_sv_to_display($svname);" if $type eq 'Display *';
     return "{"
-        ." if (!SvPOK($svname) || SvCUR($svname) != sizeof($type))"
-        .'  croak("Expected scalar of length %d but got %d",'." sizeof($type), SvCUR($svname));"
-        ." $access= * ($type *) SvPVX($svname);"
-        ."}" if $type =~ /^\w+ \*$/;
+        ." if (SvOK($svname) && !sv_isa($svname, \"X11::Xlib::$1\"))"
+        ."  croak(\"Expected X11::Xlib::$1\");"
+        ." $access= SvOK($svname)? ($type) SvIV((SV*)SvRV($svname)) : NULL;"
+        ."}" if $type =~ /^(\w+) \*$/;
     return "{"
         ." if (!SvPOK($svname) || SvCUR($svname) != sizeof($1)*$2)"
         .'  croak("Expected scalar of length %d but got %d",'." sizeof($1)*$2, SvCUR($svname));"
@@ -174,7 +174,7 @@ sub sv_create {
     return "newSViv($value)" if $int_types{$type};
     return "newSVuv($value)" if $unsigned_types{$type} or $xid_types{$type};
     return "($value? sv_setref_pv(newSV(0), \"X11::Xlib\", (void*)$value) : &PL_sv_undef)" if $type eq 'Display *';
-    return "newSVpvn((void*) &$value, sizeof($type))"
+    return "($value? sv_setref_pv(newSV(0), \"X11::Xlib::$1\", (void*) $value) : &PL_sv_undef)"
         if $type =~ /^(\w+) \*$/;
     return "newSVpvn((void*)$value, sizeof($1)*$2)"
         if $type =~ /^(\w+) \[ (\d+) \]$/;
@@ -186,7 +186,7 @@ sub generate_xs_accessor {
     my $sv_read= sv_read($member->{c_type}, "s->$member->{c_name}", "value");
     my $sv_create= sv_create($member->{c_type}, "s->$member->{c_name}");
     return <<"@";
-$member->{c_type}
+void
 $member->{pl_name}(s, value=NULL)
     ${goal} *s
     SV *value
@@ -211,11 +211,11 @@ void PerlXlib_${goal}_pack($goal *s, HV *fields, Bool consume) {
         my $name= $member->{pl_name};
         my $sv_read= sv_read($member->{c_type}, "s->$member->{c_name}", "*fp");
         my $name_len= length($name);
-        my $mark_defined= $member->{defined_flag}? "s->$member->{defined_field} |= $member->{defined_flag};" : '';
+        my $mark_defined= $member->{defined_flag}? "s->$member->{defined_field} |= $member->{defined_flag}; " : '';
         $c .= <<"@";
 
     fp= hv_fetch(fields, "$name", $name_len, 0);
-    if (fp && *fp) { $mark_defined $sv_read if (consume) hv_delete(fields, "$name", $name_len, G_DISCARD); }
+    if (fp && *fp) { $mark_defined$sv_read if (consume) hv_delete(fields, "$name", $name_len, G_DISCARD); }
 @
     }
 

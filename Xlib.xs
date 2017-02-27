@@ -1691,43 +1691,7 @@ _unpack(s, fields)
     PPCODE:
         PerlXlib_XVisualInfo_unpack(s, fields);
 
-Visual *
-visual(s, value=NULL)
-    XVisualInfo *s
-    SV *value
-  PPCODE:
-    if (value) {
-      { if (!SvPOK(value) || SvCUR(value) != sizeof(Visual *))  croak("Expected scalar of length %d but got %d", sizeof(Visual *), SvCUR(value)); s->visual= * (Visual * *) SvPVX(value);}
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSVpvn((void*) &s->visual, sizeof(Visual *))));
-    }
-
-unsigned long
-green_mask(s, value=NULL)
-    XVisualInfo *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->green_mask= SvUV(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSVuv(s->green_mask)));
-    }
-
-int
-depth(s, value=NULL)
-    XVisualInfo *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->depth= SvIV(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSViv(s->depth)));
-    }
-
-int
+void
 bits_per_rgb(s, value=NULL)
     XVisualInfo *s
     SV *value
@@ -1739,19 +1703,7 @@ bits_per_rgb(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->bits_per_rgb)));
     }
 
-VisualID
-visualid(s, value=NULL)
-    XVisualInfo *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->visualid= SvUV(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSVuv(s->visualid)));
-    }
-
-unsigned long
+void
 blue_mask(s, value=NULL)
     XVisualInfo *s
     SV *value
@@ -1763,7 +1715,19 @@ blue_mask(s, value=NULL)
       PUSHs(sv_2mortal(newSVuv(s->blue_mask)));
     }
 
-int
+void
+class(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->class= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->class)));
+    }
+
+void
 colormap_size(s, value=NULL)
     XVisualInfo *s
     SV *value
@@ -1775,19 +1739,31 @@ colormap_size(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->colormap_size)));
     }
 
-int
-screen(s, value=NULL)
+void
+depth(s, value=NULL)
     XVisualInfo *s
     SV *value
   PPCODE:
     if (value) {
-      s->screen= SvIV(value);
+      s->depth= SvIV(value);
       PUSHs(value);
     } else {
-      PUSHs(sv_2mortal(newSViv(s->screen)));
+      PUSHs(sv_2mortal(newSViv(s->depth)));
     }
 
-unsigned long
+void
+green_mask(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->green_mask= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->green_mask)));
+    }
+
+void
 red_mask(s, value=NULL)
     XVisualInfo *s
     SV *value
@@ -1799,16 +1775,40 @@ red_mask(s, value=NULL)
       PUSHs(sv_2mortal(newSVuv(s->red_mask)));
     }
 
-int
-class(s, value=NULL)
+void
+screen(s, value=NULL)
     XVisualInfo *s
     SV *value
   PPCODE:
     if (value) {
-      s->class= SvIV(value);
+      s->screen= SvIV(value);
       PUSHs(value);
     } else {
-      PUSHs(sv_2mortal(newSViv(s->class)));
+      PUSHs(sv_2mortal(newSViv(s->screen)));
+    }
+
+void
+visual(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      { if (SvOK(value) && !sv_isa(value, "X11::Xlib::Visual"))  croak("Expected X11::Xlib::Visual"); s->visual= SvOK(value)? (Visual *) SvIV((SV*)SvRV(value)) : NULL;}
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal((s->visual? sv_setref_pv(newSV(0), "X11::Xlib::Visual", (void*) s->visual) : &PL_sv_undef)));
+    }
+
+void
+visualid(s, value=NULL)
+    XVisualInfo *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->visualid= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->visualid)));
     }
 
 # END GENERATED X11_Xlib_XVisualInfo
