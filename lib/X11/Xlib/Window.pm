@@ -5,9 +5,21 @@ use parent 'X11::Xlib::XID';
 
 sub get_w_h {
     my $self= shift;
-    $self->display->XGetGeometry($self->xid, undef, undef, undef, my $w, my $h);
+    my ($ignore, $w, $h);
+    $self->display->XGetGeometry($self->xid, $ignore, $ignore, $ignore, $w, $h);
     return $w, $h;
 }
+
+sub show {
+    my ($self, $visible)= @_;
+    if ($visible || !defined $visible) {
+        $self->display->XMapWindow($self->xid);
+    } else {
+        $self->display->XUnmapWindow($self->xid);
+    }
+}
+
+sub hide { shift->show(0) }
 
 sub DESTROY {
     my $self= shift;

@@ -595,22 +595,22 @@ sub new_window {
     if (keys %sizehints) {
         # XSizeHints->pack will set its own flags for the fields that are present.
         @sizehints{qw( x y width height )}= ($x, $y, $w, $h);
-        $self->XSetWMNormalHints(\%sizehints)
+        $self->XSetWMNormalHints($wnd, \%sizehints)
     }
 
     return $wnd;
 }
 
 sub RootWindow {
-    $_[0]->get_cached_window(X11::Xlib::RootWindow(@_));
+    $_[0]->get_cached_window( &X11::Xlib::RootWindow );
 }
 
 sub XCreateWindow {
-    $_[0]->get_cached_window(X11::Xlib::XCreateWindow(@_), autofree => 1);
+    $_[0]->get_cached_window( &X11::Xlib::XCreateWindow, autofree => 1);
 }
 
 sub XCreateSimpleWindow {
-    $_[0]->get_cached_window(X11::Xlib::XCreateSimpleWindow(@_), autofree => 1);
+    $_[0]->get_cached_window( &X11::Xlib::XCreateSimpleWindow, autofree => 1);
 }
 
 =head2 INPUT STATE/CONTROL

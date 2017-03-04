@@ -13,7 +13,7 @@ L<XDestroyColormap|X11::Xlib::XDestroyColormap>.
 
 sub DESTROY {
     my $self= shift;
-    $self->display->XDestroyColormap($self->xid)
+    $self->display->XFreeColormap($self->xid)
         if $self->autofree;
 }
 
