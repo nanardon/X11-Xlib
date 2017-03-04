@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 21;
+use Test::More;
 use X11::Xlib qw( :fn_win :const_win :const_winattr :const_sizehint );
 sub err(&) { my $code= shift; my $ret; { local $@= ''; eval { $code->() }; $ret= $@; } $ret }
 
@@ -42,3 +42,7 @@ is( $size_hints_out->min_height, 50, 'min_height matches' );
 is( $size_hints_out->max_height, 100, 'max_height matches' );
 
 is( err{ XUnmapWindow($dpy, $win_id); }, '', 'XUnmapWindow' );
+
+is( err{ XDestroyWindow($dpy, $win_id); }, '', 'XDestroyWindow' );
+
+done_testing;

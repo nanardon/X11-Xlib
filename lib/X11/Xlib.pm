@@ -57,7 +57,7 @@ my %_functions= (
     RootWindow ScreenCount )],
   fn_vis => [qw( XCreateColormap XFreeColormap XGetVisualInfo XMatchVisualInfo
     XVisualIDFromVisual )],
-  fn_win => [qw( XCreateSimpleWindow XCreateWindow XGetGeometry
+  fn_win => [qw( XCreateSimpleWindow XCreateWindow XDestroyWindow XGetGeometry
     XGetWMNormalHints XGetWMSizeHints XMapWindow XSetWMNormalHints
     XSetWMSizeHints XUnmapWindow )],
   fn_xtest => [qw( XBell XQueryKeymap XTestFakeButtonEvent XTestFakeKeyEvent

@@ -447,6 +447,11 @@ XSetWMNormalHints(dpy, wnd, hints)
     Window wnd
     XSizeHints *hints
 
+void
+XDestroyWindow(dpy, wnd)
+    Display * dpy
+    Window wnd
+
 # XTest Functions (fn_xtest) -------------------------------------------------
 
 int
