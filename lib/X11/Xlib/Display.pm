@@ -180,13 +180,6 @@ sub new {
     return $self;
 }
 
-sub DESTROY {
-    my $self= shift;
-    $self->XCloseDisplay;
-}
-
-1;
-
 =head1 METHODS
 
 =head2 COMMUNICATION FUNCTIONS

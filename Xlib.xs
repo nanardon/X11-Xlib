@@ -58,10 +58,13 @@ _mark_closed(connsv)
 void
 DESTROY(connsv)
     SV *connsv
+    INIT:
+        PerlXlib_conn_t *conn;
     PPCODE:
-        if (sv_isobject(connsv) && sv_isa(connsv, "X11::Xlib"))
-            // goal is to clean up caches
-            PerlXlib_conn_mark_closed(PerlXlib_get_conn_from_sv(connsv, 0));
+        conn= PerlXlib_get_conn_from_sv(connsv, 0);
+        if (conn->state == PerlXlib_CONN_LIVE && !conn->foreign)
+            XCloseDisplay(conn->dpy);
+        PerlXlib_conn_mark_closed(conn);
 
 char *
 XServerVendor(dpy)
