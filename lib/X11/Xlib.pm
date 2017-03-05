@@ -4,16 +4,15 @@ use 5.008000;
 
 use strict;
 use warnings;
-use base qw(Exporter);
+use base qw(Exporter DynaLoader);
 use Carp;
 use Try::Tiny;
-use XSLoader;
 
 our $VERSION = '0.03_02';
 
 sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
 
-XSLoader::load(__PACKAGE__, $VERSION);
+bootstrap X11::Xlib;
 
 require X11::Xlib::Struct;
 require X11::Xlib::Visual;
