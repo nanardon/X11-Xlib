@@ -1,6 +1,7 @@
 TYPEMAP
 Display *             O_X11_Xlib
 DisplayOrNull         O_X11_XlibOrNull
+ScreenNumber          O_X11_Xlib_ScreenNumber
 Visual *              O_X11_Xlib_Opaque
 GC                    O_X11_Xlib_Opaque
 XEvent *              O_X11_Xlib_Struct
@@ -32,6 +33,20 @@ O_X11_XlibOrNull
 OUTPUT
 O_X11_XlibOrNull
     $arg = PerlXlib_obj_for_display($var);
+
+INPUT
+O_X11_Xlib_ScreenNumber
+	if (!SvOK($arg))
+		$var = DefaultScreen(dpy);
+	else if (SvROK($arg)) {
+		SV **fp;
+		if (SvTYPE(SvRV($arg)) == SVt_PVHV && (fp= hv_fetch((HV*)SvRV($arg), \"screen_number\", 13, 0)) && *fp) {
+			$var= SvIV(*fp);
+		}
+		else croak(\"Invalid object passed as Screen number\");
+	}
+	else
+		$var= SvIV($arg);
 
 INPUT
 O_X11_Xlib_XID

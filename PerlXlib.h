@@ -5,6 +5,7 @@
  */
 
 typedef Display* DisplayOrNull; // Used by typemap for stricter conversion
+typedef int ScreenNumber; // used by typemap to coerce X11::Xlib::Screen
 
 // Methods to create/alter the magic Display* attached to X11::Xlib objects
 

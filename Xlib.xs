@@ -192,7 +192,7 @@ ScreenCount(dpy)
 Window
 RootWindow(dpy, screen=DefaultScreen(dpy))
     Display *  dpy
-    int screen
+    ScreenNumber screen
     CODE:
         RETVAL = RootWindow(dpy, screen);
     OUTPUT:
@@ -201,49 +201,49 @@ RootWindow(dpy, screen=DefaultScreen(dpy))
 Colormap
 DefaultColormap(dpy, screen=DefaultScreen(dpy))
     Display * dpy
-    int screen
+    ScreenNumber screen
 
 int
 DefaultDepth(dpy, screen=DefaultScreen(dpy))
     Display * dpy
-    int screen
+    ScreenNumber screen
 
 GC
 DefaultGC(dpy, screen=DefaultScreen(dpy))
     Display * dpy
-    int screen
+    ScreenNumber screen
 
 Visual *
 DefaultVisual(dpy, screen=DefaultScreen(dpy))
     Display * dpy
-    int screen
+    ScreenNumber screen
 
 int
 DisplayWidth(dpy, screen=DefaultScreen(dpy))
     Display * dpy
-    int screen
+    ScreenNumber screen
 
 int
 DisplayHeight(dpy, screen=DefaultScreen(dpy))
     Display * dpy
-    int screen
+    ScreenNumber screen
 
 int
 DisplayWidthMM(dpy, screen=DefaultScreen(dpy))
     Display * dpy
-    int screen
+    ScreenNumber screen
 
 int
 DisplayHeightMM(dpy, screen=DefaultScreen(dpy))
     Display * dpy
-    int screen
+    ScreenNumber screen
 
 # Visual Functions (fn_vis) --------------------------------------------------
 
 Bool
 XMatchVisualInfo(dpy, screen, depth, class, vis_return)
     Display * dpy
-    int screen
+    ScreenNumber screen
     int depth
     int class
     XVisualInfo *vis_return
