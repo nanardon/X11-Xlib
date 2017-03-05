@@ -11,6 +11,8 @@ use XSLoader;
 
 our $VERSION = '0.03_01';
 
+sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
+
 XSLoader::load(__PACKAGE__, $VERSION);
 
 require X11::Xlib::Struct;
