@@ -9,7 +9,7 @@ use Carp;
 use Try::Tiny;
 use XSLoader;
 
-our $VERSION = '0.03_01';
+our $VERSION = '0.03_02';
 
 sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
 
@@ -158,12 +158,6 @@ sub _mark_dead {
     # above line removed $self from cache.  Put it back.
     Scalar::Util::weaken( $_connections{$ptr}= $self );
 }
-
-package X11::Xlib::DEAD;
-@X11::Xlib::DEAD::ISA= ('X11::Xlib');
-
-sub _pointer_value { $_[0]{_pointer_value} }
-sub DESTROY {}
 
 1;
 

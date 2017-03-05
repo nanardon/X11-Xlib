@@ -50,6 +50,7 @@ check_lib_or_exit(
 $dep->set_libs('-lX11 -lXtst -lXext');
 $dep->add_c('PerlXlib.c');
 $dep->add_xs('Xlib.xs');
+$dep->add_pm(map { my $n= $_; $n =~ s/^lib/\$(INST_LIB)/; $_ => $n } <lib/*/*.pm>, <lib/*/*/*.pm>);
 $dep->add_typemaps('typemap');
 $dep->install('PerlXlib.h');
 
