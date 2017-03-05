@@ -8,109 +8,97 @@
 
 #include "PerlXlib.h"
 
-// Potentially hot method.
-// Allow either instance of X11::Xlib, or instance of X11::Xlib::Display
-extern PerlXlib_conn_t* PerlXlib_get_conn_from_sv(SV *sv, Bool require_live) {
-    SV **fp, *inner;
-    PerlXlib_conn_t *conn;
+static MGVTBL PerlXlib_dpy_mg_vtbl;
 
+extern Display * PerlXlib_get_magic_dpy(SV *sv, Bool not_null) {
+    MAGIC *mg= NULL;
     if (sv_isobject(sv)) {
-        inner= (SV*) SvRV(sv);
-        // find connection field in a hashref-based object
-        if (SvTYPE(inner) == SVt_PVHV) {
-            fp= hv_fetch((HV*)SvRV(sv), "connection", 10, 0);
-            if (fp && *fp && sv_isobject(*fp))
-                inner= SvRV(*fp);
-        }
-        if (SvTYPE(inner) == SVt_PVMG && SvCUR(inner) == sizeof(PerlXlib_conn_t)) {
-            conn= (PerlXlib_conn_t*) SvPVX(inner);
-            if (conn->state == PerlXlib_CONN_LIVE || !require_live)
-                return conn;
-            // Else, we either have one of our objects that is invalid, or something else.
-            if (sv_derived_from(sv, "X11::Xlib")) {
-                // If that was because Xlib fatal error, then give an even more specific error
-                if (SvTRUE(get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD)))
-                    croak("Cannot call further Xlib functions after fatal Xlib error");
-                switch (conn->state) {
-                case PerlXlib_CONN_DEAD: croak("X11 connection is dead (but still allocated)");
-                case PerlXlib_CONN_CLOSED: croak("X11 connection was closed");
-                default: croak("Corrupted data in X11 connection object");
-                }
+        for (mg = SvMAGIC(SvRV(sv)); mg; mg = mg->mg_moremagic) {
+            if (mg->mg_type == PERL_MAGIC_ext && mg->mg_virtual == &PerlXlib_dpy_mg_vtbl) {
+                if (!mg->mg_ptr && not_null) break;
+                return (Display*) mg->mg_ptr;
             }
         }
     }
-    //sv_dump(sv);
-    croak("Invalid Display handle; must be a X11::Xlib instance or X11::Xlib::Display instance");
-    return NULL; // make compiler happy
+    if (not_null) {
+        if (SvTRUE(get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD)))
+            croak("Cannot call further Xlib functions after fatal Xlib error");
+        if (mg) // has magic, but NULL pointer
+            croak("X11 connection was closed");
+        if (!sv_derived_from(sv, "X11::Xlib"))
+            croak("Invalid X11 connection; must be instance of X11::Xlib");
+        croak("Invalid X11 connection; missing 'magic' Display* reference");
+    }
+    return NULL;    
+}
+
+extern SV * PerlXlib_set_magic_dpy(SV *sv, Display *dpy) {
+    MAGIC *mg= NULL;
+    Display *old_dpy= NULL;
+    SV **fp;
+    HV *cache;
+    
+    if (!sv_isobject(sv))
+        croak("Can't add magic Display* to non-object");
+    
+    // Search for existing Magic that would hold this pointer
+    for (mg = SvMAGIC(SvRV(sv)); mg; mg = mg->mg_moremagic) {
+        if (mg->mg_type == PERL_MAGIC_ext && mg->mg_virtual == &PerlXlib_dpy_mg_vtbl) {
+            old_dpy= (Display*) mg->mg_ptr;
+            mg->mg_ptr= (void*) dpy;
+            break;
+        }
+    }
+    
+    // If value remains unchanged, nothing to do
+    if (dpy == old_dpy) return sv;
+    // If magic doesn't exist, add it
+    if (!mg)
+        sv_magicext(SvRV(sv), NULL, PERL_MAGIC_ext, &PerlXlib_dpy_mg_vtbl, (const char *) dpy, 0);
+    
+    cache= get_hv("X11::Xlib::_connections", GV_ADD);
+    // Object might be cached under old dpy key.  Remove the cache reference.
+    if (old_dpy)
+        hv_delete(cache, (void*) &old_dpy, sizeof(old_dpy), G_DISCARD);
+    
+    // Cache a weak ref to this object keyed by the new Display* value
+    if (dpy) {
+        fp= hv_fetch(cache, (void*) &dpy, sizeof(dpy), 1);
+        if (!fp) croak("failed to add item to hash (tied?)");
+        if (*fp && SvROK(*fp) && SvRV(*fp) != SvRV(sv))
+            warn("Replacing cached connection object for Display* 0x%p!", dpy);
+        // New weak-ref to this object
+        if (!*fp) *fp= newRV(SvRV(sv));
+        else sv_setsv(*fp, sv);
+        sv_rvweaken(*fp);
+    }
+    return sv;
 }
 
 // Converting a Display* to a \X11::Xlib is difficult because we want
 // to re-use the existing object.  We cache them in %X11::Xlib::_connections.
-SV * PerlXlib_sv_from_display(SV *dest, Display *dpy) {
-    SV **fp;
+// This function returns a mortal strong-reference to an instance of X11::Xlib (or subclass)
+extern SV * PerlXlib_obj_for_display(Display *dpy) {
+    SV **fp, *self;
     if (!dpy) {
         // Translate NULL to undef
-        sv_setsv(dest, &PL_sv_undef);
+        return &PL_sv_undef;
     }
     else {
         fp= hv_fetch(get_hv("X11::Xlib::_connections", GV_ADD), (void*) &dpy, sizeof(dpy), 1);
         // Return existing object if we have one for this Display* already
         if (!fp) croak("failed to add item to hash (tied?)");
-        if (*fp && SvOK(*fp)) {
-            sv_setsv(dest, *fp);
+        if (*fp && SvROK(*fp)) {
+            // create strong-ref from weakref
+            return sv_2mortal(newRV(SvRV(*fp)));
         }
-        // else it is probably a bogus value from a modified struct byte buffer
         else {
-            warn("Encountered unknown Display pointer, returning as plain scalar."
-                " If you want use X11 connections created by other libraries,"
-                " use 'X11::Xlib::import_connection");
-            sv_setpvn(dest, (void*) &dpy, sizeof(dpy));
+            // Always create instance of X11::Xlib.  X11::Xlib::Display can re-bless as needed.
+            self= sv_2mortal(newRV_noinc((SV*) newHV()));
+            sv_bless(self, gv_stashpv("X11::Xlib", GV_ADD));
+            return PerlXlib_set_magic_dpy(self, dpy);
         }
     }
-    return dest;
-}
-
-SV * PerlXlib_sv_assign_conn(SV *dest, Display *dpy, bool foreign) {
-    PerlXlib_conn_t conn;
-    SV **fp;
-    
-    // Create the hash entry where we will cache this connection.
-    // If it already exists, we return the cached object.
-    fp= hv_fetch(get_hv("X11::Xlib::_connections", GV_ADD), (void*) &dpy, sizeof(dpy), 1);
-    if (!fp)
-        return NULL;
-
-    // If foreign, maybe return a cached copy.  Otherwise, overwrite any cached version.
-    if (*fp && foreign && sv_isobject(*fp))
-        sv_setsv(dest, *fp);
-    else {
-        // Wrap the Display* in our own struct to attach extra flags.
-        conn.dpy= dpy;
-        conn.state= PerlXlib_CONN_LIVE;
-        conn.foreign= foreign;
-
-        // Always create instance of X11::Xlib.  X11::Xlib::Display can wrap this as needed.
-        sv_setref_pvn(dest, "X11::Xlib", (void*)&conn, sizeof(conn));
-
-        // Save a weakref for later
-        if (!*fp) *fp= newRV(SvRV(dest));
-        else sv_setsv(*fp, dest);
-        sv_rvweaken(*fp);
-    }
-    return dest;
-}
-
-void PerlXlib_conn_mark_closed(PerlXlib_conn_t *conn) {
-    if (conn->dpy) {
-        conn->state= PerlXlib_CONN_CLOSED;
-        // Now, we must also remove the object from the $_connections cache.
-        // It's a weak reference, but if we leave it there then a new Display*
-        // could get created at the same address and cause confusion.
-        hv_delete(get_hv("X11::Xlib::_connections", GV_ADD),
-            (void*) &(conn->dpy), sizeof(Display*), 0);
-        conn->dpy= NULL;
-    }
-    return;
 }
 
 // Allow unsigned integer, or hashref with field ->{xid}
@@ -211,7 +199,6 @@ from our longjmp.  So, set a global flag to prevent any re-entry into XLib.
 
 */
 int PerlXlib_X_IO_error_handler(Display *d) {
-    SV *conn;
     sv_setiv(get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD), 1);
     warn("Xlib fatal error.  Further calls to Xlib are forbidden.");
     dSP;
@@ -219,9 +206,7 @@ int PerlXlib_X_IO_error_handler(Display *d) {
     SAVETMPS;
     PUSHMARK(SP);
     EXTEND(SP, 1);
-    conn= sv_2mortal(newSV(0));
-    PerlXlib_sv_from_display(conn, d);
-    PUSHs(conn);
+    PUSHs(PerlXlib_obj_for_display(d));
     PUTBACK;
     call_pv("X11::Xlib::_error_fatal", G_VOID|G_DISCARD|G_EVAL|G_KEEPERR);
     FREETMPS;
@@ -251,40 +236,40 @@ void PerlXlib_install_error_handlers(Bool nonfatal, Bool fatal) {
 
 const char* PerlXlib_xevent_pkg_for_type(int type) {
   switch (type) {
-  case ConfigureRequest: return "X11::Xlib::XEvent::XConfigureRequestEvent";
-  case MapNotify: return "X11::Xlib::XEvent::XMapEvent";
-  case ColormapNotify: return "X11::Xlib::XEvent::XColormapEvent";
-  case EnterNotify: return "X11::Xlib::XEvent::XCrossingEvent";
-  case KeyPress: return "X11::Xlib::XEvent::XKeyEvent";
-  case LeaveNotify: return "X11::Xlib::XEvent::XCrossingEvent";
-  case FocusIn: return "X11::Xlib::XEvent::XFocusChangeEvent";
-  case PropertyNotify: return "X11::Xlib::XEvent::XPropertyEvent";
-  case ResizeRequest: return "X11::Xlib::XEvent::XResizeRequestEvent";
-  case SelectionRequest: return "X11::Xlib::XEvent::XSelectionRequestEvent";
-  case KeyRelease: return "X11::Xlib::XEvent::XKeyEvent";
-  case DestroyNotify: return "X11::Xlib::XEvent::XDestroyWindowEvent";
-  case GraphicsExpose: return "X11::Xlib::XEvent::XGraphicsExposeEvent";
-  case FocusOut: return "X11::Xlib::XEvent::XFocusChangeEvent";
-  case CirculateRequest: return "X11::Xlib::XEvent::XCirculateRequestEvent";
   case ButtonPress: return "X11::Xlib::XEvent::XButtonEvent";
-  case Expose: return "X11::Xlib::XEvent::XExposeEvent";
-  case ReparentNotify: return "X11::Xlib::XEvent::XReparentEvent";
-  case ConfigureNotify: return "X11::Xlib::XEvent::XConfigureEvent";
-  case GenericEvent: return "X11::Xlib::XEvent::XGenericEvent";
-  case SelectionNotify: return "X11::Xlib::XEvent::XSelectionEvent";
-  case GravityNotify: return "X11::Xlib::XEvent::XGravityEvent";
-  case MotionNotify: return "X11::Xlib::XEvent::XMotionEvent";
-  case ClientMessage: return "X11::Xlib::XEvent::XClientMessageEvent";
-  case UnmapNotify: return "X11::Xlib::XEvent::XUnmapEvent";
   case ButtonRelease: return "X11::Xlib::XEvent::XButtonEvent";
-  case MappingNotify: return "X11::Xlib::XEvent::XMappingEvent";
-  case CreateNotify: return "X11::Xlib::XEvent::XCreateWindowEvent";
   case CirculateNotify: return "X11::Xlib::XEvent::XCirculateEvent";
+  case CirculateRequest: return "X11::Xlib::XEvent::XCirculateRequestEvent";
+  case ClientMessage: return "X11::Xlib::XEvent::XClientMessageEvent";
+  case ColormapNotify: return "X11::Xlib::XEvent::XColormapEvent";
+  case ConfigureNotify: return "X11::Xlib::XEvent::XConfigureEvent";
+  case ConfigureRequest: return "X11::Xlib::XEvent::XConfigureRequestEvent";
+  case CreateNotify: return "X11::Xlib::XEvent::XCreateWindowEvent";
+  case DestroyNotify: return "X11::Xlib::XEvent::XDestroyWindowEvent";
+  case EnterNotify: return "X11::Xlib::XEvent::XCrossingEvent";
+  case Expose: return "X11::Xlib::XEvent::XExposeEvent";
+  case FocusIn: return "X11::Xlib::XEvent::XFocusChangeEvent";
+  case FocusOut: return "X11::Xlib::XEvent::XFocusChangeEvent";
+  case GenericEvent: return "X11::Xlib::XEvent::XGenericEvent";
+  case GraphicsExpose: return "X11::Xlib::XEvent::XGraphicsExposeEvent";
+  case GravityNotify: return "X11::Xlib::XEvent::XGravityEvent";
+  case KeyPress: return "X11::Xlib::XEvent::XKeyEvent";
+  case KeyRelease: return "X11::Xlib::XEvent::XKeyEvent";
   case KeymapNotify: return "X11::Xlib::XEvent::XKeymapEvent";
-  case NoExpose: return "X11::Xlib::XEvent::XNoExposeEvent";
-  case VisibilityNotify: return "X11::Xlib::XEvent::XVisibilityEvent";
+  case LeaveNotify: return "X11::Xlib::XEvent::XCrossingEvent";
+  case MapNotify: return "X11::Xlib::XEvent::XMapEvent";
   case MapRequest: return "X11::Xlib::XEvent::XMapRequestEvent";
+  case MappingNotify: return "X11::Xlib::XEvent::XMappingEvent";
+  case MotionNotify: return "X11::Xlib::XEvent::XMotionEvent";
+  case NoExpose: return "X11::Xlib::XEvent::XNoExposeEvent";
+  case PropertyNotify: return "X11::Xlib::XEvent::XPropertyEvent";
+  case ReparentNotify: return "X11::Xlib::XEvent::XReparentEvent";
+  case ResizeRequest: return "X11::Xlib::XEvent::XResizeRequestEvent";
   case SelectionClear: return "X11::Xlib::XEvent::XSelectionClearEvent";
+  case SelectionNotify: return "X11::Xlib::XEvent::XSelectionEvent";
+  case SelectionRequest: return "X11::Xlib::XEvent::XSelectionRequestEvent";
+  case UnmapNotify: return "X11::Xlib::XEvent::XUnmapEvent";
+  case VisibilityNotify: return "X11::Xlib::XEvent::XVisibilityEvent";
   default: return "X11::Xlib::XEvent";
   }
 }
@@ -312,7 +297,7 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
     }
     
     fp= hv_fetch(fields, "display", 7, 0);
-    if (fp && *fp) { s->xany.display= PerlXlib_sv_to_display(*fp);; if (consume) hv_delete(fields, "display", 7, G_DISCARD); }
+    if (fp && *fp) { s->xany.display= PerlXlib_get_magic_dpy(*fp, 0);; if (consume) hv_delete(fields, "display", 7, G_DISCARD); }
     fp= hv_fetch(fields, "send_event", 10, 0);
     if (fp && *fp) { s->xany.send_event= SvIV(*fp);; if (consume) hv_delete(fields, "send_event", 10, G_DISCARD); }
     fp= hv_fetch(fields, "serial", 6, 0);
@@ -666,7 +651,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
     // If it does, we need to clean up the value!
     SV *sv= NULL;
     if (!hv_store(fields, "type", 4, (sv= newSViv(s->type)), 0)) goto store_fail;
-    if (!hv_store(fields, "display"   ,  7, (sv=(s->xany.display? sv_setref_pv(newSV(0), "X11::Xlib", (void*)s->xany.display) : &PL_sv_undef)), 0)) goto store_fail;
+    if (!hv_store(fields, "display"   ,  7, (sv=PerlXlib_obj_for_display(s->xany.display)), 0)) goto store_fail;
     if (!hv_store(fields, "send_event", 10, (sv=newSViv(s->xany.send_event)), 0)) goto store_fail;
     if (!hv_store(fields, "serial"    ,  6, (sv=newSVuv(s->xany.serial)), 0)) goto store_fail;
     if (!hv_store(fields, "type"      ,  4, (sv=newSViv(s->xany.type)), 0)) goto store_fail;

@@ -76,21 +76,36 @@ our %EXPORT_TAGS= (
 );
 our @EXPORT= @{ $EXPORT_TAGS{fn_key} };
 
+# Used by XS.  In the spirit of letting perl users violate encapsulation
+#  as needed, the XS code exposes its globals to Perl.
+our (
+    %_connections,              # weak-ref set of all connection objects, keyed by *raw pointer*
+    %_autoclose,                # set of all connections which we close on DESTROY, keyed by *waw pointer*
+    $_error_nonfatal_installed, # boolean, whether handler is installed
+    $_error_fatal_installed,    # boolean, whether handler is installed
+    $_error_fatal_trapped,      # boolean, whether Xlib is dead from fatal error
+    $on_error_cb,               # application-supplied callback
+);
+
 sub new {
     require X11::Xlib::Display;
     my $class= shift;
     X11::Xlib::Display->new(@_);
 }
 
-# Used by XS.  In the spirit of letting perl users violate encapsulation
-#  as needed, the XS code exposes its globals to Perl.
-our (
-    %_connections,              # weak-ref set of all connection objects, keyed by *raw pointer*
-    $_error_nonfatal_installed, # boolean, whether handler is installed
-    $_error_fatal_installed,    # boolean, whether handler is installed
-    $_error_fatal_trapped,      # boolean, whether Xlib is dead from fatal error
-    $on_error_cb,               # application-supplied callback
-);
+sub autoclose {
+    my $self= shift;
+    $self->{autoclose}= shift if @_;
+    return $self->{autoclose};
+}
+
+sub DESTROY {
+    my $self= shift;
+    $self->XCloseDisplay() if $self->autoclose;
+    my $ptr= $self->_pointer_value;
+    delete $_connections{$ptr} if $ptr;
+}
+
 sub on_error {
     shift if $_[0] eq __PACKAGE__;
     my $callback= shift;
@@ -123,7 +138,7 @@ sub _error_fatal {
         catch { warn $_; };
     }
     # also call a user callback in any Display object
-    for my $dpy (values %X11::Xlib::_connections) {
+    for my $dpy (values %_connections) {
         next unless defined $dpy && $dpy->can('on_error_cb') && defined $dpy->on_error_cb;
         try { $dpy->on_error_cb->($dpy); }
         catch { warn $_; };
@@ -132,6 +147,23 @@ sub _error_fatal {
     # Kill all X11 connections, since Xlib internal state might be toast after this
     $_->_mark_dead for grep { defined } values %_connections;
 }
+
+sub _mark_dead {
+    my $self= shift;
+    $self->autoclose(0);
+    my $ptr= $self->_pointer_value;
+    $self->_set_pointer_value(undef);
+    $self->{_dead}= 1;
+    $self->{_pointer_value}= $ptr;
+    # above line removed $self from cache.  Put it back.
+    Scalar::Util::weaken( $_connections{$ptr}= $self );
+}
+
+package X11::Xlib::DEAD;
+@X11::Xlib::DEAD::ISA= ('X11::Xlib');
+
+sub _pointer_value { $_[0]{_pointer_value} }
+sub DESTROY {}
 
 1;
 

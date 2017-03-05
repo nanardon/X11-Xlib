@@ -30,15 +30,13 @@ is( scalar keys %X11::Xlib::_connections, 2, 'two registered connections' );
 X11::Xlib::XCloseDisplay($conn2);
 # Display* has been freed, so address could get re-used, so it must become un-registered.
 ok( $conn2, 'conn2 still defined' );
-$conn2->_pointer_value;
-$conn2->_pointer_value;
 is( $conn2->_pointer_value, undef, 'conn2 internal pointer is NULL' );
 is( scalar keys %X11::Xlib::_connections, 1, 'one registered connection' );
 
 my $fd= $conn->ConnectionNumber;
 $conn->_mark_dead;
 is( scalar keys %X11::Xlib::_connections, 1, 'dead, but still registered' );
-like( err{ X11::Xlib::XCloseDisplay($conn) }, qr/connection is dead/i, 'accessing dead connection throws error' );
+like( err{ X11::Xlib::XCloseDisplay($conn) }, qr/connection/i, 'accessing dead connection throws error' );
 undef $conn;
 is( scalar keys %X11::Xlib::_connections, 0, 'all unregistered' );
 # clean up

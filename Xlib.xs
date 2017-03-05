@@ -16,55 +16,44 @@ XOpenDisplay(connection_string = NULL)
     char * connection_string
     INIT:
         Display *dpy;
-        PerlXlib_conn_t conn;
-        SV **fp, *dest;
+        SV *tmp, *self;
     PPCODE:
         if (SvTRUE(get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD)))
             croak("Cannot call further Xlib functions after fatal Xlib error");
-        dpy = XOpenDisplay(connection_string);
-        if (!dpy)
-            PUSHs(&PL_sv_undef);
-        else {
-            dest= sv_2mortal(newSV(0));
-            if (!PerlXlib_sv_assign_conn(dest, dpy, 0)) {
-                XCloseDisplay(dpy);
-                croak("Can't create hash entry (tied?)");
+        dpy= XOpenDisplay(connection_string);
+        self= PerlXlib_obj_for_display(dpy);
+        if (SvROK(self)) {
+            if (!hv_store((HV*) SvRV(self), "autoclose", 9, (tmp=newSViv(1)), 0)) {
+                sv_2mortal(tmp);
+                croak("Failed to set autoclose");
             }
-            PUSHs(dest);
         }
+        PUSHs(self);
 
 void
-_pointer_value(connsv)
-    SV* connsv
+_pointer_value(obj)
+    SV *obj
     INIT:
-        PerlXlib_conn_t *conn;
+        Display *dpy;
+        SV **fp= NULL;
     PPCODE:
-        conn= PerlXlib_get_conn_from_sv(connsv, 0);
-        PUSHs(!conn->dpy? &PL_sv_undef
-            : sv_2mortal(newSVpvn((void*) &conn->dpy, sizeof(Display*))));
+        dpy= PerlXlib_get_magic_dpy(obj, 0);
+        if (!dpy && SvROK(obj) && SvTYPE(SvRV(obj)) == SVt_PVHV) {
+            // in the case of a dead connection, the pointer value moves to a hash field
+            fp= hv_fetch((HV*)SvRV(obj), "_pointer_value", 14, 0);
+        }
+        PUSHs(dpy? sv_2mortal(newSVpvn((const char*)&dpy, sizeof(dpy)))
+            : (fp && *fp && SvPOK(*fp))? *fp
+            : &PL_sv_undef);
 
 void
-_mark_dead(connsv)
-    SV* connsv
+_set_pointer_value(obj, dpy_val)
+    SV *obj
+    SV *dpy_val
     PPCODE:
-        PerlXlib_get_conn_from_sv(connsv, 0)->state= PerlXlib_CONN_DEAD;
-
-void
-_mark_closed(connsv)
-    SV *connsv
-    PPCODE:
-        PerlXlib_conn_mark_closed(PerlXlib_get_conn_from_sv(connsv, 0));
-
-void
-DESTROY(connsv)
-    SV *connsv
-    INIT:
-        PerlXlib_conn_t *conn;
-    PPCODE:
-        conn= PerlXlib_get_conn_from_sv(connsv, 0);
-        if (conn->state == PerlXlib_CONN_LIVE && !conn->foreign)
-            XCloseDisplay(conn->dpy);
-        PerlXlib_conn_mark_closed(conn);
+        if (SvOK(dpy_val) && (!SvPOK(dpy_val) || SvCUR(dpy_val) != sizeof(Display*)))
+            croak("Invalid pointer value (should be scalar of %d bytes)", sizeof(Display*));
+        PerlXlib_set_magic_dpy(obj, SvOK(dpy_val)? (Display*)(void*)SvPVX(dpy_val) : NULL);
 
 char *
 XServerVendor(dpy)
@@ -86,14 +75,15 @@ XSetCloseDownMode(dpy, close_mode)
         XSetCloseDownMode(dpy, close_mode);
 
 void
-XCloseDisplay(dpy)
-    SV *dpy
+XCloseDisplay(dpy_sv)
+    SV *dpy_sv
     INIT:
-        PerlXlib_conn_t *conn;
+        Display *dpy;
     CODE:
-        conn= PerlXlib_get_conn_from_sv(dpy, 1);
-        XCloseDisplay(conn->dpy);
-        PerlXlib_conn_mark_closed(conn);
+        dpy= PerlXlib_get_magic_dpy(dpy_sv, 1);
+        XCloseDisplay(dpy);
+        PerlXlib_set_magic_dpy(dpy_sv, NULL); // mark as closed
+        hv_delete((HV*)SvRV(dpy_sv), "autoclose", 9, G_DISCARD);
 
 # Event Functions (fn_event) -------------------------------------------------
 
@@ -828,10 +818,10 @@ display(event, value=NULL)
   SV *value
   PPCODE:
     if (value) {
-      event->xany.display= PerlXlib_sv_to_display(value);
+      event->xany.display= PerlXlib_get_magic_dpy(value, 0);
       PUSHs(value);
     } else {
-      PUSHs(sv_2mortal((event->xany.display? sv_setref_pv(newSV(0), "X11::Xlib", (void*)event->xany.display) : &PL_sv_undef)));
+      PUSHs(sv_2mortal(PerlXlib_obj_for_display(event->xany.display)));
     }
 
 void

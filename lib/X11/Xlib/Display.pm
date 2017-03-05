@@ -12,18 +12,11 @@ require X11::Xlib::Pixmap;
 
 =head1 ATTRIBUTES
 
-=head2 connection
-
-Instance of L</X11::Xlib> which acts as the C<Display *> parameter to all
-X11 function calls.
-
 =head3 connection_fh
 
 Return the file handle to the X11 connection.  Useful for C<select>.
 
 =cut
-
-sub connection { shift->{connection} }
 
 sub connection_fh {
     my $self= shift;
@@ -128,47 +121,34 @@ sub on_error_cb {
 
   my $display= X11::Xlib::Display->new(); # uses $ENV{DISPLAY}
   my $display= X11::Xlib::Display->new( $connect_string );
-  my $display= X11::Xlib::Display->new( $conn );
-  my $display= X11::Xlib::Display->new( \%attributes );
+  my $display= X11::Xlib::Display->new( connect => $connect_string, %attributes );
 
-Construct a new Display, either from an existing X11::Xlib connection
-instance, or from a connection string by establishing a new connection.
+Create a new connection to an X11 server.
 
-If you pass a single argument, it is understood to be the L</connection>
-attribute.  If you do not pass a connection attribute it is given to
-XOpenDisplay as NULL, which then uses C<$ENV{DISPLAY}>.
+If you pass a single non-hashref argument, it is given to
+L<XOpenDisplay|X11::Xlib::XOpenDisplay>.
+If you omit the connect_string, it uses C<$ENV{DISPLAY}>.
 
-If you pass a connection instance and a Display object already exists for
-it, you will get back the previous object and all other attributes you
-supplied are ignored.  You also get a warning.
+If you pass a list or hashref of arguments, you can specify the connection
+string as C<connect>.
 
-If you pass a connection string and the call to XOpenDisplay fails, this
-constructor dies.
+If the call to XOpenDisplay fails, this constructor dies.
 
 =cut
 
 sub new {
     my $class= shift;
     my $args= @_ == 1 && ref($_[0]) eq 'HASH'? { %{$_[0]} }
-        : @_ == 1? { connection => $_[0] }
+        : @_ == 1? { connect => $_[0] }
         : (1 & @_) == 0? { @_ }
         : croak "Expected hashref, single connection scalar, or even-length list";
-    my $self;
-    my $conn= $args->{connection};
-    if ($conn && ref $conn && ref($conn)->isa('X11::Xlib')) {
-        # Check if object already exists for this connection
-        if (ref($X11::Xlib::_connections{$conn->_pointer_value})->isa(__PACKAGE__)) {
-            carp "re-using existing Display object for this connection";
-            return $X11::Xlib::_connections{$conn->_pointer_value};
-        }
-    }
-    else {
-        $args->{connection}= X11::Xlib::XOpenDisplay(defined $conn? ($conn) : ())
-            or croak "Unable to connect to X11 server";
-    }
-    $self= bless $args, $class;
-    my $key= $self->{connection}->_pointer_value;
-    Scalar::Util::weaken( $X11::Xlib::_connections{$key}= $self );
+    # Use the magic-enabled hashref that we get back from XOpenDisplay
+    my $self= X11::Xlib::XOpenDisplay(defined $args->{connect}? (delete $args->{connect}) : () )
+        or croak "Unable to connect to X11 server";
+    # Apply all our arguments
+    %$self= ( %$self, %$args );
+    # Re-bless
+    bless $self, $class;
     
     # initialize a few attributes that are commonly accessed
     $self->{screen_count}= $self->ScreenCount;

@@ -204,7 +204,7 @@ sub sv_read {
 	return "$access= SvIV($svname);" if $int_types{$type};
 	return "$access= SvUV($svname);" if $unsigned_types{$type};
     return "$access= PerlXlib_sv_to_xid($svname);" if $xid_types{$type};
-	return "$access= PerlXlib_sv_to_display($svname);" if $type eq 'Display *';
+	return "$access= PerlXlib_get_magic_dpy($svname, 0);" if $type eq 'Display *';
 	return "{"
 		." if (!SvPOK($svname) || SvCUR($svname) != sizeof($1)*$2)"
 		.'  croak("Expected scalar of length %d but got %d",'." sizeof($1)*$2, SvCUR($svname));"
@@ -216,7 +216,7 @@ sub sv_create {
 	my ($type, $value)= @_;
 	return "newSViv($value)" if $int_types{$type};
 	return "newSVuv($value)" if $unsigned_types{$type} or $xid_types{$type};
-	return "($value? sv_setref_pv(newSV(0), \"X11::Xlib\", (void*)$value) : &PL_sv_undef)" if $type eq 'Display *';
+	return "PerlXlib_obj_for_display($value)" if $type eq 'Display *';
 	return "newSVpvn((void*)$value, sizeof($1)*$2)"
 		if $type =~ /^(\w+) \[ (\d+) \]$/;
 	die "Don't know how to create SV from $type";
@@ -303,7 +303,7 @@ _$fieldname(event, value=NULL)
                 warn "Ignoring $_ because no type code references it\n";
                 next;
             }
-            $xs .= qq{    case $_:\n} for @$typecodes;
+            $xs .= qq{    case $_:\n} for sort @$typecodes;
             $xs .= qq{      if (value) { event->$_ = c_value; } else { c_value= event->$_; } break;\n}
         }
         $xs .= <<"@";
@@ -333,7 +333,7 @@ _$fieldname(event, value=NULL)
             my $access= "event->$_";
             my $sv_read= sv_read($members{$_}, $access, 'value');
             my $sv_create= sv_create($members{$_}, $access);
-            $xs .= qq{    case $_:\n} for @$typecodes;
+            $xs .= qq{    case $_:\n} for sort @$typecodes;
             $xs .= qq{      if (value) { $sv_read } else { PUSHs(sv_2mortal($sv_create)); } break;\n};
         }
         $xs .= <<"@";
@@ -351,7 +351,7 @@ const char* PerlXlib_xevent_pkg_for_type(int type) {
   switch (type) {
 @
     $c .= qq{  case $_: return "X11::Xlib::XEvent::$type_to_struct{$_}";\n}
-        for keys %type_to_struct;
+        for sort keys %type_to_struct;
     $c .= <<"@";
   default: return "X11::Xlib::XEvent";
   }
@@ -485,7 +485,7 @@ sub generate_subclasses {
         }
         next if $member_struct eq 'XAnyEvent' or !$typecodes or !@$typecodes;
         $pod .= "=head2 $member_struct\n\n"
-            . "Used for event type: ".join(', ', @$typecodes)."\n\n";
+            . "Used for event type: ".join(', ', sort @$typecodes)."\n\n";
         $subclasses .= "\n\n\@X11::Xlib::${goal}::${member_struct}::ISA= ( __PACKAGE__ );\n";
         my $n;
         for my $path (sort grep { $_ =~ qr/^$field\./ and $_ !~ $ignore_re } keys %members) {
@@ -571,4 +571,4 @@ $out_c  .= generate_pack_c() . "\n" . generate_unpack_c() . "\n";
 $out_pl .= generate_subclasses();
 patch_file("Xlib.xs", $file_splice_token, $out_xs);
 patch_file("PerlXlib.c", $file_splice_token, $out_c);
-patch_file("lib/X11/Xlib/Struct/XEvent.pm", $file_splice_token, $out_pl);
+patch_file("lib/X11/Xlib/XEvent.pm", $file_splice_token, $out_pl);
