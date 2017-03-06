@@ -53,6 +53,7 @@ sub width     { $_[0]{display}->DisplayWidth($_[0]{screen_number}) }
 sub height    { $_[0]{display}->DisplayHeight($_[0]{screen_number}) }
 sub width_mm  { $_[0]{display}->DisplayWidthMM($_[0]{screen_number}) }
 sub height_mm { $_[0]{display}->DisplayHeightMM($_[0]{screen_number}) }
+sub depth     { $_[0]{display}->DefaultDepth($_[0]{screen_number}) }
 
 =head2 root_window_xid
 
