@@ -485,16 +485,18 @@ sub generate_subclasses {
         }
         next if $member_struct eq 'XAnyEvent' or !$typecodes or !@$typecodes;
         $pod .= "=head2 $member_struct\n\n"
-            . "Used for event type: ".join(', ', sort @$typecodes)."\n\n";
+            . "Used for event type: ".join(', ', sort @$typecodes)."\n\n"
+            . "=over\n\n";
         $subclasses .= "\n\n\@X11::Xlib::${goal}::${member_struct}::ISA= ( __PACKAGE__ );\n";
         my $n;
         for my $path (sort grep { $_ =~ qr/^$field\./ and $_ !~ $ignore_re } keys %members) {
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
             ++$n;
-            $pod .= "=head3 $name\n\n";
+            $pod .= "=item $name\n\n";
             $subclasses .= "*X11::Xlib::${goal}::${member_struct}::$name= *_$name;\n";
         }
+        $pod .= "=back\n\n";
     }
     $pod .= "=cut\n\n";
     return $subclasses . "\n" . $pod;

@@ -42,10 +42,6 @@ X11::Xlib::Window - Low-level access to X11 windows
   my $window = $display->RootWindow();
   ...
 
-=head1 DESCRIPTION
-
-This class extends .
-
 =head1 METHODS
 
 (inherits from L<X11::Xlib::XID>)
@@ -54,9 +50,23 @@ This class extends .
 
   my ($w, $h)= $window->get_w_h
 
-Return width and height of the window by calling XGetGeometry.  This means it
-always returns the current size of the window, which could have been altered
-since the time the window was created.
+Return width and height of the window by calling L<XGetGeometry|X11::Xlib/XGetGeometry>.
+This means it always returns the current size of the window, which could have
+been altered since the time the window was created.
+
+=head2 show
+
+  $win->show;
+  $win->show(1);
+  $win->show(0);  # equivalent to 'hide'
+
+Calls L<XMapWindow|X11::Xlib/XMapWindow> to request that the X server display the window.
+
+You can pass a boolean argument to conditionally call L</hide> instead.
+
+=head2 hide
+
+Calls L<XUnmapWindow|X11::Xlib/XUnmapWindow> to request the window be hidden.
 
 =head1 SEE ALSO
 

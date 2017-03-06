@@ -1,5 +1,13 @@
 Revision history for Perl extension X11::Xlib.
 
+0.09 - 2017-03
+    - implement Xlib API for screens, events, windows, pixmaps, colormaps,
+      visual/visualinfo and error handling.
+    - more distinct separation between C-style API and object layer.
+    - caching support for objects wrapping connections or XIDs
+    - typemap handling for all the new supported objects
+    - use ExtUtils::Depends to share C API and typemap with derived modules
+
 0.03 - 2015-01-20
     - removed distro included Devel::CheckLib, and added it to CONFIGURE_REQUIRES
 

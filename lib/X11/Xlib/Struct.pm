@@ -50,8 +50,6 @@ sub initialize {
 
 Pack field values into the bytes of the struct.  Only C<\%fields> is required.
 
-If C<$zero> is true, then zero all bytes before starting.
-
 If C<$consume> is true, then remove any key of \%fields that was processed.
 
 If C<$warn> is true, then emit a warning if any un-recognized field was given.
@@ -72,7 +70,7 @@ sub pack {
   $struct->apply( \%fields );
   $struct->apply( field => $val, ... );
 
-Alias for C< pack(\%fields, 0, 1) >.
+Alias for C< pack(\%fields, 1, 1) >.
 For each given field, update that member of the struct.
 Emits a warning if the hash contains unknown fields.
 

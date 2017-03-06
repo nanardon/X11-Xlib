@@ -26,45 +26,42 @@ passed to the L<X11::Xlib> methods that expect an XEvent pointer.
 =head2 new
 
   my $xevent= X11::Xlib::XEvent->new();
-  # or:                        ->new( %fields );
-  # or:                        ->new( \%fields );
+  my $xevent= X11::Xlib::XEvent->new( %fields );
+  my $xevent= X11::Xlib::XEvent->new( \%fields );
 
 You can construct XEvent as an empty buffer, or initialize it with a hash or
 hashref of fields.  Initialization is performed via L</pack>.  Un-set fields
 are initialized to zero, and the L</buffer> is always padded to the length
 of an XEvent.
 
-=head2 buffer
+=head2 bytes
 
 Direct access to the bytes of the XEvent.
 
+=head2 apply
+
+  $xevent->apply( %fields );
+
+Alias for C< pack( \%fields, 1, 1 ) >
+
 =head2 pack
 
-  $xevent->pack( %fields );
-  $xevent->pack( \%fields );
+  $xevent->pack( \%fields, $consume, $warn );
 
-Wipe the contents of the current xevent and replace with the specified values.
-If the L</type> changes as a result, then the XEvent will get re-blessed to
-the appropriate type.
-
-This method warns about unused arguments, but not missing arguments.
-(any missing arguments get a zero value from the initial C<memset>.)
+Assign a set of fields to the packed struct, optionally removing them from
+the hashref (C<$consume>) and warning about un-known names (C<$warn>).
+If you supply a new value for L</type>, the XEvent will get re-blessed to
+the appropriate type and all union-specific fields will be zeroed before
+applying the rest of the supplied fields.
 
 =head2 unpack
 
-  my $field_hash= $xevent->unpack;
+  my $field_hashref= $xevent->unpack;
 
-Unpack the fields of an XEvent into a hashref.  Fields that reference objects
-like Window IDs or Display handles will get inflated as appropriate.
+Unpack the fields of an XEvent into a hashref.  The Display field gets
+inflated to an X11::Xlib object.
 
 =head1 ATTRIBUTES
-
-All attributes of XEvent are divided into C<get_NAME()> and C<set_NAME($val)>
-methods, but then we also provide a typical C<NAME(...)> accessor that acts as
-both getter and setter depending on whether you pass an argument.
-
-This design allows easy subclassing of get or set behavior without trying to
-handle both in the same method.
 
 =head2 Common Attributes
 
@@ -83,8 +80,6 @@ The handle to the X11 connection that this message came from.
 =head3 serial
 
 The X11 serial number
-
-=cut
 
 =head3 window
 
@@ -352,391 +347,511 @@ sub pack {
 
 Used for event type: ButtonPress, ButtonRelease
 
-=head3 button
+=over
 
-=head3 root
+=item button
 
-=head3 same_screen
+=item root
 
-=head3 state
+=item same_screen
 
-=head3 subwindow
+=item state
 
-=head3 time
+=item subwindow
 
-=head3 x
+=item time
 
-=head3 x_root
+=item x
 
-=head3 y
+=item x_root
 
-=head3 y_root
+=item y
+
+=item y_root
+
+=back
 
 =head2 XCirculateEvent
 
 Used for event type: CirculateNotify
 
-=head3 event
+=over
 
-=head3 place
+=item event
+
+=item place
+
+=back
 
 =head2 XCirculateRequestEvent
 
 Used for event type: CirculateRequest
 
-=head3 parent
+=over
 
-=head3 place
+=item parent
+
+=item place
+
+=back
 
 =head2 XClientMessageEvent
 
 Used for event type: ClientMessage
 
-=head3 b
+=over
 
-=head3 l
+=item b
 
-=head3 s
+=item l
 
-=head3 format
+=item s
 
-=head3 message_type
+=item format
+
+=item message_type
+
+=back
 
 =head2 XColormapEvent
 
 Used for event type: ColormapNotify
 
-=head3 colormap
+=over
 
-=head3 new
+=item colormap
 
-=head3 state
+=item new
+
+=item state
+
+=back
 
 =head2 XConfigureEvent
 
 Used for event type: ConfigureNotify
 
-=head3 above
+=over
 
-=head3 border_width
+=item above
 
-=head3 event
+=item border_width
 
-=head3 height
+=item event
 
-=head3 override_redirect
+=item height
 
-=head3 width
+=item override_redirect
 
-=head3 x
+=item width
 
-=head3 y
+=item x
+
+=item y
+
+=back
 
 =head2 XConfigureRequestEvent
 
 Used for event type: ConfigureRequest
 
-=head3 above
+=over
 
-=head3 border_width
+=item above
 
-=head3 detail
+=item border_width
 
-=head3 height
+=item detail
 
-=head3 parent
+=item height
 
-=head3 value_mask
+=item parent
 
-=head3 width
+=item value_mask
 
-=head3 x
+=item width
 
-=head3 y
+=item x
+
+=item y
+
+=back
 
 =head2 XCreateWindowEvent
 
 Used for event type: CreateNotify
 
-=head3 border_width
+=over
 
-=head3 height
+=item border_width
 
-=head3 override_redirect
+=item height
 
-=head3 parent
+=item override_redirect
 
-=head3 width
+=item parent
 
-=head3 x
+=item width
 
-=head3 y
+=item x
+
+=item y
+
+=back
 
 =head2 XCrossingEvent
 
 Used for event type: EnterNotify, LeaveNotify
 
-=head3 detail
+=over
 
-=head3 focus
+=item detail
 
-=head3 mode
+=item focus
 
-=head3 root
+=item mode
 
-=head3 same_screen
+=item root
 
-=head3 state
+=item same_screen
 
-=head3 subwindow
+=item state
 
-=head3 time
+=item subwindow
 
-=head3 x
+=item time
 
-=head3 x_root
+=item x
 
-=head3 y
+=item x_root
 
-=head3 y_root
+=item y
+
+=item y_root
+
+=back
 
 =head2 XDestroyWindowEvent
 
 Used for event type: DestroyNotify
 
-=head3 event
+=over
+
+=item event
+
+=back
 
 =head2 XExposeEvent
 
 Used for event type: Expose
 
-=head3 count
+=over
 
-=head3 height
+=item count
 
-=head3 width
+=item height
 
-=head3 x
+=item width
 
-=head3 y
+=item x
+
+=item y
+
+=back
 
 =head2 XFocusChangeEvent
 
 Used for event type: FocusIn, FocusOut
 
-=head3 detail
+=over
 
-=head3 mode
+=item detail
+
+=item mode
+
+=back
 
 =head2 XGenericEvent
 
 Used for event type: GenericEvent
 
-=head3 evtype
+=over
 
-=head3 extension
+=item evtype
+
+=item extension
+
+=back
 
 =head2 XGraphicsExposeEvent
 
 Used for event type: GraphicsExpose
 
-=head3 count
+=over
 
-=head3 drawable
+=item count
 
-=head3 height
+=item drawable
 
-=head3 major_code
+=item height
 
-=head3 minor_code
+=item major_code
 
-=head3 width
+=item minor_code
 
-=head3 x
+=item width
 
-=head3 y
+=item x
+
+=item y
+
+=back
 
 =head2 XGravityEvent
 
 Used for event type: GravityNotify
 
-=head3 event
+=over
 
-=head3 x
+=item event
 
-=head3 y
+=item x
+
+=item y
+
+=back
 
 =head2 XKeyEvent
 
 Used for event type: KeyPress, KeyRelease
 
-=head3 keycode
+=over
 
-=head3 root
+=item keycode
 
-=head3 same_screen
+=item root
 
-=head3 state
+=item same_screen
 
-=head3 subwindow
+=item state
 
-=head3 time
+=item subwindow
 
-=head3 x
+=item time
 
-=head3 x_root
+=item x
 
-=head3 y
+=item x_root
 
-=head3 y_root
+=item y
+
+=item y_root
+
+=back
 
 =head2 XKeymapEvent
 
 Used for event type: KeymapNotify
 
-=head3 key_vector
+=over
+
+=item key_vector
+
+=back
 
 =head2 XMapEvent
 
 Used for event type: MapNotify
 
-=head3 event
+=over
 
-=head3 override_redirect
+=item event
+
+=item override_redirect
+
+=back
 
 =head2 XMapRequestEvent
 
 Used for event type: MapRequest
 
-=head3 parent
+=over
+
+=item parent
+
+=back
 
 =head2 XMappingEvent
 
 Used for event type: MappingNotify
 
-=head3 count
+=over
 
-=head3 first_keycode
+=item count
 
-=head3 request
+=item first_keycode
+
+=item request
+
+=back
 
 =head2 XMotionEvent
 
 Used for event type: MotionNotify
 
-=head3 is_hint
+=over
 
-=head3 root
+=item is_hint
 
-=head3 same_screen
+=item root
 
-=head3 state
+=item same_screen
 
-=head3 subwindow
+=item state
 
-=head3 time
+=item subwindow
 
-=head3 x
+=item time
 
-=head3 x_root
+=item x
 
-=head3 y
+=item x_root
 
-=head3 y_root
+=item y
+
+=item y_root
+
+=back
 
 =head2 XNoExposeEvent
 
 Used for event type: NoExpose
 
-=head3 drawable
+=over
 
-=head3 major_code
+=item drawable
 
-=head3 minor_code
+=item major_code
+
+=item minor_code
+
+=back
 
 =head2 XPropertyEvent
 
 Used for event type: PropertyNotify
 
-=head3 atom
+=over
 
-=head3 state
+=item atom
 
-=head3 time
+=item state
+
+=item time
+
+=back
 
 =head2 XReparentEvent
 
 Used for event type: ReparentNotify
 
-=head3 event
+=over
 
-=head3 override_redirect
+=item event
 
-=head3 parent
+=item override_redirect
 
-=head3 x
+=item parent
 
-=head3 y
+=item x
+
+=item y
+
+=back
 
 =head2 XResizeRequestEvent
 
 Used for event type: ResizeRequest
 
-=head3 height
+=over
 
-=head3 width
+=item height
+
+=item width
+
+=back
 
 =head2 XSelectionClearEvent
 
 Used for event type: SelectionClear
 
-=head3 selection
+=over
 
-=head3 time
+=item selection
+
+=item time
+
+=back
 
 =head2 XSelectionEvent
 
 Used for event type: SelectionNotify
 
-=head3 property
+=over
 
-=head3 requestor
+=item property
 
-=head3 selection
+=item requestor
 
-=head3 target
+=item selection
 
-=head3 time
+=item target
+
+=item time
+
+=back
 
 =head2 XSelectionRequestEvent
 
 Used for event type: SelectionRequest
 
-=head3 owner
+=over
 
-=head3 property
+=item owner
 
-=head3 requestor
+=item property
 
-=head3 selection
+=item requestor
 
-=head3 target
+=item selection
 
-=head3 time
+=item target
+
+=item time
+
+=back
 
 =head2 XUnmapEvent
 
 Used for event type: UnmapNotify
 
-=head3 event
+=over
 
-=head3 from_configure
+=item event
+
+=item from_configure
+
+=back
 
 =head2 XVisibilityEvent
 
 Used for event type: VisibilityNotify
 
-=head3 state
+=over
+
+=item state
+
+=back
 
 =cut
 

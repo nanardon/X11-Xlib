@@ -10,9 +10,18 @@ require X11::Xlib::Colormap;
 require X11::Xlib::Window;
 require X11::Xlib::Pixmap;
 
+# ABSTRACT - Object-Oriented behavior for X11::Xlib
+
+=head1 DESCRIPTION
+
+This subclass of X11::Xlib provides perl-ish Object-Oriented behavior for
+the API of Xlib.  Calling methods like XCreateWindow return L<Window|X11::Xlib::Window>
+objects instead of integer XIDs.  It also contains a number of friendly helper
+methods that wrap the Xlib API in a more intuitive manner.
+
 =head1 ATTRIBUTES
 
-=head3 connection_fh
+=head2 connection_fh
 
 Return the file handle to the X11 connection.  Useful for C<select>.
 
@@ -26,38 +35,13 @@ sub connection_fh {
     };
 }
 
-sub _xid_cache { $_[0]{_xid_cache} }
-sub get_cached_xobj {
-    my ($self, $xid)= (shift, shift);
-    my $obj;
-    return $self->{_xid_cache}{$xid} || do {
-        my $class= shift || 'X11::Xlib::XID';
-        $obj= $class->new(display => $self, xid => $xid, @_);
-        Scalar::Util::weaken( $self->{_xid_cache}{$xid}= $obj );
-        $obj;
-    };
-}
-sub get_cached_colormap {
-    shift->get_cached_xobj(shift, 'X11::Xlib::Colormap', @_);
-}
-sub get_cached_pixmap {
-    shift->get_cached_xobj(shift, 'X11::Xlib::Pixmap', @_);
-}
-sub get_cached_window {
-    shift->get_cached_xobj(shift, 'X11::Xlib::Window', @_);
-}
-
-=head3 screen_count
+=head2 screen_count
 
    for (0 .. $display->screen_count - 1) { ... }
 
 Number of screens available on this display.
 
-=head3 default_screen_num
-
-Number of the default screen
-
-=head3 screen
+=head2 screen
 
    my $screen= $display->screen();  # alias for $display->default_screen
    my $screen= $display->screen(3); # or some specific screen
@@ -65,7 +49,11 @@ Number of the default screen
 Get a L<X11::Xlib::Screen> object, to query per-screen attributes.
 (which is most of them)
 
-=head3 default_screen
+=head2 default_screen_num
+
+Number of the default screen
+
+=head2 default_screen
 
 Alias for C<< $display->screen($display->default_screen_num) >>.
 
@@ -91,7 +79,8 @@ sub screen {
 
 Optional callback to handle error conditions in the X11 protocol, or fatal
 Xlib errors.  If the C<$event> argument is not null, it was a protocol error
-and you can recover.  If it was an Xlib error the program must terminate.
+and you can recover.  If the C<$event> argument is undef, it was a fatal Xlib
+error and the program must terminate.
 
 Setting a value for this attribute automatically installs the Xlib error
 handler.
@@ -99,7 +88,7 @@ handler.
 Note that this callback is called from XS context, so your exceptions will
 not travel up the stack.  Also note that on Xlib fatal errors, you cannot
 call any more Xlib functions on the current connection, or on any connection
-once the callback returns.
+at all once the callback returns.  See L<X11::Xlib/install_error_handlers>.
 
 =cut
 
@@ -126,13 +115,13 @@ sub on_error_cb {
 Create a new connection to an X11 server.
 
 If you pass a single non-hashref argument, it is given to
-L<XOpenDisplay|X11::Xlib::XOpenDisplay>.
+L<XOpenDisplay|X11::Xlib/XOpenDisplay>.
 If you omit the connect_string, it uses C<$ENV{DISPLAY}>.
 
 If you pass a list or hashref of arguments, you can specify the connection
 string as C<connect>.
 
-If the call to XOpenDisplay fails, this constructor dies.
+If the call to C<XOpenDisplay> fails, this constructor dies.
 
 =cut
 
@@ -160,9 +149,7 @@ sub new {
     return $self;
 }
 
-=head1 METHODS
-
-=head2 COMMUNICATION FUNCTIONS
+=head2 COMMUNICATION/EVENT
 
 =head3 wait_event
 
@@ -280,41 +267,30 @@ sub fake_motion { shift->XTestFakeMotionEvent(@_) }
 sub fake_button { shift->XTestFakeButtonEvent(@_) }
 sub fake_key    { shift->XTestFakeKeyEvent(@_) }
 
-=head2 SCREEN ATTRIBUTES
+=head2 SCREEN
 
-The following convenience methods pass-through to the default screen object.
+The following convenience methods pass-through to the default
+L<screen|X11::Xlib::Screen> object:
 
-=head3 root_window
+=over
 
-L<X11::Xlib::Screen/root_window>
+=item root_window
 
-=head3 width
+=item width
 
-L<X11::Xlib::Screen/width>
+=item height
 
-=head3 height
+=item width_mm
 
-L<X11::Xlib::Screen/height>
+=item height_mm
 
-=head3 width_mm
+=item visual
 
-L<X11::Xlib::Screen/width_mm>
+=item depth
 
-=head3 height_mm
+=item colormap
 
-L<X11::Xlib::Screen/height_mm>
-
-=head3 visual
-
-L<X11::Xlib::Screen/visual>
-
-=head3 depth
-
-L<X11::Xlib::Screen/depth>
-
-=head3 colormap
-
-L<X11::Xlib::Screen/colormap>
+=back
 
 =cut
 
@@ -327,7 +303,7 @@ sub visual       { shift->{default_screen}->visual }
 sub depth        { shift->{default_screen}->depth }
 sub colormap     { shift->{default_screen}->colormap }
 
-=head2 VISUAL/COLORMAP FUNCTIONS
+=head2 VISUAL/COLORMAP
 
 =head3 visual_info
 
@@ -341,8 +317,10 @@ types of object.
 
 =head3 match_visual_info
 
-  my $info= $display->find_visual_info($screen_num, $color_depth, $class)
+  my $info= $display->match_visual_info($screen_num, $color_depth, $class)
     or die "No matching visual";
+
+Search for a visual on C<$scren_num> that matches the color depth and class.
 
 =head3 search_visual_info
 
@@ -359,8 +337,8 @@ types of object.
     bits_per_rgb  => $n,
   );
 
-Search for a visual by any of its VisualInfo members.  You can specify as
-many or as few fields as you like.
+Search for a visual by any of its L<X11::Xlib::XVisualInfo> members.
+You can specify as many or as few fields as you like.
 
 =cut
 
@@ -431,7 +409,7 @@ sub XCreateColormap {
 
 Create a new L<Pixmap|X11::Xlib/Pixmap> on the server, and wrap it with a
 L<X11::Xlib::Pixmap> object to track its lifespan.  If the object does
-out of scope it calls L<XFreePixmap|X11::Xlib::XFreePixmap>.
+out of scope it calls L<XFreePixmap|X11::Xlib/XFreePixmap>.
 
 C<$drawable>'s only purpose is to determine which screen to use, and so it
 may also be a L<Screen|X11::Xlib::Screen> object.
@@ -503,9 +481,9 @@ sub XCreatePixmapFromBitmapData {
 This method takes any argument to the XCreateWindow function and also any of
 the fields of the L<X11::Xlib::XSetWindowAttributes> struct or L<X11::Xlib::XSizeHints>.
 This saves you the trouble of calculating the attribute mask, and of a second
-call to L<X11::Xlib::SetWMNormalHints> if you wanted to set those fields.
+call to L<SetWMNormalHints|X11::Xlib/SetWMNormalHints> if you wanted to set those fields.
 
-It first calls XCreateWindow, which returns an XID, then wraps it with a
+It first calls L</XCreateWindow>, which returns an XID, then wraps it with a
 L<X11::Xlib::Window> object (which calls C<XDestroyWindow> if it goes out of
 scope), then calls C<SetWMNormalHints> if you specified any of those fields.
 
@@ -602,5 +580,58 @@ Return a mask value for the currently-lit keyboard LEDs.
 =cut
 
 # comes from XS
+
+=head2 CACHE MANAGEMENT
+
+The Display object keeps weak references to the wrapper objects it creates so
+that if you fetch the same resource again, you get the same object instance as
+last time.  These methods are made public so that you can get the same behavior
+when working with XIDs that weren't already wrapped by this module.
+
+=head3 get_cached_xobj
+
+  my $obj= $display->get_cached_xobj( $xid, $class, %new_args );
+
+If C<$xid> already references an object, return that object.  Else create
+a new object of type C<$class> and initialize it with the list of arguments.
+If C<$class> is not given it defaults to L<X11::Xlib::XID>.
+
+=cut
+
+sub _xid_cache { $_[0]{_xid_cache} }
+sub get_cached_xobj {
+    my ($self, $xid)= (shift, shift);
+    my $obj;
+    return $self->{_xid_cache}{$xid} || do {
+        my $class= shift || 'X11::Xlib::XID';
+        $obj= $class->new(display => $self, xid => $xid, @_);
+        Scalar::Util::weaken( $self->{_xid_cache}{$xid}= $obj );
+        $obj;
+    };
+}
+
+=head3 get_cached_colormap
+
+Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::Colormap>
+
+=head3 get_cached_pixmap
+
+Shortcut for L</get_cached_pixmap> that implies a class of L<X11::Xlib::Pixmap>
+
+=head3 get_cached_window
+
+Shortcut for L</get_cached_window> that implies a class of L<X11::Xlib::Window>
+
+=cut
+
+sub get_cached_colormap {
+    shift->get_cached_xobj(shift, 'X11::Xlib::Colormap', @_);
+}
+sub get_cached_pixmap {
+    shift->get_cached_xobj(shift, 'X11::Xlib::Pixmap', @_);
+}
+sub get_cached_window {
+    shift->get_cached_xobj(shift, 'X11::Xlib::Window', @_);
+}
 
 1;

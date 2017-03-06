@@ -10,6 +10,8 @@ Object representing a Pixmap remote X11 resource.
 
 =head1 ATTRIBUTES
 
+See L<X11::Xlib::XID> for base-class attributes.
+
 =head2 width
 
 Width, in pixels

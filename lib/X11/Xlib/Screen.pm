@@ -45,6 +45,10 @@ Physical width in millimeters.
 
 Physical height in millimeters.
 
+=head2 depth
+
+Color depth of the RootWindow of this screen.
+
 =cut
 
 sub display   { $_[0]{display} }
@@ -122,7 +126,7 @@ sub visual_info {
 
   my $vinfo= $screen->match_visual_info($depth, $class);
 
-Like L<X11::Xlib::Display/match_visual_info> but without the C<$screen> argument.
+Like L<X11::Xlib::Display/match_visual_info> but with an implied C<$screen> argument.
 
 =cut
 

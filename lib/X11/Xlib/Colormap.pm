@@ -7,7 +7,12 @@ use parent 'X11::Xlib::XID';
 
 Object representing a Colormap, which is a remote X11 resource
 referenced by an XID.  When this object goes out of scope it calls
-L<XDestroyColormap|X11::Xlib::XDestroyColormap>.
+L<XDestroyColormap|X11::Xlib/XDestroyColormap> if L<autofree|X11::Xlib::XID/autofree>
+is true.
+
+=head1 ATTRIBUTES
+
+See L<X11::Xlib::XID>
 
 =cut
 
