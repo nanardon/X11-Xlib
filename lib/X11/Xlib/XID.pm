@@ -24,39 +24,23 @@ __END__
 
 =head1 NAME
 
-X11::Xlib::Window - Low-level access to X11 windows
-
-=head1 SYNOPSIS
-
-  use X11::Xlib;
-  my $display = X11::Xlib->new();
-  my $window = $display->RootWindow();
-  ...
-
-=head1 DESCRIPTION
+X11::Xlib::XID - Base class for objects wrapping an XID
 
 =head1 ATTRIBUTES
 
 =head2 display
 
-The L<X11::Xlib::Display> where the resource is located.
+Required.  The L<X11::Xlib::Display> where the resource is located.
 
 =head2 xid
 
-Return the X11 numeric ID for this window resource.
+Required.  The X11 numeric ID for this resource.
 
 =head2 autofree
 
-Whether this window object should control the lifespan of the remote resource,
-by calling XDestroyWindow if it goes out of scope.
-
-=head1 METHODS
-
-=head2 new
-
-This is mostly meant to be called by L<Display|X11::Xlib::Display>, but you
-can wrap additional Window XIDs with:
-
-  my $wnd= X11::Xlib::Window->new(display => $dpy, xid => $xid)
+Whether this object should control the lifespan of the remote resource,
+by calling an Xlib Free/Destroy function if it goes out of scope.
+The default is False, since this base class has no idea how to release
+any resources.
 
 =cut

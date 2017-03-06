@@ -8,7 +8,7 @@ use base qw(Exporter DynaLoader);
 use Carp;
 use Try::Tiny;
 
-our $VERSION = '0.03_02';
+our $VERSION = '0.09_01';
 
 sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
 
@@ -79,7 +79,6 @@ our @EXPORT= @{ $EXPORT_TAGS{fn_key} };
 #  as needed, the XS code exposes its globals to Perl.
 our (
     %_connections,              # weak-ref set of all connection objects, keyed by *raw pointer*
-    %_autoclose,                # set of all connections which we close on DESTROY, keyed by *waw pointer*
     $_error_nonfatal_installed, # boolean, whether handler is installed
     $_error_fatal_installed,    # boolean, whether handler is installed
     $_error_fatal_trapped,      # boolean, whether Xlib is dead from fatal error
@@ -169,9 +168,19 @@ X11::Xlib - Low-level access to the X11 library
 
 =head1 SYNOPSIS
 
+  # C-style
+  
+  use X11::Xlib ':all';
+  my $display = XOpenDisplay($conn_string);
+  XTestFakeMotionEvent($display, undef, 50, 50);
+  XFlush($display);
+  
+  # or, Object-Oriented perl style:
+  
   use X11::Xlib;
-  my $display = X11::Xlib::Display->new();
-  ...
+  my $display= X11::Xlib->new($conn_string);  # shortcut for X11::Xlib::Display->new
+  my $window= $display->new_window({ x => 0, y => 0, width => 50, height => 50);
+  $window->show();
 
 =head1 DESCRIPTION
 
@@ -180,7 +189,7 @@ This module provides low-level access to Xlib functions.
 This includes access to some X11 extensions like the X11 test library (Xtst).
 
 If you import the Xlib functions directly, or call them as methods on an
-instance of X11::Xlib, you get a near-C<C> experience where you are required to
+instance of X11::Xlib, you get a near-C experience where you are required to
 manage the lifespan of resources, XIDs are integers instead of objects, and the
 library doesn't make any attempt to keep you from passing bad data to Xlib.
 
@@ -191,13 +200,17 @@ on the state of the library when you call methods.
 
 =cut
 
+=head1 ATTRIBUTES
+
+The X11::Xlib connection is a hashref with a few attributes and methods
+independent of Xlib.
+
+=head2 autoclose
+
+Boolean flag that determines whether the destructor will call XCloseDisplay.
+Defaults to true for connections returned by L</XOpenDisplay>.
+
 =head1 FUNCTIONS
-
-Most functions can be called as methods on the Xlib connection object, since
-this is usually the first argument.  Every Xlib function listed below can be
-exported, and you can grab them all with
-
-  use X11::Xlib ':functions';
 
 =head2 new
 
@@ -222,16 +235,22 @@ install the C error handler to try to gracefully recover, when the error
 handler returns Xlib still kills your program.  Under normal circumstances you
 would have to perform all cleanup with your stack tied up through Xlib, but
 this library cheats by using croak (C<longjmp>) to escape the callback and let
-you wrap up your script in a normal manner.  <b>However</b>, after a fatal
+you wrap up your script in a normal manner.  B<However>, after a fatal
 error Xlib's internal state could be dammaged, so it is unsafe to make any more
 Xlib calls.  The library tries to help assert this by invalidating all the
 connection objects.
 
 If you really need your program to keep running your best bet is to state-dump
-to shared memory and then exec() a fresh copy of your script and reload the
+to shared memory and then C<exec()> a fresh copy of your script and reload the
 dumped state.  Or use XCB instead of Xlib.
 
 =head1 XLIB API
+
+Most functions can be called as methods on the Xlib connection object, since
+this is usually the first argument.  Every Xlib function listed below can be
+exported, and you can grab them all with
+
+  use X11::Xlib ':functions';
 
 =head2 CONNECTION FUNCTIONS
 
@@ -239,7 +258,7 @@ dumped state.  Or use XCB instead of Xlib.
 
   my $display= X11::Xlib::XOpenDisplay($connection_string);
 
-Instantiate a new (C<c> level) L</Display> instance. This object contains the
+Instantiate a new (C-level) L</Display> instance. This object contains the
 connection to the X11 display.  This will be an instance of C<X11::Xlib>.
 The L<X11::Xlib::Display> object constructor is recommended instead.
 
@@ -258,7 +277,7 @@ read the notes under L</install_error_handlers>
   # or, just:
   undef $display
 
-Close a handle returned by XOpenDisplay.  You do not need to call this method
+Close a handle returned by C<XOpenDisplay>.  You do not need to call this method
 since the handle's destructor does it for you, unless you want to forcibly
 stop communicating with X and can't track down your references.  Once closed,
 all further Xlib calls on the handle will die with an exception.
@@ -269,7 +288,7 @@ all further Xlib calls on the handle will die with an exception.
 
 Return the file descriptor (integer) of the socket connected to the server.
 This is useful for select/poll designs.
-(See also: L<X11::Xlib::Display->wait_event|X11::Xlib::Display/wait_event>)
+(See also: L<X11::Xlib::Display/wait_event>)
 
 =head3 XSetCloseDownMode
 
@@ -310,8 +329,9 @@ the server and not yet extracted form the message queue.  If so, it stores the
 event into C<$event_return> and returns true.  Else it returns false without
 blocking.
 
-There's also a variation that uses a callback to choose which message to extract
-but that would be a pain to implement and probably not used much.
+(Xlib also has another variant that uses a callback to choose which message to
+ extract, but I didn't implement that because it seemed like a pain and probably
+ nobody would use it.)
 
 =head3 XSendEvent
 
@@ -392,7 +412,7 @@ C<$screen> paramter to use the default screen of your L<Display> connection.
   my $h= DisplayHeightMM($display, $screen);
   # use instead of WidthMMOfScreen, HeightMMOfScreen
 
-Return the physical width or height (in millimeters) of screen number <$screen>.
+Return the physical width or height (in millimeters) of screen number C<$screen>.
 You can omit the screen number to use the default screen of the display.
 
 =head3 RootWindow
@@ -436,7 +456,7 @@ Returns true if it found a matching visual.
   my @info_structs= XGetVisualInfo($display, $mask, $xvis_template);
 
 Returns a list of L</XVisualInfo> each describing an available L</Visual>
-which matches the template (also XVisualInfo) you provided.
+which matches the template you provided. (also an C<XVisualInfo>)
 
 C<$mask> can be one of:
 
@@ -554,7 +574,7 @@ C<$visual> is a L</Visual>.  You probably either want to use the default visual
 of the screen (L</DefaultVisual>) or look up your own visual using
 L</XGetVisualInfo> or L</XMatchVisualInfo> (which is a L</VisualInfo>, and has
 an attribute C<< ->visual >>).  In the second case, you should also pass
-C<$visual_info->depth> as the C<$depth> parameter, and create a matching
+C<< $visual_info->depth >> as the C<$depth> parameter, and create a matching
 L</Colormap> which you pass via the C<\%attrs> parameter.
 
 Since this function didn't have nearly enough parameters for the imaginations
@@ -582,7 +602,7 @@ It is initially unmapped.  See L</XMapWindow>.
   XMapWindow($display, $window);
 
 Ask the X server to show a window.  This call asynchronous and you should call
-XFlush if you want it to appear immediately.  The window will only appear if
+L</XFlush> if you want it to appear immediately.  The window will only appear if
 the parent window is also mapped.  The server sends back a MapNotify event if
 the Window event mask allows it, and if a variety of other conditions are met.
 It's really pretty complicated and you should read the offical docs.
@@ -617,7 +637,7 @@ for this window.
 Set window manager hints for the specified window.  C<$hints> is an instance of
 L<X11::Xlib::XSizeHints>, or a hashref of its fields.  Note that the C<< ->flags >>
 member of this struct will be initialized for you if you pass a hashref, according
-to what fields are mentioned in the hashref.
+to what fields exist in the hashref.
 
 =head3 XUnmapWindow
 
@@ -639,14 +659,18 @@ They are available through the XTEST extension.
 Don't forget to call L</XFlush> after these methods, if you want the events to
 happen immediately.
 
-=head3 XTestFakeMotionEvent($display, $screen, $x, $y, $EventSendDelay)
+=head3 XTestFakeMotionEvent
+
+  XTestFakeMotionEvent($display, $screen, $x, $y, $EventSendDelay)
 
 Fake a mouse movement on screen number C<$screen> to position C<$x>,C<$y>.
 
 The optional C<$EventSendDelay> parameter specifies the number of milliseconds to wait
 before sending the event. The default is 10 milliseconds.
 
-=head3 XTestFakeButtonEvent($display, $button, $pressed, $EventSendDelay)
+=head3 XTestFakeButtonEvent
+
+  XTestFakeButtonEvent($display, $button, $pressed, $EventSendDelay)
 
 Simulate an action on mouse button number C<$button>. C<$pressed> indicates whether
 the button should be pressed (true) or released (false). 
@@ -654,7 +678,9 @@ the button should be pressed (true) or released (false).
 The optional C<$EventSendDelay> parameter specifies the number of milliseconds ro wait
 before sending the event. The default is 10 milliseconds.
 
-=head3 XTestFakeKeyEvent($display, $kc, $pressed, $EventSendDelay)
+=head3 XTestFakeKeyEvent
+
+  XTestFakeKeyEvent($display, $kc, $pressed, $EventSendDelay)
 
 Simulate a event on any key on the keyboard. C<$kc> is the key code (8 to 255),
 and C<$pressed> indicates if the key was pressed or released.
@@ -662,21 +688,29 @@ and C<$pressed> indicates if the key was pressed or released.
 The optional C<$EventSendDelay> parameter specifies the number of milliseconds to wait
 before sending the event. The default is 10 milliseconds.
 
-=head3 XBell($display, $percent)
+=head3 XBell
+
+  XBell($display, $percent)
 
 Make the X server emit a sound.
 
-=head3 XQueryKeymap($display)
+=head3 XQueryKeymap
+
+  XQueryKeymap($display)
 
 Return a list of the key codes currently pressed on the keyboard.
 
 =head2 KEYCODE FUNCTIONS
 
-=head3 XKeysymToKeycode($display, $keysym)
+=head3 XKeysymToKeycode
+
+  XKeysymToKeycode($display, $keysym)
 
 Return the key code corresponding to the character number C<$keysym>.
 
-=head3 XGetKeyboardMapping($display, $keycode, $count)
+=head3 XGetKeyboardMapping
+
+  XGetKeyboardMapping($display, $keycode, $count)
 
 Return an array of character numbers corresponding to the key C<$keycode>.
 
@@ -685,47 +719,63 @@ Each value in the array corresponds to the action of a key modifier (Shift, Alt)
 C<$count> is the number of the keycode to return. The default value is 1, e.g.
 it returns the character corresponding to the given $keycode.
 
-=head3 XKeysymToString($keysym)
+=head3 XKeysymToString
+
+  XKeysymToString($keysym)
 
 Return the human-readable string for character number C<$keysym>.
 
 C<XKeysymToString> is the exact reverse of C<XStringToKeysym>.
 
-=head3 XStringToKeysym($string)
+=head3 XStringToKeysym
+
+  XStringToKeysym($string)
 
 Return the keysym number for the human-readable character C<$string>.
 
 C<XStringToKeysym> is the exact reverse of C<XKeysymToString>.
 
-=head3 IsFunctionKey($keysym)
+=head3 IsFunctionKey
+
+  IsFunctionKey($keysym)
 
 Return true if C<$keysym> is a function key (F1 .. F35)
 
-=head3 IsKeypadKey($keysym)
+=head3 IsKeypadKey
+
+  IsKeypadKey($keysym)
 
 Return true if C<$keysym> is on numeric keypad.
 
-=head3 IsMiscFunctionKey($keysym)
+=head3 IsMiscFunctionKey
+
+  IsMiscFunctionKey($keysym)
 
 Return true is key if... honestly don't know :\
 
-=head3 IsModifierKey($keysym)
+=head3 IsModifierKey
+
+  IsModifierKey($keysym)
 
 Return true if C<$keysym> is a modifier key (Shift, Alt).
 
-=head3 IsPFKey($keysym)
+=head3 IsPFKey
 
-No idea.
+  IsPFKey($keysym)
 
-=head3 IsPrivateKeypadKey($keysym)
+Xlib docs are fun.  No mention of what "PF" might be.
 
-Again, no idea.
+=head3 IsPrivateKeypadKey
+
+  IsPrivateKeypadKey($keysym)
+
+True for vendor-private key codes.
 
 =cut
 
 =head1 STRUCTURES
 
-Xlib has a lot of C structs.  Most of them do not have much "depth"
+Xlib has a lot of C B<struct>s.  Most of them do not have much "depth"
 (i.e. pointers to further nested structs) and so I chose to represent them
 as simple blessed scalar refs to a byte string.  This gives you the ability
 to pack new values into the struct which might not be known by this module,
@@ -734,11 +784,11 @@ C<unpack> method which convert from/to a hashref.
 Sometimes however these structs do contain a raw pointer value, and so you
 should take extreme care if you do modify the bytes.
 
-Xlib also has a lot of "opaque objects" where they just give you a pointer
+Xlib also has a lot of B<opaque pointers> where they just give you a pointer
 and some methods to access it without any explanation of its inner fields.
 I represent these with the matching Perl feature for blessed opaque references,
 so the only way to interact with the pointer value is through XS code.
-In each case, when the object goes out of scope, this library calls the
+In each case, when the object goes out of scope, this library calls any
 appropriate "Free" function.
 
 Finally, there are lots of objects which exist on the server, and Xlib just
@@ -771,14 +821,14 @@ An B<opaque pointer> describing binary representation of pixels for some mode of
 the display.  There's probably only one in use on the entire display (i.e. RGBA)
 but Xlib makes you look it up and pass it around to various functions.
 
+=head2 XVisualInfo
+
+A more useful B<struct> describing a Visual.  See L<X11::Xlib::XVisualInfo>.
+
 =head2 XEvent
 
 A B<struct> that can hold any sort of message sent to/from the server.  The struct
 is a union of many other structs, which you can read about in L<X11::Xlib::XEvent>.
-
-=head2 XVisualInfo
-
-A more useful B<struct> describing a Visual.  See L<X11::Xlib::XVisualInfo>.
 
 =head2 Colormap
 
