@@ -3,10 +3,13 @@ use strict;
 use warnings;
 use File::Temp;
 
-# Usage:
-#  generate_union_accessor_xs.pl XEvent < /usr/include/X11/Xlib.h
+my $goal= shift
+  or print <<'END';
 
-my $goal= shift;
+Usage:
+  generate_xevent_xs.pl XEvent < /usr/include/X11/Xlib.h
+
+END
 
 my $input= do { local $/= undef; <STDIN> };
 my %types;
@@ -485,18 +488,17 @@ sub generate_subclasses {
         }
         next if $member_struct eq 'XAnyEvent' or !$typecodes or !@$typecodes;
         $pod .= "=head2 $member_struct\n\n"
-            . "Used for event type: ".join(', ', sort @$typecodes)."\n\n"
-            . "=over\n\n";
+            . "Used for event type: ".join(', ', sort @$typecodes)."\n\n";
         $subclasses .= "\n\n\@X11::Xlib::${goal}::${member_struct}::ISA= ( __PACKAGE__ );\n";
         my $n;
         for my $path (sort grep { $_ =~ qr/^$field\./ and $_ !~ $ignore_re } keys %members) {
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
             ++$n;
-            $pod .= "=item $name\n\n";
+            $pod .= sprintf("  %-17s - %s\n", $name, $members{$path});
             $subclasses .= "*X11::Xlib::${goal}::${member_struct}::$name= *_$name;\n";
         }
-        $pod .= "=back\n\n";
+        $pod .= "\n";
     }
     $pod .= "=cut\n\n";
     return $subclasses . "\n" . $pod;

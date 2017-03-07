@@ -3,10 +3,14 @@ use strict;
 use warnings;
 use File::Temp;
 
-# Usage:
-#  generate_union_accessor_xs.pl XEvent < /usr/include/X11/Xlib.h
+my $goal= shift
+  or print <<'END';
 
-my $goal= shift;
+Usage:
+  generate_struct_xs.pl XEvent < /usr/include/X11/Xlib.h
+
+END
+
 
 my $input= do { local $/= undef; <STDIN> };
 my %types;

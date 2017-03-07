@@ -347,511 +347,286 @@ sub pack {
 
 Used for event type: ButtonPress, ButtonRelease
 
-=over
-
-=item button
-
-=item root
-
-=item same_screen
-
-=item state
-
-=item subwindow
-
-=item time
-
-=item x
-
-=item x_root
-
-=item y
-
-=item y_root
-
-=back
+  button            - unsigned int
+  root              - Window
+  same_screen       - Bool
+  state             - unsigned int
+  subwindow         - Window
+  time              - Time
+  x                 - int
+  x_root            - int
+  y                 - int
+  y_root            - int
 
 =head2 XCirculateEvent
 
 Used for event type: CirculateNotify
 
-=over
-
-=item event
-
-=item place
-
-=back
+  event             - Window
+  place             - int
 
 =head2 XCirculateRequestEvent
 
 Used for event type: CirculateRequest
 
-=over
-
-=item parent
-
-=item place
-
-=back
+  parent            - Window
+  place             - int
 
 =head2 XClientMessageEvent
 
 Used for event type: ClientMessage
 
-=over
-
-=item b
-
-=item l
-
-=item s
-
-=item format
-
-=item message_type
-
-=back
+  b                 - char [ 20 ]
+  l                 - long [ 5 ]
+  s                 - short [ 10 ]
+  format            - int
+  message_type      - Atom
 
 =head2 XColormapEvent
 
 Used for event type: ColormapNotify
 
-=over
-
-=item colormap
-
-=item new
-
-=item state
-
-=back
+  colormap          - Colormap
+  new               - Bool
+  state             - int
 
 =head2 XConfigureEvent
 
 Used for event type: ConfigureNotify
 
-=over
-
-=item above
-
-=item border_width
-
-=item event
-
-=item height
-
-=item override_redirect
-
-=item width
-
-=item x
-
-=item y
-
-=back
+  above             - Window
+  border_width      - int
+  event             - Window
+  height            - int
+  override_redirect - Bool
+  width             - int
+  x                 - int
+  y                 - int
 
 =head2 XConfigureRequestEvent
 
 Used for event type: ConfigureRequest
 
-=over
-
-=item above
-
-=item border_width
-
-=item detail
-
-=item height
-
-=item parent
-
-=item value_mask
-
-=item width
-
-=item x
-
-=item y
-
-=back
+  above             - Window
+  border_width      - int
+  detail            - int
+  height            - int
+  parent            - Window
+  value_mask        - unsigned long
+  width             - int
+  x                 - int
+  y                 - int
 
 =head2 XCreateWindowEvent
 
 Used for event type: CreateNotify
 
-=over
-
-=item border_width
-
-=item height
-
-=item override_redirect
-
-=item parent
-
-=item width
-
-=item x
-
-=item y
-
-=back
+  border_width      - int
+  height            - int
+  override_redirect - Bool
+  parent            - Window
+  width             - int
+  x                 - int
+  y                 - int
 
 =head2 XCrossingEvent
 
 Used for event type: EnterNotify, LeaveNotify
 
-=over
-
-=item detail
-
-=item focus
-
-=item mode
-
-=item root
-
-=item same_screen
-
-=item state
-
-=item subwindow
-
-=item time
-
-=item x
-
-=item x_root
-
-=item y
-
-=item y_root
-
-=back
+  detail            - int
+  focus             - Bool
+  mode              - int
+  root              - Window
+  same_screen       - Bool
+  state             - unsigned int
+  subwindow         - Window
+  time              - Time
+  x                 - int
+  x_root            - int
+  y                 - int
+  y_root            - int
 
 =head2 XDestroyWindowEvent
 
 Used for event type: DestroyNotify
 
-=over
-
-=item event
-
-=back
+  event             - Window
 
 =head2 XExposeEvent
 
 Used for event type: Expose
 
-=over
-
-=item count
-
-=item height
-
-=item width
-
-=item x
-
-=item y
-
-=back
+  count             - int
+  height            - int
+  width             - int
+  x                 - int
+  y                 - int
 
 =head2 XFocusChangeEvent
 
 Used for event type: FocusIn, FocusOut
 
-=over
-
-=item detail
-
-=item mode
-
-=back
+  detail            - int
+  mode              - int
 
 =head2 XGenericEvent
 
 Used for event type: GenericEvent
 
-=over
-
-=item evtype
-
-=item extension
-
-=back
+  evtype            - int
+  extension         - int
 
 =head2 XGraphicsExposeEvent
 
 Used for event type: GraphicsExpose
 
-=over
-
-=item count
-
-=item drawable
-
-=item height
-
-=item major_code
-
-=item minor_code
-
-=item width
-
-=item x
-
-=item y
-
-=back
+  count             - int
+  drawable          - Drawable
+  height            - int
+  major_code        - int
+  minor_code        - int
+  width             - int
+  x                 - int
+  y                 - int
 
 =head2 XGravityEvent
 
 Used for event type: GravityNotify
 
-=over
-
-=item event
-
-=item x
-
-=item y
-
-=back
+  event             - Window
+  x                 - int
+  y                 - int
 
 =head2 XKeyEvent
 
 Used for event type: KeyPress, KeyRelease
 
-=over
-
-=item keycode
-
-=item root
-
-=item same_screen
-
-=item state
-
-=item subwindow
-
-=item time
-
-=item x
-
-=item x_root
-
-=item y
-
-=item y_root
-
-=back
+  keycode           - unsigned int
+  root              - Window
+  same_screen       - Bool
+  state             - unsigned int
+  subwindow         - Window
+  time              - Time
+  x                 - int
+  x_root            - int
+  y                 - int
+  y_root            - int
 
 =head2 XKeymapEvent
 
 Used for event type: KeymapNotify
 
-=over
-
-=item key_vector
-
-=back
+  key_vector        - char [ 32 ]
 
 =head2 XMapEvent
 
 Used for event type: MapNotify
 
-=over
-
-=item event
-
-=item override_redirect
-
-=back
+  event             - Window
+  override_redirect - Bool
 
 =head2 XMapRequestEvent
 
 Used for event type: MapRequest
 
-=over
-
-=item parent
-
-=back
+  parent            - Window
 
 =head2 XMappingEvent
 
 Used for event type: MappingNotify
 
-=over
-
-=item count
-
-=item first_keycode
-
-=item request
-
-=back
+  count             - int
+  first_keycode     - int
+  request           - int
 
 =head2 XMotionEvent
 
 Used for event type: MotionNotify
 
-=over
-
-=item is_hint
-
-=item root
-
-=item same_screen
-
-=item state
-
-=item subwindow
-
-=item time
-
-=item x
-
-=item x_root
-
-=item y
-
-=item y_root
-
-=back
+  is_hint           - char
+  root              - Window
+  same_screen       - Bool
+  state             - unsigned int
+  subwindow         - Window
+  time              - Time
+  x                 - int
+  x_root            - int
+  y                 - int
+  y_root            - int
 
 =head2 XNoExposeEvent
 
 Used for event type: NoExpose
 
-=over
-
-=item drawable
-
-=item major_code
-
-=item minor_code
-
-=back
+  drawable          - Drawable
+  major_code        - int
+  minor_code        - int
 
 =head2 XPropertyEvent
 
 Used for event type: PropertyNotify
 
-=over
-
-=item atom
-
-=item state
-
-=item time
-
-=back
+  atom              - Atom
+  state             - int
+  time              - Time
 
 =head2 XReparentEvent
 
 Used for event type: ReparentNotify
 
-=over
-
-=item event
-
-=item override_redirect
-
-=item parent
-
-=item x
-
-=item y
-
-=back
+  event             - Window
+  override_redirect - Bool
+  parent            - Window
+  x                 - int
+  y                 - int
 
 =head2 XResizeRequestEvent
 
 Used for event type: ResizeRequest
 
-=over
-
-=item height
-
-=item width
-
-=back
+  height            - int
+  width             - int
 
 =head2 XSelectionClearEvent
 
 Used for event type: SelectionClear
 
-=over
-
-=item selection
-
-=item time
-
-=back
+  selection         - Atom
+  time              - Time
 
 =head2 XSelectionEvent
 
 Used for event type: SelectionNotify
 
-=over
-
-=item property
-
-=item requestor
-
-=item selection
-
-=item target
-
-=item time
-
-=back
+  property          - Atom
+  requestor         - Window
+  selection         - Atom
+  target            - Atom
+  time              - Time
 
 =head2 XSelectionRequestEvent
 
 Used for event type: SelectionRequest
 
-=over
-
-=item owner
-
-=item property
-
-=item requestor
-
-=item selection
-
-=item target
-
-=item time
-
-=back
+  owner             - Window
+  property          - Atom
+  requestor         - Window
+  selection         - Atom
+  target            - Atom
+  time              - Time
 
 =head2 XUnmapEvent
 
 Used for event type: UnmapNotify
 
-=over
-
-=item event
-
-=item from_configure
-
-=back
+  event             - Window
+  from_configure    - Bool
 
 =head2 XVisibilityEvent
 
 Used for event type: VisibilityNotify
 
-=over
-
-=item state
-
-=back
+  state             - int
 
 =cut
 
