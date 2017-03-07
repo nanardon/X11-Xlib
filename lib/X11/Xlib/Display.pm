@@ -47,7 +47,6 @@ Number of screens available on this display.
    my $screen= $display->screen(3); # or some specific screen
 
 Get a L<X11::Xlib::Screen> object, to query per-screen attributes.
-(which is most of them)
 
 =head2 default_screen_num
 
@@ -55,7 +54,7 @@ Number of the default screen
 
 =head2 default_screen
 
-Alias for C<< $display->screen($display->default_screen_num) >>.
+Alias for C<< $display->screen( $display->default_screen_num ) >>.
 
 =cut
 
@@ -249,13 +248,13 @@ Generate a fake motion event on the server, optionally waiting
 C<$send_delay> milliseconds.  If C<$screen> is -1, it references the
 screen which the mouse is currently on.
 
-=head3 fake_key
+=head3 fake_button
 
   $display->fake_button($button_number, $is_press, $send_delay = 10);
 
 Generate a fake mouse button press or release.
 
-=head3 fake_button
+=head3 fake_key
 
   $display->fake_key($key_code, $is_press, $send_delay = 10);
 
@@ -274,21 +273,37 @@ L<screen|X11::Xlib::Screen> object:
 
 =over
 
-=item root_window
+=item *
 
-=item width
+L<root_window|X11::Xlib::Screen/root_window>
 
-=item height
+=item *
 
-=item width_mm
+L<width|X11::Xlib::Screen/width>
 
-=item height_mm
+=item *
 
-=item visual
+L<height|X11::Xlib::Screen/height>
 
-=item depth
+=item *
 
-=item colormap
+L<width_mm|X11::Xlib::Screen/width_mm>
+
+=item *
+
+L<height_mm|X11::Xlib::Screen/height_mm>
+
+=item *
+
+L<visual|X11::Xlib::Screen/visual>
+
+=item *
+
+L<depth|X11::Xlib::Screen/depth>
+
+=item *
+
+L<colormap|X11::Xlib::Screen/colormap>
 
 =back
 
@@ -573,9 +588,14 @@ sub XCreateSimpleWindow {
 
 =head2 INPUT STATE/CONTROL
 
-=head3 $display->keyboard_leds
+=head3 keyboard_leds
 
-Return a mask value for the currently-lit keyboard LEDs.
+  my $bits= $display->keyboard_leds;
+  printf("LED 1 is %s\n", $bits & 1? "lit" : "not lit");
+
+Return an integer mask value for the currently-lit keyboard LEDs.
+Each LED gets one bit of the integer, starting from the least significant.
+(The docs make no mention of the meaning of each LED)
 
 =cut
 
@@ -616,11 +636,11 @@ Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::Colormap>
 
 =head3 get_cached_pixmap
 
-Shortcut for L</get_cached_pixmap> that implies a class of L<X11::Xlib::Pixmap>
+Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::Pixmap>
 
 =head3 get_cached_window
 
-Shortcut for L</get_cached_window> that implies a class of L<X11::Xlib::Window>
+Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::Window>
 
 =cut
 
