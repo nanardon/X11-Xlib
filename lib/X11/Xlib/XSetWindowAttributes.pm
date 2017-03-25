@@ -30,4 +30,8 @@ or L<XChangeWindowAttributes|X11::Xlib/XChangeWindowAttributes>.
 	Colormap colormap;              /* color map to be associated with window */
 	Cursor cursor;                  /* cursor to be displayed (or None) */
 
+=head1 METHODS
+
+See parent class L<X11::Xlib::Struct>
+
 =cut

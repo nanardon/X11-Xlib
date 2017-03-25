@@ -48,9 +48,9 @@ sub initialize {
 
   $struct->pack( \%fields, $consume, $warn );
 
-Pack field values into the bytes of the struct.  Only C<\%fields> is required.
+Pack field values into the bytes of the struct.  Only C<%fields> is required.
 
-If C<$consume> is true, then remove any key of \%fields that was processed.
+If C<$consume> is true, then remove any key of C<%fields> that was processed.
 
 If C<$warn> is true, then emit a warning if any un-recognized field was given.
 

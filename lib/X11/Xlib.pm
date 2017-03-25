@@ -236,7 +236,7 @@ handler returns Xlib still kills your program.  Under normal circumstances you
 would have to perform all cleanup with your stack tied up through Xlib, but
 this library cheats by using croak (C<longjmp>) to escape the callback and let
 you wrap up your script in a normal manner.  B<However>, after a fatal
-error Xlib's internal state could be dammaged, so it is unsafe to make any more
+error Xlib's internal state could be damaged, so it is unsafe to make any more
 Xlib calls.  The library tries to help assert this by invalidating all the
 connection objects.
 
@@ -299,17 +299,17 @@ Determines what resources are freed upon disconnect.  See X11 documentation.
 =head2 COMMUNICATION FUNCTIONS
 
 Most of these functions return an L</XEvent> by way of an "out" parameter that
-gets overwritten during the call, in the style of C.  You may pass in an
-undefined scalar to be automatically allocated for you.
+gets overwritten during the call, in the style of C.  The variable receiving the
+event does not need to be initialized.
 
 =head3 XNextEvent
 
   XNextEvent($display, my $event_return)
   ... # event scalar is populated with event
 
-You probably don't want this.  It blocks forever until an event arrives.
-I added it for completeness.  See L<X11::Xlib::Display/wait_event>
-for a more Perl-ish interface.
+You probably don't want this.  It blocks forever until an event arrives, even
+ignoring signals.  I added it for completeness.
+See L<X11::Xlib::Display/wait_event> for a more perl-ish interface.
 
 =head3 XCheckMaskEvent
 
@@ -338,21 +338,23 @@ blocking.
   XSendEvent($display, $window, $propagate, $event_mask, $xevent)
     or die "Xlib hates us";
 
-Send an XEvent.
+Send an XEvent to the server, to be redispatched however appropriate.
 
 =head3 XPutBackEvent
 
   XPutBackEvent($display, $xevent)
 
-Push an XEvent back onto the queue.  This can also presumably put an
-arbitrarily bogus event onto your own queue since it returns void.
+Push an XEvent back onto your own incoming queue.
+This can presumably put arbitrarily bogus events onto your own queue
+since it returns void.
 
 =head3 XFlush
 
   XFlush($display)
 
-Push any queued messages to the X11 server.  If you're wondering why nothing
-happened when you called an XTest function, this is why.
+Push any queued messages to the X11 server.  Some Xlib calls perform an
+implied flush of the queue, while others don't.  If you're wondering why
+nothing happened when you called an XTest function, this is why.
 
 =head3 XSync
 
@@ -456,9 +458,9 @@ Returns true if it found a matching visual.
   my @info_structs= XGetVisualInfo($display, $mask, $xvis_template);
 
 Returns a list of L</XVisualInfo> each describing an available L</Visual>
-which matches the template you provided. (also an C<XVisualInfo>)
+which matches the template you provided. (which is also an C<XVisualInfo>)
 
-C<$mask> can be one of:
+C<$mask> can be any combination of:
 
   VisualIDMask
   VisualScreenMask
@@ -601,7 +603,7 @@ It is initially unmapped.  See L</XMapWindow>.
 
   XMapWindow($display, $window);
 
-Ask the X server to show a window.  This call asynchronous and you should call
+Ask the X server to show a window.  This call is asynchronous and you should call
 L</XFlush> if you want it to appear immediately.  The window will only appear if
 the parent window is also mapped.  The server sends back a MapNotify event if
 the Window event mask allows it, and if a variety of other conditions are met.
@@ -663,7 +665,7 @@ happen immediately.
 
   XTestFakeMotionEvent($display, $screen, $x, $y, $EventSendDelay)
 
-Fake a mouse movement on screen number C<$screen> to position C<$x>,C<$y>.
+Fake a mouse movement to position C<$x>,C<$y> on screen number C<$screen>.
 
 The optional C<$EventSendDelay> parameter specifies the number of milliseconds to wait
 before sending the event. The default is 10 milliseconds.
@@ -813,7 +815,8 @@ perl-ish interface and some helper methods to "DWIM".
 The Xlib C<Screen*> is not exported by this module, since most methods that
 use a C<Screen*> have a matching method that uses a C<Display*>.
 If you are using the object-oriented L<Display|X11::Xlib::Display> you then
-get L<Screen|X11::Xlib::Screen> objects for convenience.
+get L<Screen|X11::Xlib::Screen> objects for convenience, but they are just
+a wrapper around the Display and screen number instead of screen pointer.
 
 =head2 Visual
 
@@ -877,6 +880,10 @@ This module provides a higher-level API for X input simulation and testing.
 
 Functions provided by X11/Xlib are mostly included in the L<Gtk2> binding, but
 through the GTK API and perl objects.
+
+=item L<X11::Protocol>
+
+Pure-perl implementation of the X11 protocol.
 
 =back
 

@@ -44,7 +44,7 @@ Number of screens available on this display.
 =head2 screen
 
    my $screen= $display->screen();  # alias for $display->default_screen
-   my $screen= $display->screen(3); # or some specific screen
+   my $screen= $display->screen(3); # get some specific screen
 
 Get a L<X11::Xlib::Screen> object, to query per-screen attributes.
 
@@ -227,7 +227,7 @@ Push any queued messages to the X server.
 
 =head3 flush_sync
 
-Push any queued messages to the x server and wait for all replies.
+Push any queued messages to the X server and wait for all replies.
 
 =head3 flush_sync_discard
 
@@ -610,7 +610,7 @@ when working with XIDs that weren't already wrapped by this module.
 
 =head3 get_cached_xobj
 
-  my $obj= $display->get_cached_xobj( $xid, $class, %new_args );
+  my $obj= $display->get_cached_xobj( $xid, $class, @new_args );
 
 If C<$xid> already references an object, return that object.  Else create
 a new object of type C<$class> and initialize it with the list of arguments.
@@ -632,13 +632,19 @@ sub get_cached_xobj {
 
 =head3 get_cached_colormap
 
+  my $colormap= $display->get_cached_colormap($xid, @new_args);
+
 Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::Colormap>
 
 =head3 get_cached_pixmap
 
+  my $pixmap= $display->get_cached_pixmap($xid, @new_args);
+
 Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::Pixmap>
 
 =head3 get_cached_window
+
+  my $window= $display->get_cached_window($xid, @new_args);
 
 Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::Window>
 

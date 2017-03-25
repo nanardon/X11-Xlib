@@ -2,8 +2,6 @@ package X11::Xlib::XVisualInfo;
 require X11::Xlib::Struct;
 __END__
 
-(most methods are inherited or XS, so there is no need to load this package file)
-
 =head1 SYNOPSIS
 
   my $conn= X11::Xlib->new();
@@ -33,5 +31,9 @@ making lots of method calls.
     int colormap_size;
     int bits_per_rgb;
   } XVisualInfo;
+
+=head1 METHODS
+
+See parent class L<X11::Xlib::Struct>
 
 =cut

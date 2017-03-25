@@ -8,6 +8,9 @@ use parent 'X11::Xlib::XID';
 
 Object representing a Pixmap remote X11 resource.
 
+There doesn't seem to be any way to query the attributes of a pixmap,
+so this object's attributes must be passed to the constructor.
+
 =head1 ATTRIBUTES
 
 See L<X11::Xlib::XID> for base-class attributes.

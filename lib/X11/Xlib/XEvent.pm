@@ -61,40 +61,36 @@ applying the rest of the supplied fields.
 Unpack the fields of an XEvent into a hashref.  The Display field gets
 inflated to an X11::Xlib object.
 
-=head1 ATTRIBUTES
-
-=head2 Common Attributes
+=head1 COMMON ATTRIBUTES
 
 All XEvent subclasses have the following attributes:
 
-=head3 type
+=head2 type
 
 This is the key attribute that determines all the rest.  Setting this value
 will re-bless the object to the relevant sub-class.  If the type is unknown,
 it becomes C<X11::Xlib::XEvent>.
 
-=head3 display
+=head2 display
 
 The handle to the X11 connection that this message came from.
 
-=head3 serial
+=head2 serial
 
 The X11 serial number
 
-=head3 window
+=head2 window
 
 The Window XID the message is associated with, or 0.
 
-=head3 send_event
+=head2 send_event
 
-Boolean indicating whether the event was sent with XSendEvent
-
-=head1 SEE ALSO
-
-For information about the rest of these structures, consult the
-L<official documentation|https://www.x.org/releases/X11R7.7/doc/libX11/libX11/libX11.html>
+Boolean indicating whether the event was sent with C<XSendEvent>
 
 =head1 SUBCLASS ATTRIBUTES
+
+For detailed information about these structures, consult the
+L<official documentation|https://www.x.org/releases/X11R7.7/doc/libX11/libX11/libX11.html>
 
 =cut
 

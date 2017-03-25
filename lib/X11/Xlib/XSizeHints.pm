@@ -43,3 +43,7 @@ and can be one of:
   PBaseSize    /* program specified base for incrementing */
   PWinGravity  /* program specified window gravity */
 
+=head1 METHODS
+
+See parent class L<X11::Xlib::Struct>
+
