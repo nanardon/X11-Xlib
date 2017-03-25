@@ -29,6 +29,14 @@ my %_constants= (
     KeymapNotify LeaveNotify MapNotify MappingNotify MotionNotify NoExpose
     PropertyNotify ReparentNotify ResizeRequest SelectionClear SelectionNotify
     SelectionRequest UnmapNotify VisibilityNotify )],
+  const_event_mask => [qw( Button1MotionMask Button2MotionMask
+    Button3MotionMask Button4MotionMask Button5MotionMask ButtonMotionMask
+    ButtonPressMask ButtonReleaseMask ColormapChangeMask EnterWindowMask
+    ExposureMask FocusChangeMask KeyPressMask KeyReleaseMask KeymapStateMask
+    LeaveWindowMask NoEventMask OwnerGrabButtonMask PointerMotionHintMask
+    PointerMotionMask PropertyChangeMask ResizeRedirectMask
+    StructureNotifyMask SubstructureNotifyMask SubstructureRedirectMask
+    VisibilityChangeMask )],
   const_sizehint => [qw( PAspect PBaseSize PMaxSize PMinSize PPosition
     PResizeInc PSize PWinGravity USPosition USSize )],
   const_visual => [qw( VisualAllMask VisualBitsPerRGBMask VisualBlueMaskMask

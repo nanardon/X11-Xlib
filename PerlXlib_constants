@@ -29,6 +29,33 @@ const_event
  i SelectionRequest
  i UnmapNotify
  i VisibilityNotify
+const_event_mask
+ i NoEventMask
+ i KeyPressMask
+ i KeyReleaseMask
+ i ButtonPressMask
+ i ButtonReleaseMask
+ i EnterWindowMask
+ i LeaveWindowMask
+ i PointerMotionMask
+ i PointerMotionHintMask
+ i Button1MotionMask
+ i Button2MotionMask
+ i Button3MotionMask
+ i Button4MotionMask
+ i Button5MotionMask
+ i ButtonMotionMask
+ i KeymapStateMask
+ i ExposureMask
+ i VisibilityChangeMask
+ i StructureNotifyMask
+ i ResizeRedirectMask
+ i SubstructureNotifyMask
+ i SubstructureRedirectMask
+ i FocusChangeMask
+ i PropertyChangeMask
+ i ColormapChangeMask
+ i OwnerGrabButtonMask
 const_error
  i BadAccess
  i BadAlloc
