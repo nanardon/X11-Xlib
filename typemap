@@ -60,7 +60,7 @@ O_X11_Xlib_XID
 INPUT
 O_X11_Xlib_Struct
     $var= ( $type ) PerlXlib_get_struct_ptr(
-        $arg, \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\", sizeof(@{[ $type =~ /(\w+)/ ]}),
+        $arg, 0, \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\", sizeof(@{[ $type =~ /(\w+)/ ]}),
         (PerlXlib_struct_pack_fn*) &PerlXlib_@{[ $type =~ /(\w+)/ ]}_pack
     );
 

@@ -1,6 +1,7 @@
 #! /usr/bin/env perl
 use strict;
 use warnings;
+use FindBin;
 use File::Temp;
 
 my $goal= shift
@@ -259,8 +260,8 @@ sub patch_file {
     my ($fname, $token, $new_content)= @_;
     my $begin_token= "BEGIN $token";
     my $end_token=   "END $token";
-    open my $orig, "<", $fname or die "open($fname): $!";
-    my $new= File::Temp->new(DIR => ".", TEMPLATE => "${fname}_XXXX");
+    open my $orig, "<", "$FindBin::Bin/../$fname" or die "open($fname): $!";
+    my $new= File::Temp->new(DIR => "$FindBin::Bin/..", TEMPLATE => "${fname}_XXXX");
     while (<$orig>) {
         $new->print($_);
         last if index($_, $begin_token) >= 0;
@@ -271,7 +272,7 @@ sub patch_file {
     $orig->eof and die "Didn't find $end_token in $fname\n";
     while (<$orig>) { $new->print($_) }
     $new->close or die "Failed to save $new";
-    rename($new, $fname) or die "rename: $!";
+    rename($new, "$FindBin::Bin/../$fname") or die "rename: $!";
 }
 
 my $out_xs= <<"@";
@@ -288,9 +289,14 @@ _sizeof(ignored=NULL)
 
 void
 _initialize(s)
-    ${goal} *s
+    SV *s
+    INIT:
+        void *sptr;
     PPCODE:
-        memset((void*) s, 0, sizeof(*s));
+        sptr= PerlXlib_get_struct_ptr(s, 1, "X11::Xlib::${goal}", sizeof($goal),
+            (PerlXlib_struct_pack_fn*) &PerlXlib_${goal}_pack
+        );
+        memset((void*) sptr, 0, sizeof($goal));
 
 void
 _pack(s, fields, consume=0)

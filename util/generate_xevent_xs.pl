@@ -2,6 +2,7 @@
 use strict;
 use warnings;
 use File::Temp;
+use FindBin;
 
 my $goal= shift
   or print <<'END';
@@ -353,7 +354,7 @@ sub generate_pack_c {
 const char* PerlXlib_xevent_pkg_for_type(int type) {
   switch (type) {
 @
-    $c .= qq{  case $_: return "X11::Xlib::XEvent::$type_to_struct{$_}";\n}
+    $c .= qq{  case $_: return "X11::Xlib::$type_to_struct{$_}";\n}
         for sort keys %type_to_struct;
     $c .= <<"@";
   default: return "X11::Xlib::XEvent";
@@ -489,14 +490,14 @@ sub generate_subclasses {
         next if $member_struct eq 'XAnyEvent' or !$typecodes or !@$typecodes;
         $pod .= "=head2 $member_struct\n\n"
             . "Used for event type: ".join(', ', sort @$typecodes)."\n\n";
-        $subclasses .= "\n\n\@X11::Xlib::${goal}::${member_struct}::ISA= ( __PACKAGE__ );\n";
+        $subclasses .= "\n\n\@X11::Xlib::${member_struct}::ISA= ( __PACKAGE__ );\n";
         my $n;
         for my $path (sort grep { $_ =~ qr/^$field\./ and $_ !~ $ignore_re } keys %members) {
             my ($name)= ($path =~ /([^.]+)$/);
             next if $have{$name};
             ++$n;
             $pod .= sprintf("  %-17s - %s\n", $name, $members{$path});
-            $subclasses .= "*X11::Xlib::${goal}::${member_struct}::$name= *_$name;\n";
+            $subclasses .= "*X11::Xlib::${member_struct}::$name= *_$name;\n";
         }
         $pod .= "\n";
     }
@@ -508,8 +509,8 @@ sub patch_file {
     my ($fname, $token, $new_content)= @_;
     my $begin_token= "BEGIN $token";
     my $end_token=   "END $token";
-    open my $orig, "<", $fname or die "open($fname): $!";
-    my $new= File::Temp->new(DIR => ".", TEMPLATE => "${fname}_XXXX");
+    open my $orig, "<", "$FindBin::Bin/../$fname" or die "open($fname): $!";
+    my $new= File::Temp->new(DIR => "$FindBin::Bin/..", TEMPLATE => "${fname}_XXXX");
     while (<$orig>) {
         $new->print($_);
         last if index($_, $begin_token) >= 0;
@@ -520,15 +521,20 @@ sub patch_file {
     $orig->eof and die "Didn't find $end_token in $fname\n";
     while (<$orig>) { $new->print($_) }
     $new->close or die "Failed to save $new";
-    rename($new, $fname) or die "rename: $!";
+    rename($new, "$FindBin::Bin/../$fname") or die "rename: $!";
 }
 
 my $out_xs= <<"@";
 void
-_initialize(e)
-    XEvent *e
+_initialize(s)
+    SV *s
+    INIT:
+        void *sptr;
     PPCODE:
-        memset((void*) e, 0, sizeof(*e));
+        sptr= PerlXlib_get_struct_ptr(s, 1, "X11::Xlib::${goal}", sizeof($goal),
+            (PerlXlib_struct_pack_fn*) &PerlXlib_${goal}_pack
+        );
+        memset((void*) sptr, 0, sizeof($goal));
 
 int
 _sizeof(ignored)

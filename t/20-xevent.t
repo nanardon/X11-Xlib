@@ -24,7 +24,7 @@ like( err{ $blank_event->_x }, qr/XEvent\.x/, 'XS refuses to fetch subtype field
 # Create an XEvent with constructor arguments
 my $bp_ev;
 is( err{ $bp_ev= X11::Xlib::XEvent->new(type => 'ButtonPress'); }, '', 'create buttonpress event' );
-isa_ok( $bp_ev, 'X11::Xlib::XEvent::XButtonEvent', 'event' )
+isa_ok( $bp_ev, 'X11::Xlib::XButtonEvent', 'event' )
     or diag explain $bp_ev;
 
 is( $bp_ev->type, X11::Xlib::ButtonPress(), 'button press correct type' );

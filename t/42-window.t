@@ -10,7 +10,7 @@ my $dpy= new_ok( 'X11::Xlib', [], 'connect to X11' );
 
 my @args= ($dpy, $dpy->RootWindow, 0, 0, 50, 50, 0,
     $dpy->DefaultDepth, InputOutput, $dpy->DefaultVisual,
-    0, my $attrs);
+    0, {});
 my $win_id;
 is( err{ $win_id= XCreateWindow(@args) }, '', 'CreateWindow' )
     or diag explain \@args;

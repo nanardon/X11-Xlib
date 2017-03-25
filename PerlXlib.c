@@ -128,18 +128,20 @@ XID PerlXlib_sv_to_xid(SV *sv) {
 #ifndef X11_Xlib_Struct_Padding
 #define X11_Xlib_Struct_Padding 64
 #endif
-void* PerlXlib_get_struct_ptr(SV *sv, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer) {
-    SV *tmp;
+void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer) {
+    SV *tmp, *rsv;
     void* buf;
+    size_t n;
 
     if (SvROK(sv)) {
         // Follow scalar refs, to get to the buffer of a blessed object
         if (SvTYPE(SvRV(sv)) == SVt_PVMG)
-            sv= SvRV(sv);
+            rsv= SvRV(sv);
             // continue below using this SV
 
         // Also accept a hashref, which we pass to "pack"
         else if (SvTYPE(SvRV(sv)) == SVt_PVHV) {
+            if (lvalue) croak("Can't coerce hashref to %s lvalue", pkg);
             // Need a buffer that lasts for the rest of our XS call stack.
             // Cheat by using a mortal SV :-)
             tmp= sv_2mortal(newSV(struct_size + X11_Xlib_Struct_Padding));
@@ -150,24 +152,36 @@ void* PerlXlib_get_struct_ptr(SV *sv, const char* pkg, int struct_size, PerlXlib
     }
     // If uninitialized, initialize to a blessed struct object
     else if (!SvOK(sv)) {
-        sv= newSVrv(sv, pkg);
-        // sv is now the referenced scalar, which is undef, and gets inflated next
+        if (!lvalue) croak("Can't coerce undef to %s rvalue", pkg);
+        rsv= newSVrv(sv, pkg);
+        // rsv is now the referenced scalar, which is undef, and gets inflated next
     }
     
-    if (!SvOK(sv)) {
-        sv_setpvn(sv, "", 0);
-        SvGROW(sv, struct_size+X11_Xlib_Struct_Padding);
-        SvCUR_set(sv, struct_size);
-        memset(SvPVX(sv), 0, struct_size+1);
+    if (!SvOK(rsv)) {
+        if (!lvalue) croak("Can't coerce \\undef to %s rvalue", pkg);
+        sv_setpvn(rsv, "", 0);
+        SvGROW(rsv, struct_size+X11_Xlib_Struct_Padding);
+        SvCUR_set(rsv, struct_size);
+        memset(SvPVX(rsv), 0, struct_size+1);
     }
-    else if (!SvPOK(sv))
+    else if (!SvPOK(rsv))
         croak("Paramters requiring %s can only be coerced from scalar, scalar ref, hashref, or undef", pkg);
-    else if (SvCUR(sv) < struct_size)
+    else if (SvCUR(rsv) < struct_size)
         croak("Scalars used as %s must be at least %d bytes long (got %d)",
-            pkg, struct_size, SvCUR(sv));
+            pkg, struct_size, SvCUR(rsv));
     // Make sure we have the padding even if the user tinkered with the buffer
-    SvGROW(sv, struct_size+X11_Xlib_Struct_Padding);
-    return SvPVX(sv);
+    SvGROW(rsv, struct_size+X11_Xlib_Struct_Padding);
+    // Re-bless to correct type
+    if (lvalue) {
+        if (lvalue > 1 || !sv_isobject(sv) || !sv_derived_from(sv, pkg))
+            sv_bless(sv, gv_stashpv(pkg, GV_ADD));
+    } else {
+        if (sv_isobject(sv) && !sv_derived_from(sv, pkg)) {
+            buf= SvPV(sv, n);
+            croak("can't coerce %.*s is not a %s", n, buf, pkg);
+        }
+    }
+    return SvPVX(rsv);
 }
 
 int PerlXlib_X_error_handler(Display *d, XErrorEvent *e) {
@@ -236,40 +250,40 @@ void PerlXlib_install_error_handlers(Bool nonfatal, Bool fatal) {
 
 const char* PerlXlib_xevent_pkg_for_type(int type) {
   switch (type) {
-  case ButtonPress: return "X11::Xlib::XEvent::XButtonEvent";
-  case ButtonRelease: return "X11::Xlib::XEvent::XButtonEvent";
-  case CirculateNotify: return "X11::Xlib::XEvent::XCirculateEvent";
-  case CirculateRequest: return "X11::Xlib::XEvent::XCirculateRequestEvent";
-  case ClientMessage: return "X11::Xlib::XEvent::XClientMessageEvent";
-  case ColormapNotify: return "X11::Xlib::XEvent::XColormapEvent";
-  case ConfigureNotify: return "X11::Xlib::XEvent::XConfigureEvent";
-  case ConfigureRequest: return "X11::Xlib::XEvent::XConfigureRequestEvent";
-  case CreateNotify: return "X11::Xlib::XEvent::XCreateWindowEvent";
-  case DestroyNotify: return "X11::Xlib::XEvent::XDestroyWindowEvent";
-  case EnterNotify: return "X11::Xlib::XEvent::XCrossingEvent";
-  case Expose: return "X11::Xlib::XEvent::XExposeEvent";
-  case FocusIn: return "X11::Xlib::XEvent::XFocusChangeEvent";
-  case FocusOut: return "X11::Xlib::XEvent::XFocusChangeEvent";
-  case GenericEvent: return "X11::Xlib::XEvent::XGenericEvent";
-  case GraphicsExpose: return "X11::Xlib::XEvent::XGraphicsExposeEvent";
-  case GravityNotify: return "X11::Xlib::XEvent::XGravityEvent";
-  case KeyPress: return "X11::Xlib::XEvent::XKeyEvent";
-  case KeyRelease: return "X11::Xlib::XEvent::XKeyEvent";
-  case KeymapNotify: return "X11::Xlib::XEvent::XKeymapEvent";
-  case LeaveNotify: return "X11::Xlib::XEvent::XCrossingEvent";
-  case MapNotify: return "X11::Xlib::XEvent::XMapEvent";
-  case MapRequest: return "X11::Xlib::XEvent::XMapRequestEvent";
-  case MappingNotify: return "X11::Xlib::XEvent::XMappingEvent";
-  case MotionNotify: return "X11::Xlib::XEvent::XMotionEvent";
-  case NoExpose: return "X11::Xlib::XEvent::XNoExposeEvent";
-  case PropertyNotify: return "X11::Xlib::XEvent::XPropertyEvent";
-  case ReparentNotify: return "X11::Xlib::XEvent::XReparentEvent";
-  case ResizeRequest: return "X11::Xlib::XEvent::XResizeRequestEvent";
-  case SelectionClear: return "X11::Xlib::XEvent::XSelectionClearEvent";
-  case SelectionNotify: return "X11::Xlib::XEvent::XSelectionEvent";
-  case SelectionRequest: return "X11::Xlib::XEvent::XSelectionRequestEvent";
-  case UnmapNotify: return "X11::Xlib::XEvent::XUnmapEvent";
-  case VisibilityNotify: return "X11::Xlib::XEvent::XVisibilityEvent";
+  case ButtonPress: return "X11::Xlib::XButtonEvent";
+  case ButtonRelease: return "X11::Xlib::XButtonEvent";
+  case CirculateNotify: return "X11::Xlib::XCirculateEvent";
+  case CirculateRequest: return "X11::Xlib::XCirculateRequestEvent";
+  case ClientMessage: return "X11::Xlib::XClientMessageEvent";
+  case ColormapNotify: return "X11::Xlib::XColormapEvent";
+  case ConfigureNotify: return "X11::Xlib::XConfigureEvent";
+  case ConfigureRequest: return "X11::Xlib::XConfigureRequestEvent";
+  case CreateNotify: return "X11::Xlib::XCreateWindowEvent";
+  case DestroyNotify: return "X11::Xlib::XDestroyWindowEvent";
+  case EnterNotify: return "X11::Xlib::XCrossingEvent";
+  case Expose: return "X11::Xlib::XExposeEvent";
+  case FocusIn: return "X11::Xlib::XFocusChangeEvent";
+  case FocusOut: return "X11::Xlib::XFocusChangeEvent";
+  case GenericEvent: return "X11::Xlib::XGenericEvent";
+  case GraphicsExpose: return "X11::Xlib::XGraphicsExposeEvent";
+  case GravityNotify: return "X11::Xlib::XGravityEvent";
+  case KeyPress: return "X11::Xlib::XKeyEvent";
+  case KeyRelease: return "X11::Xlib::XKeyEvent";
+  case KeymapNotify: return "X11::Xlib::XKeymapEvent";
+  case LeaveNotify: return "X11::Xlib::XCrossingEvent";
+  case MapNotify: return "X11::Xlib::XMapEvent";
+  case MapRequest: return "X11::Xlib::XMapRequestEvent";
+  case MappingNotify: return "X11::Xlib::XMappingEvent";
+  case MotionNotify: return "X11::Xlib::XMotionEvent";
+  case NoExpose: return "X11::Xlib::XNoExposeEvent";
+  case PropertyNotify: return "X11::Xlib::XPropertyEvent";
+  case ReparentNotify: return "X11::Xlib::XReparentEvent";
+  case ResizeRequest: return "X11::Xlib::XResizeRequestEvent";
+  case SelectionClear: return "X11::Xlib::XSelectionClearEvent";
+  case SelectionNotify: return "X11::Xlib::XSelectionEvent";
+  case SelectionRequest: return "X11::Xlib::XSelectionRequestEvent";
+  case UnmapNotify: return "X11::Xlib::XUnmapEvent";
+  case VisibilityNotify: return "X11::Xlib::XVisibilityEvent";
   default: return "X11::Xlib::XEvent";
   }
 }
@@ -1015,7 +1029,7 @@ void PerlXlib_XSizeHints_pack(XSizeHints *s, HV *fields, Bool consume) {
     if (fp && *fp) { s->flags |= PBaseSize; s->base_width= SvIV(*fp); if (consume) hv_delete(fields, "base_width", 10, G_DISCARD); }
 
     fp= hv_fetch(fields, "flags", 5, 0);
-    if (fp && *fp) {  s->flags= SvIV(*fp); if (consume) hv_delete(fields, "flags", 5, G_DISCARD); }
+    if (fp && *fp) { s->flags= SvIV(*fp); if (consume) hv_delete(fields, "flags", 5, G_DISCARD); }
 
     fp= hv_fetch(fields, "height", 6, 0);
     if (fp && *fp) { s->flags |= PSize; s->height= SvIV(*fp); if (consume) hv_delete(fields, "height", 6, G_DISCARD); }

@@ -27,8 +27,7 @@ fields names.
 sub new {
     my $class= shift;
     $class= ref $class if ref $class;
-    my $buffer;
-    my $self= bless \$buffer, $class;
+    my $self= bless \my $buffer, $class;
     $self->_initialize;
     $self->apply(@_) if @_; # If arguments, then initialize using apply
     $self;

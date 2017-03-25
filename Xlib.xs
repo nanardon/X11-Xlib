@@ -88,35 +88,101 @@ XCloseDisplay(dpy_sv)
 # Event Functions (fn_event) -------------------------------------------------
 
 void
-XNextEvent(dpy, event)
+XNextEvent(dpy, event_sv)
     Display * dpy
-    XEvent *event
+    SV *event_sv
+    INIT:
+        XEvent *event;
+    CODE:
+        event= (XEvent*) PerlXlib_get_struct_ptr(
+            event_sv, 2,
+            "X11::Xlib::XEvent", sizeof(XEvent),
+            (PerlXlib_struct_pack_fn*) PerlXlib_XEvent_pack
+        );
+        XNextEvent(dpy, event);
+        sv_bless(event_sv, gv_stashpv(PerlXlib_xevent_pkg_for_type(event->type), GV_ADD));
 
 Bool
 XCheckWindowEvent(dpy, wnd, event_mask, event_return)
     Display * dpy
     Window wnd
     int event_mask
-    XEvent *event_return
+    SV *event_return
+    INIT:
+        XEvent event, *dest;
+    CODE:
+        RETVAL= XCheckWindowEvent(dpy, wnd, event_mask, &event);
+        if (RETVAL) {
+            dest= (XEvent*) PerlXlib_get_struct_ptr(
+                event_return, 2,
+                PerlXlib_xevent_pkg_for_type(event.type), sizeof(XEvent),
+                (PerlXlib_struct_pack_fn*) PerlXlib_XEvent_pack
+            );
+            memcpy(dest, &event, sizeof(event));
+        }
+    OUTPUT:
+        RETVAL
 
 Bool
 XCheckTypedWindowEvent(dpy, wnd, event_type, event_return)
     Display * dpy
     Window wnd
     int event_type
-    XEvent *event_return
+    SV *event_return
+    INIT:
+        XEvent event, *dest;
+    CODE:
+        RETVAL= XCheckTypedWindowEvent(dpy, wnd, event_type, &event);
+        if (RETVAL) {
+            dest= (XEvent*) PerlXlib_get_struct_ptr(
+                event_return, 2,
+                PerlXlib_xevent_pkg_for_type(event.type), sizeof(XEvent),
+                (PerlXlib_struct_pack_fn*) PerlXlib_XEvent_pack
+            );
+            memcpy(dest, &event, sizeof(event));
+        }
+    OUTPUT:
+        RETVAL
 
 Bool
 XCheckMaskEvent(dpy, event_mask, event_return)
     Display * dpy
     int event_mask
-    XEvent *event_return
+    SV *event_return
+    INIT:
+        XEvent event, *dest;
+    CODE:
+        RETVAL= XCheckMaskEvent(dpy, event_mask, &event);
+        if (RETVAL) {
+            dest= (XEvent*) PerlXlib_get_struct_ptr(
+                event_return, 2,
+                PerlXlib_xevent_pkg_for_type(event.type), sizeof(XEvent),
+                (PerlXlib_struct_pack_fn*) PerlXlib_XEvent_pack
+            );
+            memcpy(dest, &event, sizeof(event));
+        }
+    OUTPUT:
+        RETVAL
 
 Bool
 XCheckTypedEvent(dpy, event_type, event_return)
     Display * dpy
     int event_type
-    XEvent *event_return
+    SV *event_return
+    INIT:
+        XEvent event, *dest;
+    CODE:
+        RETVAL= XCheckTypedEvent(dpy, event_type, &event);
+        if (RETVAL) {
+            dest= (XEvent*) PerlXlib_get_struct_ptr(
+                event_return, 2,
+                PerlXlib_xevent_pkg_for_type(event.type), sizeof(XEvent),
+                (PerlXlib_struct_pack_fn*) PerlXlib_XEvent_pack
+            );
+            memcpy(dest, &event, sizeof(event));
+        }
+    OUTPUT:
+        RETVAL
 
 Bool
 XSendEvent(dpy, wnd, propagate, event_mask, event_send)
@@ -152,19 +218,20 @@ _wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
     Window wnd
     int event_type
     int event_mask
-    XEvent *event_return
+    SV *event_return
     int max_wait_msec
     INIT:
+        XEvent event, *dest;
         int retried= 0;
         fd_set fds;
         int x11_fd;
         struct timeval tv;
     CODE:
         retry:
-        RETVAL= wnd && event_type? XCheckTypedWindowEvent(dpy, wnd, event_type, event_return)
-              : wnd?               XCheckWindowEvent(dpy, wnd, event_mask, event_return)
-              : event_type?        XCheckTypedEvent(dpy, event_type, event_return)
-              :                    XCheckMaskEvent(dpy, event_mask, event_return);
+        RETVAL= wnd && event_type? XCheckTypedWindowEvent(dpy, wnd, event_type, &event)
+              : wnd?               XCheckWindowEvent(dpy, wnd, event_mask, &event)
+              : event_type?        XCheckTypedEvent(dpy, event_type, &event)
+              :                    XCheckMaskEvent(dpy, event_mask, &event);
         if (!RETVAL && !retried) {
             x11_fd= ConnectionNumber(dpy);
             tv.tv_sec= max_wait_msec / 1000;
@@ -175,6 +242,14 @@ _wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
                 retried= 1;
                 goto retry;
             }
+        }
+        if (RETVAL) {
+            dest= (XEvent*) PerlXlib_get_struct_ptr(
+                event_return, 1,
+                PerlXlib_xevent_pkg_for_type(event.type), sizeof(XEvent),
+                (PerlXlib_struct_pack_fn*) PerlXlib_XEvent_pack
+            );
+            memcpy(dest, &event, sizeof(event));
         }
     OUTPUT:
         RETVAL
@@ -421,13 +496,22 @@ int
 XGetWMNormalHints(dpy, wnd, hints_out, supplied_out)
     Display * dpy
     Window wnd
-    XSizeHints *hints_out
+    SV *hints_out
     SV *supplied_out
     INIT:
         long supplied;
+        XSizeHints hints, *dest;
     CODE:
-        RETVAL = XGetWMNormalHints(dpy, wnd, hints_out, &supplied);
-        sv_setiv(supplied_out, supplied);
+        RETVAL = XGetWMNormalHints(dpy, wnd, &hints, &supplied);
+        if (RETVAL) {
+            dest= (XSizeHints*) PerlXlib_get_struct_ptr(
+                hints_out, 1,
+                "X11::Xlib::XSizeHints", sizeof(XSizeHints),
+                (PerlXlib_struct_pack_fn*) PerlXlib_XSizeHints_pack
+            );
+            memcpy(dest, &hints, sizeof(hints));
+            sv_setiv(supplied_out, supplied);
+        }
     OUTPUT:
         RETVAL
 
@@ -631,10 +715,15 @@ MODULE = X11::Xlib                PACKAGE = X11::Xlib::XEvent
 # ----------------------------------------------------------------------------
 # BEGIN GENERATED X11_Xlib_XEvent
 void
-_initialize(e)
-    XEvent *e
+_initialize(s)
+    SV *s
+    INIT:
+        void *sptr;
     PPCODE:
-        memset((void*) e, 0, sizeof(*e));
+        sptr= PerlXlib_get_struct_ptr(s, 1, "X11::Xlib::XEvent", sizeof(XEvent),
+            (PerlXlib_struct_pack_fn*) &PerlXlib_XEvent_pack
+        );
+        memset((void*) sptr, 0, sizeof(XEvent));
 
 int
 _sizeof(ignored)
@@ -1670,9 +1759,14 @@ _sizeof(ignored=NULL)
 
 void
 _initialize(s)
-    XVisualInfo *s
+    SV *s
+    INIT:
+        void *sptr;
     PPCODE:
-        memset((void*) s, 0, sizeof(*s));
+        sptr= PerlXlib_get_struct_ptr(s, 1, "X11::Xlib::XVisualInfo", sizeof(XVisualInfo),
+            (PerlXlib_struct_pack_fn*) &PerlXlib_XVisualInfo_pack
+        );
+        memset((void*) sptr, 0, sizeof(XVisualInfo));
 
 void
 _pack(s, fields, consume=0)
@@ -1825,9 +1919,14 @@ _sizeof(ignored=NULL)
 
 void
 _initialize(s)
-    XSetWindowAttributes *s
+    SV *s
+    INIT:
+        void *sptr;
     PPCODE:
-        memset((void*) s, 0, sizeof(*s));
+        sptr= PerlXlib_get_struct_ptr(s, 1, "X11::Xlib::XSetWindowAttributes", sizeof(XSetWindowAttributes),
+            (PerlXlib_struct_pack_fn*) &PerlXlib_XSetWindowAttributes_pack
+        );
+        memset((void*) sptr, 0, sizeof(XSetWindowAttributes));
 
 void
 _pack(s, fields, consume=0)
@@ -1844,127 +1943,7 @@ _unpack(s, fields)
     PPCODE:
         PerlXlib_XSetWindowAttributes_unpack(s, fields);
 
-int
-bit_gravity(s, value=NULL)
-    XSetWindowAttributes *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->bit_gravity= SvIV(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSViv(s->bit_gravity)));
-    }
-
-Colormap
-colormap(s, value=NULL)
-    XSetWindowAttributes *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->colormap= PerlXlib_sv_to_xid(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSVuv(s->colormap)));
-    }
-
-Bool
-override_redirect(s, value=NULL)
-    XSetWindowAttributes *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->override_redirect= SvIV(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSViv(s->override_redirect)));
-    }
-
-Cursor
-cursor(s, value=NULL)
-    XSetWindowAttributes *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->cursor= PerlXlib_sv_to_xid(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSVuv(s->cursor)));
-    }
-
-int
-win_gravity(s, value=NULL)
-    XSetWindowAttributes *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->win_gravity= SvIV(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSViv(s->win_gravity)));
-    }
-
-long
-do_not_propagate_mask(s, value=NULL)
-    XSetWindowAttributes *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->do_not_propagate_mask= SvIV(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSViv(s->do_not_propagate_mask)));
-    }
-
-unsigned long
-backing_planes(s, value=NULL)
-    XSetWindowAttributes *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->backing_planes= SvUV(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSVuv(s->backing_planes)));
-    }
-
-int
-backing_store(s, value=NULL)
-    XSetWindowAttributes *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->backing_store= SvIV(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSViv(s->backing_store)));
-    }
-
-unsigned long
-border_pixel(s, value=NULL)
-    XSetWindowAttributes *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->border_pixel= SvUV(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSVuv(s->border_pixel)));
-    }
-
-Pixmap
-border_pixmap(s, value=NULL)
-    XSetWindowAttributes *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->border_pixmap= PerlXlib_sv_to_xid(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSVuv(s->border_pixmap)));
-    }
-
-unsigned long
+void
 background_pixel(s, value=NULL)
     XSetWindowAttributes *s
     SV *value
@@ -1976,19 +1955,7 @@ background_pixel(s, value=NULL)
       PUSHs(sv_2mortal(newSVuv(s->background_pixel)));
     }
 
-Bool
-save_under(s, value=NULL)
-    XSetWindowAttributes *s
-    SV *value
-  PPCODE:
-    if (value) {
-      s->save_under= SvIV(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSViv(s->save_under)));
-    }
-
-Pixmap
+void
 background_pixmap(s, value=NULL)
     XSetWindowAttributes *s
     SV *value
@@ -2000,7 +1967,7 @@ background_pixmap(s, value=NULL)
       PUSHs(sv_2mortal(newSVuv(s->background_pixmap)));
     }
 
-unsigned long
+void
 backing_pixel(s, value=NULL)
     XSetWindowAttributes *s
     SV *value
@@ -2012,7 +1979,103 @@ backing_pixel(s, value=NULL)
       PUSHs(sv_2mortal(newSVuv(s->backing_pixel)));
     }
 
-long
+void
+backing_planes(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->backing_planes= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->backing_planes)));
+    }
+
+void
+backing_store(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->backing_store= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->backing_store)));
+    }
+
+void
+bit_gravity(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->bit_gravity= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->bit_gravity)));
+    }
+
+void
+border_pixel(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->border_pixel= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->border_pixel)));
+    }
+
+void
+border_pixmap(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->border_pixmap= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->border_pixmap)));
+    }
+
+void
+colormap(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->colormap= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->colormap)));
+    }
+
+void
+cursor(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->cursor= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->cursor)));
+    }
+
+void
+do_not_propagate_mask(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->do_not_propagate_mask= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->do_not_propagate_mask)));
+    }
+
+void
 event_mask(s, value=NULL)
     XSetWindowAttributes *s
     SV *value
@@ -2022,6 +2085,42 @@ event_mask(s, value=NULL)
       PUSHs(value);
     } else {
       PUSHs(sv_2mortal(newSViv(s->event_mask)));
+    }
+
+void
+override_redirect(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->override_redirect= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->override_redirect)));
+    }
+
+void
+save_under(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->save_under= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->save_under)));
+    }
+
+void
+win_gravity(s, value=NULL)
+    XSetWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->win_gravity= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->win_gravity)));
     }
 
 # END GENERATED X11_Xlib_XSetWindowAttributes
@@ -2040,9 +2139,14 @@ _sizeof(ignored=NULL)
 
 void
 _initialize(s)
-    XSizeHints *s
+    SV *s
+    INIT:
+        void *sptr;
     PPCODE:
-        memset((void*) s, 0, sizeof(*s));
+        sptr= PerlXlib_get_struct_ptr(s, 1, "X11::Xlib::XSizeHints", sizeof(XSizeHints),
+            (PerlXlib_struct_pack_fn*) &PerlXlib_XSizeHints_pack
+        );
+        memset((void*) sptr, 0, sizeof(XSizeHints));
 
 void
 _pack(s, fields, consume=0)
@@ -2059,7 +2163,7 @@ _unpack(s, fields)
     PPCODE:
         PerlXlib_XSizeHints_unpack(s, fields);
 
-int
+void
 base_height(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2071,7 +2175,7 @@ base_height(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->base_height)));
     }
 
-int
+void
 base_width(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2083,7 +2187,7 @@ base_width(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->base_width)));
     }
 
-long
+void
 flags(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2095,7 +2199,7 @@ flags(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->flags)));
     }
 
-int
+void
 height(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2107,7 +2211,7 @@ height(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->height)));
     }
 
-int
+void
 height_inc(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2119,7 +2223,7 @@ height_inc(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->height_inc)));
     }
 
-int
+void
 max_aspect_x(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2131,7 +2235,7 @@ max_aspect_x(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->max_aspect.x)));
     }
 
-int
+void
 max_aspect_y(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2143,7 +2247,7 @@ max_aspect_y(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->max_aspect.y)));
     }
 
-int
+void
 max_height(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2155,7 +2259,7 @@ max_height(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->max_height)));
     }
 
-int
+void
 max_width(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2167,7 +2271,7 @@ max_width(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->max_width)));
     }
 
-int
+void
 min_aspect_x(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2179,7 +2283,7 @@ min_aspect_x(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->min_aspect.x)));
     }
 
-int
+void
 min_aspect_y(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2191,7 +2295,7 @@ min_aspect_y(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->min_aspect.y)));
     }
 
-int
+void
 min_height(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2203,7 +2307,7 @@ min_height(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->min_height)));
     }
 
-int
+void
 min_width(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2215,7 +2319,7 @@ min_width(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->min_width)));
     }
 
-int
+void
 width(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2227,7 +2331,7 @@ width(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->width)));
     }
 
-int
+void
 width_inc(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2239,7 +2343,7 @@ width_inc(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->width_inc)));
     }
 
-int
+void
 win_gravity(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2251,7 +2355,7 @@ win_gravity(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->win_gravity)));
     }
 
-int
+void
 x(s, value=NULL)
     XSizeHints *s
     SV *value
@@ -2263,7 +2367,7 @@ x(s, value=NULL)
       PUSHs(sv_2mortal(newSViv(s->x)));
     }
 
-int
+void
 y(s, value=NULL)
     XSizeHints *s
     SV *value

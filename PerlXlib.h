@@ -15,9 +15,9 @@ extern SV * PerlXlib_obj_for_display(Display *dpy);
 
 extern XID PerlXlib_sv_to_xid(SV *sv);
 
-typedef void PerlXlib_struct_pack_fn(SV*, HV*, Bool consume);
+typedef void PerlXlib_struct_pack_fn(void*, HV*, Bool consume);
 
-extern void* PerlXlib_get_struct_ptr(SV *sv, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer);
+extern void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer);
 extern void PerlXlib_install_error_handlers(Bool nonfatal, Bool fatal);
 
 extern const char* PerlXlib_xevent_pkg_for_type(int type);
