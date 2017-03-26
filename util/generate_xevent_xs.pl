@@ -220,7 +220,7 @@ sub sv_create {
 	my ($type, $value)= @_;
 	return "newSViv($value)" if $int_types{$type};
 	return "newSVuv($value)" if $unsigned_types{$type} or $xid_types{$type};
-	return "PerlXlib_obj_for_display($value)" if $type eq 'Display *';
+	return "SvREFCNT_inc(PerlXlib_obj_for_display($value, 0))" if $type eq 'Display *';
 	return "newSVpvn((void*)$value, sizeof($1)*$2)"
 		if $type =~ /^(\w+) \[ (\d+) \]$/;
 	die "Don't know how to create SV from $type";
@@ -294,7 +294,7 @@ _$fieldname(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    $common_type c_value;
+    $common_type c_value= 0;
   PPCODE:
     if (value) { $sv_read }
     switch (event->type) {
@@ -346,6 +346,7 @@ _$fieldname(event, value=NULL)
 
 @
     }
+    $xs =~ s/sv_2mortal\(SvREFCNT_inc\((.*?)\)\)/$1/g;
     return $xs;
 }
 
@@ -417,7 +418,7 @@ void PerlXlib_${goal}_pack($goal *s, HV *fields, Bool consume) {
 
     $c .= <<"@";
     default:
-      croak("Unknown ${goal} type %d", s->type);
+      warn("Unknown ${goal} type %d", s->type);
     }
 }
 @
@@ -458,9 +459,9 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
         $c .= "      break;\n";
     }
 
-    $c .= <<'@';
+    $c .= <<"@";
     default:
-      warn("Unknown XEvent type %d", s->type);
+      warn("Unknown ${goal} type %d", s->type);
     }
     return;
     store_fail:

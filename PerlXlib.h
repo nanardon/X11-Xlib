@@ -11,7 +11,7 @@ typedef int ScreenNumber; // used by typemap to coerce X11::Xlib::Screen
 
 extern Display * PerlXlib_get_magic_dpy(SV *sv, Bool not_null);
 extern SV * PerlXlib_set_magic_dpy(SV *sv, Display *dpy);
-extern SV * PerlXlib_obj_for_display(Display *dpy);
+extern SV * PerlXlib_obj_for_display(Display *dpy, int create);
 
 extern XID PerlXlib_sv_to_xid(SV *sv);
 

@@ -68,8 +68,10 @@ extern SV * PerlXlib_set_magic_dpy(SV *sv, Display *dpy) {
         if (*fp && SvROK(*fp) && SvRV(*fp) != SvRV(sv))
             warn("Replacing cached connection object for Display* 0x%p!", dpy);
         // New weak-ref to this object
-        if (!*fp) *fp= newRV(SvRV(sv));
-        else sv_setsv(*fp, sv);
+        // Docs warn that sv_setsv might de-allocate mortal sources, so inc ref count temporarily
+        SvREFCNT_inc(sv);
+        if (!*fp) *fp= newSVsv(sv); else sv_setsv(*fp, sv);
+        sv_2mortal(sv);
         sv_rvweaken(*fp);
     }
     return sv;
@@ -78,25 +80,28 @@ extern SV * PerlXlib_set_magic_dpy(SV *sv, Display *dpy) {
 // Converting a Display* to a \X11::Xlib is difficult because we want
 // to re-use the existing object.  We cache them in %X11::Xlib::_connections.
 // This function returns a mortal strong-reference to an instance of X11::Xlib (or subclass)
-extern SV * PerlXlib_obj_for_display(Display *dpy) {
+extern SV * PerlXlib_obj_for_display(Display *dpy, int create) {
     SV **fp, *self;
     if (!dpy) {
         // Translate NULL to undef
         return &PL_sv_undef;
     }
     else {
-        fp= hv_fetch(get_hv("X11::Xlib::_connections", GV_ADD), (void*) &dpy, sizeof(dpy), 1);
+        fp= hv_fetch(get_hv("X11::Xlib::_connections", GV_ADD), (void*) &dpy, sizeof(dpy), 0);
         // Return existing object if we have one for this Display* already
-        if (!fp) croak("failed to add item to hash (tied?)");
-        if (*fp && SvROK(*fp)) {
+        if (fp && *fp && SvROK(*fp)) {
             // create strong-ref from weakref
-            return sv_2mortal(newRV(SvRV(*fp)));
+            return sv_mortalcopy(*fp);
         }
-        else {
+        else if (create) {
             // Always create instance of X11::Xlib.  X11::Xlib::Display can re-bless as needed.
             self= sv_2mortal(newRV_noinc((SV*) newHV()));
             sv_bless(self, gv_stashpv("X11::Xlib", GV_ADD));
-            return PerlXlib_set_magic_dpy(self, dpy);
+            PerlXlib_set_magic_dpy(self, dpy); // This also adds it to the _connections cache
+            return self;
+        }
+        else {
+            return sv_2mortal(newSVuv(PTR2UV(dpy)));
         }
     }
 }
@@ -128,60 +133,72 @@ XID PerlXlib_sv_to_xid(SV *sv) {
 #ifndef X11_Xlib_Struct_Padding
 #define X11_Xlib_Struct_Padding 64
 #endif
+// Coercions allowed for RValue:
+//   foo( "buffer_of_the_correct_length_or_more" );
+//   foo( \"ref_to_buffer_of_the_correct_length_or_more" );
+//   foo( \%hashref_of_fields );
+//   foo( bless(\"buffer_of_correct_length_or_more", "pkg_or_subclass") )
+// Coercions allowed for LValue:
+//   foo( my $x= undef );
+//   foo( "buffer_of_correct_length_or_more" );
+//   foo( \(my $x= undef) );
+//   foo( \"buffer_of_correct_length_or_more" );
+//   foo( bless(\"buffer_of_correct_length_or_more", "any_struct_class") )
 void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer) {
-    SV *tmp, *rsv;
+    SV *tmp, *ref= NULL;
     void* buf;
     size_t n;
 
     if (SvROK(sv)) {
+        ref= sv;
+        sv= SvRV(sv);
         // Follow scalar refs, to get to the buffer of a blessed object
-        if (SvTYPE(SvRV(sv)) == SVt_PVMG)
-            rsv= SvRV(sv);
-            // continue below using this SV
-
+        if (SvTYPE(sv) == SVt_PVMG) {
+            // If it is a blessed object, ensure the type matches
+            if (sv_isobject(ref) && !sv_isa(ref, pkg)) {
+                if (!sv_derived_from(ref, lvalue? "X11::Xlib::Struct" : pkg)) {
+                    buf= SvPV(ref, n);
+                    croak("Can't coerce %.*s to %s %s", n, buf, pkg, lvalue? "lvalue":"rvalue");
+                }
+            }
+        }
         // Also accept a hashref, which we pass to "pack"
-        else if (SvTYPE(SvRV(sv)) == SVt_PVHV) {
+        else if (SvTYPE(sv) == SVt_PVHV) {
             if (lvalue) croak("Can't coerce hashref to %s lvalue", pkg);
             // Need a buffer that lasts for the rest of our XS call stack.
             // Cheat by using a mortal SV :-)
             tmp= sv_2mortal(newSV(struct_size + X11_Xlib_Struct_Padding));
             buf= SvPVX(tmp);
-            packer(buf, (HV*) SvRV(sv), 0);
+            packer(buf, (HV*) sv, 0);
             return buf;
         }
-    }
-    // If uninitialized, initialize to a blessed struct object
-    else if (!SvOK(sv)) {
-        if (!lvalue) croak("Can't coerce undef to %s rvalue", pkg);
-        rsv= newSVrv(sv, pkg);
-        // rsv is now the referenced scalar, which is undef, and gets inflated next
-    }
-    
-    if (!SvOK(rsv)) {
-        if (!lvalue) croak("Can't coerce \\undef to %s rvalue", pkg);
-        sv_setpvn(rsv, "", 0);
-        SvGROW(rsv, struct_size+X11_Xlib_Struct_Padding);
-        SvCUR_set(rsv, struct_size);
-        memset(SvPVX(rsv), 0, struct_size+1);
-    }
-    else if (!SvPOK(rsv))
-        croak("Paramters requiring %s can only be coerced from scalar, scalar ref, hashref, or undef", pkg);
-    else if (SvCUR(rsv) < struct_size)
-        croak("Scalars used as %s must be at least %d bytes long (got %d)",
-            pkg, struct_size, SvCUR(rsv));
-    // Make sure we have the padding even if the user tinkered with the buffer
-    SvGROW(rsv, struct_size+X11_Xlib_Struct_Padding);
-    // Re-bless to correct type
-    if (lvalue) {
-        if (lvalue > 1 || !sv_isobject(sv) || !sv_derived_from(sv, pkg))
-            sv_bless(sv, gv_stashpv(pkg, GV_ADD));
-    } else {
-        if (sv_isobject(sv) && !sv_derived_from(sv, pkg)) {
-            buf= SvPV(sv, n);
-            croak("can't coerce %.*s is not a %s", n, buf, pkg);
+        else if (SvTYPE(sv) >= SVt_PVAV) { // not a scalar
+            buf= SvPV(ref, n);
+            croak("Can't coerce %.*s to %s %s", n, buf, pkg, lvalue? "lvalue":"rvalue");
         }
     }
-    return SvPVX(rsv);
+    
+    // If uninitialized, initialize to a blessed struct object,
+    //  unless we're looking at \undef in which case just initialize to a string
+    if (!SvOK(sv)) {
+        if (!lvalue) croak("Can't coerce %sundef to %s rvalue", ref? "\\" : "", pkg);
+        if (!ref) {
+            ref= sv, sv= newSVrv(sv, pkg);
+            // sv is now the referenced scalar, which is undef, and gets inflated next
+        }
+        sv_setpvn(sv, "", 0);
+        SvGROW(sv, struct_size+X11_Xlib_Struct_Padding);
+        SvCUR_set(sv, struct_size);
+        memset(SvPVX(sv), 0, struct_size+1);
+    }
+    else if (!SvPOK(sv))
+        croak("Paramters requiring %s can only be coerced from string, string ref, hashref, or undef", pkg);
+    else if (SvCUR(sv) < struct_size)
+        croak("Scalars used as %s must be at least length %d (got %d)", pkg, struct_size, SvCUR(sv));
+    // Make sure we have the padding even if the user tinkered with the buffer
+    SvPV_force(sv, n);
+    SvGROW(sv, struct_size+X11_Xlib_Struct_Padding);
+    return SvPVX(sv);
 }
 
 int PerlXlib_X_error_handler(Display *d, XErrorEvent *e) {
@@ -190,7 +207,7 @@ int PerlXlib_X_error_handler(Display *d, XErrorEvent *e) {
     SAVETMPS;
     PUSHMARK(SP);
     EXTEND(SP, 1);
-    PUSHs(sv_2mortal(sv_setref_pvn(newSV(0), "X11::Xlib::XEvent::XErrorEvent", (void*) e, sizeof(XEvent))));
+    PUSHs(sv_2mortal(sv_setref_pvn(newSV(0), "X11::Xlib::XErrorEvent", (void*) e, sizeof(XEvent))));
     PUTBACK;
     call_pv("X11::Xlib::_error_nonfatal", G_VOID|G_DISCARD|G_EVAL|G_KEEPERR);
     FREETMPS;
@@ -220,7 +237,7 @@ int PerlXlib_X_IO_error_handler(Display *d) {
     SAVETMPS;
     PUSHMARK(SP);
     EXTEND(SP, 1);
-    PUSHs(PerlXlib_obj_for_display(d));
+    PUSHs(PerlXlib_obj_for_display(d, 1));
     PUTBACK;
     call_pv("X11::Xlib::_error_fatal", G_VOID|G_DISCARD|G_EVAL|G_KEEPERR);
     FREETMPS;
@@ -656,7 +673,7 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xvisibility.state= SvIV(*fp);; if (consume) hv_delete(fields, "state", 5, G_DISCARD); }
       break;
     default:
-      croak("Unknown XEvent type %d", s->type);
+      warn("Unknown XEvent type %d", s->type);
     }
 }
 
@@ -665,7 +682,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
     // If it does, we need to clean up the value!
     SV *sv= NULL;
     if (!hv_store(fields, "type", 4, (sv= newSViv(s->type)), 0)) goto store_fail;
-    if (!hv_store(fields, "display"   ,  7, (sv=PerlXlib_obj_for_display(s->xany.display)), 0)) goto store_fail;
+    if (!hv_store(fields, "display"   ,  7, (sv=SvREFCNT_inc(PerlXlib_obj_for_display(s->xany.display, 0))), 0)) goto store_fail;
     if (!hv_store(fields, "send_event", 10, (sv=newSViv(s->xany.send_event)), 0)) goto store_fail;
     if (!hv_store(fields, "serial"    ,  6, (sv=newSVuv(s->xany.serial)), 0)) goto store_fail;
     if (!hv_store(fields, "type"      ,  4, (sv=newSViv(s->xany.type)), 0)) goto store_fail;

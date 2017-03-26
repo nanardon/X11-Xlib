@@ -24,7 +24,7 @@ O_X11_Xlib
 
 OUTPUT
 O_X11_Xlib
-    $arg = PerlXlib_obj_for_display($var);
+    $arg = PerlXlib_obj_for_display($var, 0);
 
 INPUT
 O_X11_XlibOrNull
@@ -32,7 +32,7 @@ O_X11_XlibOrNull
 
 OUTPUT
 O_X11_XlibOrNull
-    $arg = PerlXlib_obj_for_display($var);
+    $arg = PerlXlib_obj_for_display($var, 0);
 
 INPUT
 O_X11_Xlib_ScreenNumber

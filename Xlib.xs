@@ -21,7 +21,7 @@ XOpenDisplay(connection_string = NULL)
         if (SvTRUE(get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD)))
             croak("Cannot call further Xlib functions after fatal Xlib error");
         dpy= XOpenDisplay(connection_string);
-        self= PerlXlib_obj_for_display(dpy);
+        self= PerlXlib_obj_for_display(dpy, 1);
         if (SvROK(self)) {
             if (!hv_store((HV*) SvRV(self), "autoclose", 9, (tmp=newSViv(1)), 0)) {
                 sv_2mortal(tmp);
@@ -671,7 +671,7 @@ _error_names()
         codes= get_hv("X11::Xlib::_error_names", 0);
         if (!codes) {
             codes= get_hv("X11::Xlib::_error_names", GV_ADD);
-#define E(name) hv_store(codes, intbuf, snprintf(intbuf, sizeof(intbuf), "%d", name), newSVpv(#name,0), 0) || die("hv_store");
+#define E(name) if (!hv_store(codes, intbuf, snprintf(intbuf, sizeof(intbuf), "%d", name), newSVpv(#name,0), 0)) die("hv_store");
             E(BadAccess)
             E(BadAlloc)
             E(BadAtom)
@@ -760,7 +760,7 @@ _above(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Window c_value;
+    Window c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -777,7 +777,7 @@ _atom(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Atom c_value;
+    Atom c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -803,7 +803,7 @@ _border_width(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -822,7 +822,7 @@ _button(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    unsigned int c_value;
+    unsigned int c_value= 0;
   PPCODE:
     if (value) { c_value= SvUV(value); }
     switch (event->type) {
@@ -838,7 +838,7 @@ _colormap(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Colormap c_value;
+    Colormap c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -853,7 +853,7 @@ _cookie(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    unsigned int c_value;
+    unsigned int c_value= 0;
   PPCODE:
     if (value) { c_value= SvUV(value); }
     switch (event->type) {
@@ -866,7 +866,7 @@ _count(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -885,7 +885,7 @@ _detail(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -910,7 +910,7 @@ display(event, value=NULL)
       event->xany.display= PerlXlib_get_magic_dpy(value, 0);
       PUSHs(value);
     } else {
-      PUSHs(sv_2mortal(PerlXlib_obj_for_display(event->xany.display)));
+      PUSHs(PerlXlib_obj_for_display(event->xany.display, 0));
     }
 
 void
@@ -918,7 +918,7 @@ _drawable(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Drawable c_value;
+    Drawable c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -935,7 +935,7 @@ _event(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Window c_value;
+    Window c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -962,7 +962,7 @@ _evtype(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -977,7 +977,7 @@ _extension(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -992,7 +992,7 @@ _first_keycode(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1007,7 +1007,7 @@ _focus(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Bool c_value;
+    Bool c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1023,7 +1023,7 @@ _format(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1038,7 +1038,7 @@ _from_configure(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Bool c_value;
+    Bool c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1053,7 +1053,7 @@ _height(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1078,7 +1078,7 @@ _is_hint(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    char c_value;
+    char c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1104,7 +1104,7 @@ _keycode(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    unsigned int c_value;
+    unsigned int c_value= 0;
   PPCODE:
     if (value) { c_value= SvUV(value); }
     switch (event->type) {
@@ -1131,7 +1131,7 @@ _major_code(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1148,7 +1148,7 @@ _message_type(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Atom c_value;
+    Atom c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -1163,7 +1163,7 @@ _minor_code(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1180,7 +1180,7 @@ _mode(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1199,7 +1199,7 @@ _new(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Bool c_value;
+    Bool c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1214,7 +1214,7 @@ _override_redirect(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Bool c_value;
+    Bool c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1235,7 +1235,7 @@ _owner(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Window c_value;
+    Window c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -1259,7 +1259,7 @@ _parent(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Window c_value;
+    Window c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -1282,7 +1282,7 @@ _place(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1299,7 +1299,7 @@ _property(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Atom c_value;
+    Atom c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -1316,7 +1316,7 @@ _request(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1331,7 +1331,7 @@ _requestor(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Window c_value;
+    Window c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -1348,7 +1348,7 @@ _root(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Window c_value;
+    Window c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -1383,7 +1383,7 @@ _same_screen(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Bool c_value;
+    Bool c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1407,7 +1407,7 @@ _selection(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Atom c_value;
+    Atom c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -1476,7 +1476,7 @@ _subwindow(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Window c_value;
+    Window c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -1500,7 +1500,7 @@ _target(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Atom c_value;
+    Atom c_value= 0;
   PPCODE:
     if (value) { c_value= PerlXlib_sv_to_xid(value); }
     switch (event->type) {
@@ -1517,7 +1517,7 @@ _time(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    Time c_value;
+    Time c_value= 0;
   PPCODE:
     if (value) { c_value= SvUV(value); }
     switch (event->type) {
@@ -1572,7 +1572,7 @@ _value_mask(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    unsigned long c_value;
+    unsigned long c_value= 0;
   PPCODE:
     if (value) { c_value= SvUV(value); }
     switch (event->type) {
@@ -1587,7 +1587,7 @@ _width(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1624,7 +1624,7 @@ _x(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1662,7 +1662,7 @@ _x_root(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1686,7 +1686,7 @@ _y(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
@@ -1724,7 +1724,7 @@ _y_root(event, value=NULL)
   XEvent *event
   SV *value
   INIT:
-    int c_value;
+    int c_value= 0;
   PPCODE:
     if (value) { c_value= SvIV(value); }
     switch (event->type) {
