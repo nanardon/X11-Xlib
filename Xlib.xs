@@ -648,19 +648,132 @@ XKeysymToKeycode(dpy, keysym)
         RETVAL
 
 void
+XDisplayKeycodes(dpy, minkey_sv, maxkey_sv)
+    Display *dpy
+    SV *minkey_sv
+    SV *maxkey_sv
+    INIT:
+        int minkey, maxkey;
+    PPCODE:
+        XDisplayKeycodes(dpy, &minkey, &maxkey);
+        sv_setiv(minkey_sv, minkey);
+        sv_setiv(maxkey_sv, maxkey);
+
+void
 XGetKeyboardMapping(dpy, fkeycode, count = 1)
     Display * dpy
     unsigned int fkeycode
     int count
     PREINIT:
-    int creturn;
-    KeySym * keysym;
-    int i = 0;
+        int creturn;
+        KeySym * keysym;
+        int i = 0;
     PPCODE:
-    keysym = XGetKeyboardMapping(dpy, fkeycode, count, &creturn);
-    EXTEND(SP, creturn -1);
-    for (i=0; i < creturn; i++)
-        XPUSHs(sv_2mortal(newSVuv(keysym[i])));
+        keysym = XGetKeyboardMapping(dpy, fkeycode, count, &creturn);
+        EXTEND(SP, creturn * count -1);
+        for (i=0; i < creturn * count; i++)
+            XPUSHs(sv_2mortal(newSVuv(keysym[i])));
+        XFree(keysym);
+
+void
+_load_symbolic_keymap(dpy)
+    Display *dpy
+    INIT:
+        int minkey, maxkey, i, j, nsym;
+        const char *symname;
+        KeySym *syms, *cursym;
+        AV *tbl, *row;
+    PPCODE:
+        XDisplayKeycodes(dpy, &minkey, &maxkey);
+        syms= XGetKeyboardMapping(dpy, minkey, maxkey-minkey+1, &nsym);
+        tbl= newAV();
+        av_extend(tbl, maxkey);
+        for (i= 0; i < minkey; i++)
+            av_push(tbl, newSVsv(&PL_sv_undef));
+        for (i= 0; i <= maxkey-minkey; i++) {
+            row= newAV();
+            for (j= 0; j < nsym; j++) {
+                symname= syms[i*nsym+j] == NoSymbol? NULL : XKeysymToString(syms[i*nsym+j]);
+                av_push(row, symname? newSVpv(symname, 0) : newSVsv(&PL_sv_undef));
+            }
+            av_push(tbl, newRV_noinc((SV*) row));
+        }
+        XFree(syms);
+        PUSHs(sv_2mortal(newRV_noinc((SV*) tbl)));
+
+void
+XGetModifierMapping(dpy)
+    Display *dpy
+    INIT:
+        XModifierKeymap *modmap;
+        AV *tbl, *row;
+        int i, j;
+    PPCODE:
+        modmap= XGetModifierMapping(dpy);
+        tbl= newAV();
+        av_extend(tbl, 8);
+        for (i= 0; i < 8; i++) {
+            row= newAV();
+            av_extend(row, modmap->max_keypermod);
+            for (j= 0; j < modmap->max_keypermod; j++) {
+                av_push(row, newSViv(modmap->modifiermap[i * modmap->max_keypermod + j]));
+            }
+            av_push(tbl, newRV_noinc((SV*) row));
+        }
+        XFree(modmap);
+        PUSHs(sv_2mortal(newRV_noinc((SV*) tbl)));
+
+int
+XSetModifierMapping(dpy, tbl)
+    Display *dpy
+    AV *tbl
+    INIT:
+        XModifierKeymap modmap;
+        KeyCode keycodes[64];
+        int i, n, j, code, minkey, maxkey;
+        SV **elem;
+        AV *row;
+    CODE:
+        memset(keycodes, 0, sizeof(keycodes));
+        modmap.max_keypermod= 0;
+        modmap.modifiermap= keycodes;
+        XDisplayKeycodes(dpy, &minkey, &maxkey);
+        // Find the longest array.  Also validate.
+        if (av_len(tbl) != 7)
+            croak("Expected arrayref of length 8");
+        for (i= 0; i < 8; i++) {
+            elem= av_fetch(tbl, i, 0);
+            if (!elem || !*elem || !SvROK(*elem) || SvTYPE(SvRV(*elem)) != SVt_PVAV)
+                croak("Expected arrayref of arrayrefs");
+            row= (AV*) SvRV(*elem);
+            n= av_len(row)+1;
+            if (n > 8)
+                croak("There can be at most 8 keys per modifier");
+            if (n > modmap.max_keypermod)
+                modmap.max_keypermod= n;
+            for (j= 0; j < n; j++) {
+                elem= av_fetch(row, j, 0);
+                if (elem && *elem && SvOK(*elem)) {
+                    code= SvIV(*elem);
+                    if (code != 0 && (code < minkey || code > maxkey))
+                        croak("Keycode %d outside range of %d..%d", code, minkey, maxkey);
+                    keycodes[i*8+j]= code;
+                }
+            }
+        }
+        // If the number of modifiers is less than the max, shrink the table
+        // rows to match.
+        if (modmap.max_keypermod < 8) {
+            n= modmap.max_keypermod;
+            if (n == 0)
+                croak("Cowardly refusing to set an empty modifiermap");
+            for (i= 1; i < 8; i++)
+                for (j= 0; j < n; j++)
+                    keycodes[i * n + j]= keycodes[i * 8 + j];
+        }
+        RETVAL= XSetModifierMapping(dpy, &modmap);
+    OUTPUT:
+        RETVAL
 
 void
 _error_names()

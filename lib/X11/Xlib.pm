@@ -57,8 +57,9 @@ my %_functions= (
     XCheckWindowEvent XFlush XNextEvent XPutBackEvent XSelectInput XSendEvent
     XSync )],
   fn_key => [qw( IsFunctionKey IsKeypadKey IsMiscFunctionKey IsModifierKey
-    IsPFKey IsPrivateKeypadKey XGetKeyboardMapping XKeysymToKeycode
-    XKeysymToString XStringToKeysym )],
+    IsPFKey IsPrivateKeypadKey XDisplayKeycodes XGetKeyboardMapping
+    XGetModifierMapping XKeysymToKeycode XKeysymToString XSetModifierMapping
+    XStringToKeysym )],
   fn_pix => [qw( XCreateBitmapFromData XCreatePixmap
     XCreatePixmapFromBitmapData XFreePixmap )],
   fn_screen => [qw( DefaultColormap DefaultDepth DefaultGC DefaultScreen
