@@ -1,0 +1,10 @@
+/X11-Xlib-*.tar.gz
+/Xlib.c
+/Xlib.o
+/Xlib.bs
+/Makefile
+/Makefile.old
+/PerlXlib.o
+/build
+/blib
+/pm_to_blib
