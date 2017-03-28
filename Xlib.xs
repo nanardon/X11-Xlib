@@ -676,30 +676,93 @@ XGetKeyboardMapping(dpy, fkeycode, count = 1)
         XFree(keysym);
 
 void
-_load_symbolic_keymap(dpy)
+_load_symbolic_keymap(dpy, minkey=0, maxkey=255)
     Display *dpy
+    int minkey
+    int maxkey
     INIT:
-        int minkey, maxkey, i, j, nsym;
+        int xmin, xmax, i, j, nsym;
         const char *symname;
         KeySym *syms, *cursym;
         AV *tbl, *row;
     PPCODE:
-        XDisplayKeycodes(dpy, &minkey, &maxkey);
-        syms= XGetKeyboardMapping(dpy, minkey, maxkey-minkey+1, &nsym);
+        XDisplayKeycodes(dpy, &xmin, &xmax);
+        if (xmin < minkey) xmin= minkey;
+        if (xmax > maxkey) xmax= maxkey;
+        syms= XGetKeyboardMapping(dpy, xmin, xmax-xmin+1, &nsym);
         tbl= newAV();
         av_extend(tbl, maxkey);
-        for (i= 0; i < minkey; i++)
+        for (i= minkey; i < xmin; i++)
             av_push(tbl, newSVsv(&PL_sv_undef));
-        for (i= 0; i <= maxkey-minkey; i++) {
+        for (i= 0; i <= xmax-xmin; i++) {
             row= newAV();
+            av_extend(row, nsym-1);
             for (j= 0; j < nsym; j++) {
                 symname= syms[i*nsym+j] == NoSymbol? NULL : XKeysymToString(syms[i*nsym+j]);
-                av_push(row, symname? newSVpv(symname, 0) : newSVsv(&PL_sv_undef));
+                if (symname)
+                    av_store(row, j, newSVpv(symname, 0));
             }
             av_push(tbl, newRV_noinc((SV*) row));
         }
         XFree(syms);
         PUSHs(sv_2mortal(newRV_noinc((SV*) tbl)));
+
+void
+_save_symbolic_keymap(dpy, kmap, minkey=0, maxkey=255)
+    Display *dpy
+    AV *kmap
+    int minkey
+    int maxkey
+    INIT:
+        int xmin, xmax, amin, nsym, i, j, n, m;
+        const char *name;
+        KeySym *syms, cursym;
+        SV **elem, *buf;
+        AV *row;
+    PPCODE:
+        m= av_len(kmap);
+        if (minkey < 0 || maxkey > 255 || minkey > maxkey || m < 0)
+            croak("require 0 <= min <= max <= 255 and non-zero length array");
+        XDisplayKeycodes(dpy, &xmin, &xmax);
+        if (xmin < minkey) xmin= minkey;
+        if (xmax > maxkey) xmax= maxkey;
+        // If the length of the array is equal to maxkey-minkey, then assume the elements
+        // are exactly min..max.  Else if the array is longer, assume the array starts at 0
+        // and min..max are indexes into the array
+        amin= (m == maxkey - minkey)? minkey : 0;
+        if (maxkey - amin > m && maxkey < 255)
+            croak("max exceeds array length");
+        if (xmax - amin > m)
+            xmax= m - amin;
+        // Find the longest array in the bunch
+        nsym= 0;
+        for (i= 0; i < xmax-xmin+1; i++) {
+            elem= av_fetch(kmap, i + (xmin-amin), 0);
+            if (!elem || !*elem || !SvROK(*elem) || SvTYPE(SvRV(*elem)) != SVt_PVAV)
+                croak("Expected arrayref of arrayrefs (defined for the range %d..%d)", xmin-amin, xmax-amin);
+            n= av_len((AV*) SvRV(*elem))+1;
+            if (nsym < n) nsym= n;
+        }
+        // Allocate buffer in a temp SV in case we croak
+        buf= newSV(nsym * (xmax-xmin+1) * sizeof(KeySym));
+        syms= (KeySym*) SvPVX(buf);
+        for (i= 0; i < xmax-xmin+1; i++) {
+            row= (AV*) SvRV(*av_fetch(kmap, i + (xmin-amin), 0));
+            for (j= 0, n= av_len(row)+1; j < nsym; j++) {
+                cursym= NoSymbol;
+                if (j < n) {
+                    elem= av_fetch(row, j, 0);
+                    if (elem && *elem && SvOK(*elem)) {
+                        name= SvPV_nolen(*elem);
+                        cursym= XStringToKeysym(name);
+                        if (cursym == NoSymbol)
+                            croak("No such KeySym %s", name);
+                    }
+                }
+                syms[ i * nsym + j ]= cursym;
+            }
+        }
+        XChangeKeyboardMapping(dpy, xmin, nsym, syms, xmax-xmin+1);
 
 void
 XGetModifierMapping(dpy)
