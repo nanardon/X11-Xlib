@@ -648,6 +648,18 @@ XKeysymToKeycode(dpy, keysym)
         RETVAL
 
 void
+XConvertCase(ksym, lowercase, uppercase)
+    KeySym ksym
+    SV *lowercase
+    SV *uppercase
+    INIT:
+        KeySym lc, uc;
+    PPCODE:
+        XConvertCase(ksym, &lc, &uc);
+        sv_setiv(lowercase, lc);
+        sv_setiv(uppercase, uc);
+
+void
 XDisplayKeycodes(dpy, minkey_sv, maxkey_sv)
     Display *dpy
     SV *minkey_sv
@@ -837,6 +849,39 @@ XSetModifierMapping(dpy, tbl)
         RETVAL= XSetModifierMapping(dpy, &modmap);
     OUTPUT:
         RETVAL
+
+void
+XLookupString(event, str_sv, keysym_sv= NULL)
+    XEvent *event
+    SV *str_sv
+    SV *keysym_sv
+    INIT:
+        size_t len, maxlen;
+        KeySym sym;
+    PPCODE:
+        if (event->type != KeyPress && event->type != KeyRelease)
+            croak("Expected event of type KeyPress or KeyRelease");
+        SvPV_force(str_sv, len);
+        maxlen= len < 16? 16 : len;
+        SvGROW(str_sv, maxlen);
+        len= XLookupString((XKeyEvent*) event, SvPVX(str_sv), maxlen-1, &sym, NULL);
+        // If full buffer, try one more time with quadruple buffer space
+        if (len == maxlen-1) {
+            maxlen <<= 2;
+            SvGROW(str_sv, maxlen);
+            len= XLookupString((XKeyEvent*) event, SvPVX(str_sv), maxlen-1, &sym, NULL);
+        }
+        SvCUR_set(str_sv, len);
+        if (keysym_sv)
+            SvIV_set(str_sv, sym);
+
+void
+XRefreshKeyboardMapping(event)
+    XEvent *event
+    PPCODE:
+        if (event->type != MappingNotify)
+            croak("Expected event of type MappingNotify");
+        XRefreshKeyboardMapping((XMappingEvent*) event);
 
 void
 _error_names()

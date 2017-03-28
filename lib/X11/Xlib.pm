@@ -60,9 +60,10 @@ my %_functions= (
     XCheckWindowEvent XFlush XNextEvent XPutBackEvent XSelectInput XSendEvent
     XSync )],
   fn_key => [qw( IsFunctionKey IsKeypadKey IsMiscFunctionKey IsModifierKey
-    IsPFKey IsPrivateKeypadKey XDisplayKeycodes XGetKeyboardMapping
-    XGetModifierMapping XKeysymToKeycode XKeysymToString XSetModifierMapping
-    XStringToKeysym )],
+    IsPFKey IsPrivateKeypadKey XConvertCase XDisplayKeycodes
+    XGetKeyboardMapping XGetModifierMapping XKeysymToKeycode XKeysymToString
+    XLookupString XRefreshKeyboardMapping XSetModifierMapping XStringToKeysym
+    )],
   fn_pix => [qw( XCreateBitmapFromData XCreatePixmap
     XCreatePixmapFromBitmapData XFreePixmap )],
   fn_screen => [qw( DefaultColormap DefaultDepth DefaultGC DefaultScreen
@@ -702,11 +703,7 @@ and C<$pressed> indicates if the key was pressed or released.
 The optional C<$EventSendDelay> parameter specifies the number of milliseconds to wait
 before sending the event. The default is 10 milliseconds.
 
-=head3 XBell
-
-  XBell($display, $percent)
-
-Make the X server emit a sound.
+=head2 KEYCODE FUNCTIONS
 
 =head3 XQueryKeymap
 
@@ -714,24 +711,64 @@ Make the X server emit a sound.
 
 Return a list of the key codes currently pressed on the keyboard.
 
-=head2 KEYCODE FUNCTIONS
+=head3 XGetKeyboardMapping
+
+  XGetKeyboardMapping($display, $keycode, $count)
+
+Return an array of KeySym numbers corresponding to C<$count> keys, starting
+at C<$keycode>.
+
+Each value in the array corresponds to a combination of key modifiers (Shift,
+Lock, Mode).  The X11 server may return a variable number of codes per key,
+which you can determine by dividing the total number of values returned by this
+function by the C<$count>.
+
+For an easier interface, see L<X11::Xlib::Keymap>.
+
+=head3 XGetModifierMapping
+
+  my $mapping= XGetModifierMapping($display);
+
+Return an arrayref of 8 arrayrefs, one for each of the possible modifiers.
+The inner arrayrefs can contain a variable number of key codes which belong
+to the modifier group.  See L<X11::Xlib::Keymap> for an explanation.
+
+=head3 XSetModifierMapping
+
+  XSetModifierMapping($display, \@modifiers);
+
+C<@modifiers> is an array of 8 arrayrefs, each holding the set of key codes
+that are part of the modifier.  This is the same format as returned by
+C<XGetModifierMapping>.
+
+=head3 XRefreshKeyboardMapping
+
+  XRefreshKeyboardMapping($mapping_event);
+
+Given a XMappingEvent, reload the internal Xlib cache for the parts of the
+keymap or modmap which have changed.
+
+The functions below (using the internal Xlib cache) are an alternative to
+processing the keymap directly.
+
+=head3 XLookupString
+
+  XLookupString($key_event, $text_out, $keycode_out);
+
+Given a XKeyEvent, translate the key code and modifiers vs. the internal Xlib
+cached keymap/modmap and write the text name of the key into C<$text_out>.
+This will either be a name of a key, or the character the key normally
+generates in a Latin-1 environment.  If C<$keycode_out> is given, it will be
+overwritten with the numeric value of the KeySym.
+
+(If you want to do more than Latin-1, see L<X11::Xlib::Keymap> for utilities
+ to manipulate the keymap directly.)
 
 =head3 XKeysymToKeycode
 
   XKeysymToKeycode($display, $keysym)
 
 Return the key code corresponding to the character number C<$keysym>.
-
-=head3 XGetKeyboardMapping
-
-  XGetKeyboardMapping($display, $keycode, $count)
-
-Return an array of character numbers corresponding to the key C<$keycode>.
-
-Each value in the array corresponds to the action of a key modifier (Shift, Alt).
-
-C<$count> is the number of the keycode to return. The default value is 1, e.g.
-it returns the character corresponding to the given $keycode.
 
 =head3 XKeysymToString
 
@@ -748,6 +785,12 @@ C<XKeysymToString> is the exact reverse of C<XStringToKeysym>.
 Return the keysym number for the human-readable character C<$string>.
 
 C<XStringToKeysym> is the exact reverse of C<XKeysymToString>.
+
+=head3 XConvertCase
+
+  XConvertCase($keysym, $lowercase_out, $uppercase_out);
+
+Return the lowercase and uppercase KeySyms values for C<$keysym>.
 
 =head3 IsFunctionKey
 
@@ -785,7 +828,11 @@ Xlib docs are fun.  No mention of what "PF" might be.
 
 True for vendor-private key codes.
 
-=cut
+=head3 XBell
+
+  XBell($display, $percent)
+
+Make the X server emit a sound.
 
 =head1 STRUCTURES
 

@@ -17,6 +17,8 @@ VisualID              O_X11_Xlib_XID
 Atom                  T_UV
 Time                  T_UV
 Bool                  T_BOOL
+KeyCode               T_IV
+KeySym                T_IV
 
 INPUT
 O_X11_Xlib
