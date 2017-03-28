@@ -56,6 +56,20 @@ const_event_mask
  i PropertyChangeMask
  i ColormapChangeMask
  i OwnerGrabButtonMask
+const_event_input_state
+ i ShiftMask
+ i LockMask
+ i ControlMask
+ i Mod1Mask
+ i Mod2Mask
+ i Mod3Mask
+ i Mod4Mask
+ i Mod5Mask
+ i Button1Mask
+ i Button2Mask
+ i Button3Mask
+ i Button4Mask
+ i Button5Mask
 const_error
  i BadAccess
  i BadAlloc

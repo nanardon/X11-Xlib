@@ -29,6 +29,9 @@ my %_constants= (
     KeymapNotify LeaveNotify MapNotify MappingNotify MotionNotify NoExpose
     PropertyNotify ReparentNotify ResizeRequest SelectionClear SelectionNotify
     SelectionRequest UnmapNotify VisibilityNotify )],
+  const_event_input_state => [qw( Button1Mask Button2Mask Button3Mask
+    Button4Mask Button5Mask ControlMask LockMask Mod1Mask Mod2Mask Mod3Mask
+    Mod4Mask Mod5Mask ShiftMask )],
   const_event_mask => [qw( Button1MotionMask Button2MotionMask
     Button3MotionMask Button4MotionMask Button5MotionMask ButtonMotionMask
     ButtonPressMask ButtonReleaseMask ColormapChangeMask EnterWindowMask
