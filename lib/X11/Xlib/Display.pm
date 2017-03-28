@@ -603,175 +603,37 @@ sub XCreateSimpleWindow {
 
 =head3 keymap
 
-  my $keymap= $display->keymap
-
-  # [
-  #   [ $upper, $lower, $mo
-  #   ...
-  # ]
+  my $keymap= $display->keymap; # lazy-loaded instance of X11::Xlib::Keymap
 
 X11 Operates on keyboard scan codes, and leaves interpreting them to the
 client.  The server holds a mapping table of scan codes and modifiers which
-all clients share and can modify as needed, though the X server never uses
-the table itself.  The mapping table maps the codes to "Keysyms", which are
-device-independent constants.
+all clients share and can modify as needed, though the X server never uses the
+table itself.
+The details are hairy enough that I moved them to their own module.
+See L<X11::Xlib::Keymap> for details.
 
-The list of Keysyms is large enough that is is not practical to export them
-as perl constants.  Xlib can translate Keysyms to/from text on the client
-side, so using L<X11::Xlib/XKeysymToString> / L<X11::Xlib/XStringToKeysym>
-is a practical alternative.
+The first time you access C<keymap> it fetches the tables from the server.
+The tables may change on the fly, so you should watch for MappingNotify events
+to know when to reload the keymap.
 
-This keymap cache skips the keysym values altogether, and stores the keysym
-names as text in a 2-D array of keycode/modifier.
-
-This table is loaded on demand the first time you access it, and does not
-stay up to date with changes on the X server unless you clear it with
-C<< $display->keymap(undef) >>.
-You should listen to XMapEvents to determine when this is needed.
-
-=head3 keymap_reverse
-
-A hashref mapping from the symbolic nameof a key to its scan code.
-Lazily built from L</keymap> and cleared when C<keymap> is reloaded.
+Note that if you only need Latin-1 translation of key codes, you can just use
+L<X11::Xlib/XLookupString> and L<X11::Xlib/XRefreshKeyboardMapping> to have
+Xlib do all the heavy lifting.
 
 =cut
 
 sub keymap {
     my $self= shift;
     if (@_) { $self->{keymap}= shift; delete $self->{keymap_reverse}; }
-    $self->{keymap} ||= $self->_load_symbolic_keymap if defined wantarray;
+    $self->{keymap} ||= $self->_build_keymap if defined wantarray;
 }
 
-sub keymap_reverse {
+sub _build_keymap {
     my $self= shift;
-    $self->{keymap_reverse} ||= do {
-        my %rkmap;
-        my $kmap= $self->keymap;
-        for (my $i= $#$kmap; $i >= 0; $i--) {
-            next unless ref $kmap->[$i] eq 'ARRAY';
-            defined $_ and $rkmap{$_}= $i for @{$kmap->[$i]};
-        }
-        \%rkmap;
-    };
-}
-
-=head3 lookup_key
-
-  my $sym_name= $display->lookup_key( $key_code, $modifiers );
-  my $sym_name= $display->lookup_key( $XKeyEvent );
-
-Returns the symbolic name of a key, given its scan code.
-
-For convenience, you can pass an L<X11::Xlib::XEvent/XKeyEvent> object.
-
-=cut
-
-sub lookup_key {
-    my $self= shift;
-    my ($keycode, $modifiers)=
-        @_ == 1 && $_[0]->can('pack')? ( $_[0]->keycode, $_[0]->state )
-        : @_ == 2? @_
-        : croak "Expected XKeyEvent or (code,modifiers)";
-    return $self->keymap->[$keycode];
-}
-
-=head3 modmap
-
-Returns the cached L<X11::Xlib::XModifierKeymap>, loading it with
-C<XGetModifierMapping> first if needed.  The object contains KeyCodes,
-not KeySyms, so you need to cross-reference with L</keymap> and
-L<X11::Xlib/XKeysymToString>, or use the convenience functions below.
-
-=cut
-
-sub modmap {
-    my $self= shift;
-    $self->{modmap}= shift if @_;
-    $self->{modmap} ||= $self->_build_modmap if defined wantarray;
-}
-sub _build_modmap {
-    bless shift->XGetModifierMapping, 'X11::Xlib::XModifierKeymap';
-}
-
-=head3 modmap_sym_list
-
-  my @keysym_names= $display->modmap_sym_list( $modifier );
-  
-  # Shortcut for:
-  my $method= "${modifier}_codes";
-  my @keysym_names= map { $display->keymap->[$_][0] } @{ $display->modmap->$method }
-
-Get the keysym names for all the keys bound to the C<$modifier>.
-Modifier is one of 'shift','lock','control','mod1','mod2','mod3','mod4','mod5'.
-
-=cut
-
-sub modmap_sym_list {
-    my ($self, $modifier)= @_;
-    my $keymap= $self->keymap;
-    my $method= $modifier."_codes";
-    return map { $keymap->[$_][0] } @{ $self->modmap->$method };
-}
-
-=head3 modmap_add_syms
-
-  $display->modmap_add_syms( $modifier, @keysym_names );
-
-Convert keysym names to key codes and then add them to L</modmap>.
-C<$modifier> is one of the values listed above.
-
-Generates a warning for any keysym which is not part of the current keyboard
-layout.  Returns the number of key codes added.
-
-=head3 modmap_del_syms
-
-  $display->modmap_del_syms( $modifier, @keysym_names );
-
-Convert keysym names to key codes and then remove any matches from L</modmap>.
-C<$modifier> is one of the values listed above.
-
-Generates a warning for any keysym which is not part of the current keyboard
-layout.  Returns number of key codes removed.
-
-=cut
-
-sub modmap_add_syms {
-    my ($self, $modifier, @names)= @_;
-    my $rkeymap= $self->keymap_reverse;
-    my @codes= map {
-            my $keycode= $self->keymap_reverse->{$_}
-                or carp "Skipping '$_'; not found in this keyboard layout";
-            $keycode? ( $keycode ) : ()
-        } @names;
-    return $self->modmap->add(@codes);
-}
-
-sub modmap_del_syms {
-    my ($self, $modifier, @names)= @_;
-    my $rkeymap= $self->keymap_reverse;
-    my %del;
-    for (@names) {
-        my $keycode= $self->keymap_reverse->{$_};
-        defined $keycode? $del{$keycode}++
-            : carp "Skipping '$_'; not found in this keyboard layout";
-    }
-    return 0+(keys %del);
-}
-
-=head3 modmap_save
-
-  $display->modmap_save;  # Save current L</modmap> back to server
-  $display->modmap_save($new_modmap); # Replace modmap and save to server
-
-Call L<X11::Xlib/XSetModifierMapping> with either a new modmap, or the current
-cached one assuming you've made changes to it.
-
-=cut
-
-sub modmap_save {
-    my ($self, $new_modmap)= @_;
-    $self->{modmap}= $new_modmap if defined $new_modmap;
-    $self->XSetModifierMapping($self->modmap);
+    require X11::Xlib::Keymap;
+    return X11::Xlib::Keymap->new(
+        display => $self,
+    );
 }
 
 =head3 keyboard_leds
