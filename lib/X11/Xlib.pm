@@ -8,7 +8,7 @@ use base qw(Exporter DynaLoader);
 use Carp;
 use Try::Tiny;
 
-our $VERSION = '0.09_02';
+our $VERSION = '0.09_04';
 
 sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
 
@@ -59,10 +59,12 @@ my %_functions= (
   fn_event => [qw( XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent
     XCheckWindowEvent XFlush XNextEvent XPutBackEvent XSelectInput XSendEvent
     XSync )],
-  fn_key => [qw( IsFunctionKey IsKeypadKey IsMiscFunctionKey IsModifierKey
-    IsPFKey IsPrivateKeypadKey XConvertCase XDisplayKeycodes
-    XGetKeyboardMapping XGetModifierMapping XKeysymToKeycode XKeysymToString
-    XLookupString XRefreshKeyboardMapping XSetModifierMapping XStringToKeysym
+  fn_input => [qw(  )],
+  fn_keymap => [qw( XDisplayKeycodes XGetKeyboardMapping XGetModifierMapping
+    XKeysymToKeycode XLookupString XRefreshKeyboardMapping XSetModifierMapping
+    )],
+  fn_keysym => [qw( IsFunctionKey IsKeypadKey IsMiscFunctionKey IsModifierKey
+    IsPFKey IsPrivateKeypadKey XConvertCase XKeysymToString XStringToKeysym
     )],
   fn_pix => [qw( XCreateBitmapFromData XCreatePixmap
     XCreatePixmapFromBitmapData XFreePixmap )],
@@ -86,7 +88,7 @@ our %EXPORT_TAGS= (
     functions => [ map { @$_ } values %_functions ],
     all => \@EXPORT_OK,
 );
-our @EXPORT= @{ $EXPORT_TAGS{fn_key} };
+our @EXPORT= @{ $EXPORT_TAGS{fn_keysym} };
 
 # Used by XS.  In the spirit of letting perl users violate encapsulation
 #  as needed, the XS code exposes its globals to Perl.

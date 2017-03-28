@@ -570,33 +570,7 @@ XQueryKeymap(dpy)
             }
         }
 
-# Keyboard/Keycode Functions (fn_key) ----------------------------------------
-
-unsigned long
-keyboard_leds(dpy)
-    Display *  dpy;
-    PREINIT:
-        XKeyboardState state;
-    CODE:
-        XGetKeyboardControl(dpy, &state);
-        RETVAL = state.led_mask;
-    OUTPUT:
-        RETVAL
-
-void
-_auto_repeat(dpy)
-    Display *  dpy;
-    PREINIT:
-        XKeyboardState state;
-        int i, j;
-    CODE:
-        XGetKeyboardControl(dpy, &state);
-        for(i=0; i<32; i++) {
-            for (j=0; j<8; j++) {
-                if (state.auto_repeats[i] & (1 << j))
-                    XPUSHs(sv_2mortal(newSViv(i * 8 + j)));
-            }
-        }
+# KeySym Utility Functions (fn_keysym) ---------------------------------------
 
 char *
 XKeysymToString(keysym)
@@ -638,15 +612,6 @@ int
 IsModifierKey(keysym)
     unsigned long keysym
 
-unsigned int
-XKeysymToKeycode(dpy, keysym)
-    Display * dpy
-    unsigned long keysym
-    CODE:
-        RETVAL = XKeysymToKeycode(dpy, keysym);
-    OUTPUT:
-        RETVAL
-
 void
 XConvertCase(ksym, lowercase, uppercase)
     KeySym ksym
@@ -658,6 +623,36 @@ XConvertCase(ksym, lowercase, uppercase)
         XConvertCase(ksym, &lc, &uc);
         sv_setiv(lowercase, lc);
         sv_setiv(uppercase, uc);
+
+# Input Functions (fn_input) -------------------------------------------------
+
+unsigned long
+keyboard_leds(dpy)
+    Display *  dpy;
+    PREINIT:
+        XKeyboardState state;
+    CODE:
+        XGetKeyboardControl(dpy, &state);
+        RETVAL = state.led_mask;
+    OUTPUT:
+        RETVAL
+
+void
+_auto_repeat(dpy)
+    Display *  dpy;
+    PREINIT:
+        XKeyboardState state;
+        int i, j;
+    CODE:
+        XGetKeyboardControl(dpy, &state);
+        for(i=0; i<32; i++) {
+            for (j=0; j<8; j++) {
+                if (state.auto_repeats[i] & (1 << j))
+                    XPUSHs(sv_2mortal(newSViv(i * 8 + j)));
+            }
+        }
+
+# Keyboard Mapping Functions (fn_keymap) -------------------------------------
 
 void
 XDisplayKeycodes(dpy, minkey_sv, maxkey_sv)
@@ -874,6 +869,15 @@ XLookupString(event, str_sv, keysym_sv= NULL)
         SvCUR_set(str_sv, len);
         if (keysym_sv)
             SvIV_set(str_sv, sym);
+
+unsigned int
+XKeysymToKeycode(dpy, keysym)
+    Display * dpy
+    unsigned long keysym
+    CODE:
+        RETVAL = XKeysymToKeycode(dpy, keysym);
+    OUTPUT:
+        RETVAL
 
 void
 XRefreshKeyboardMapping(event)
