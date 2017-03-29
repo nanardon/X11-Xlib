@@ -856,7 +856,14 @@ XLookupString(event, str_sv, keysym_sv= NULL)
     PPCODE:
         if (event->type != KeyPress && event->type != KeyRelease)
             croak("Expected event of type KeyPress or KeyRelease");
-        SvPV_force(str_sv, len);
+        if (!event->xany.display)
+            croak("event->display must be set");
+        if (SvOK(str_sv))
+            SvPV_force(str_sv, len);
+        else {
+            sv_setpvn(str_sv, "", 0);
+            len= 0;
+        }
         maxlen= len < 16? 16 : len;
         SvGROW(str_sv, maxlen);
         len= XLookupString((XKeyEvent*) event, SvPVX(str_sv), maxlen-1, &sym, NULL);
@@ -866,9 +873,10 @@ XLookupString(event, str_sv, keysym_sv= NULL)
             SvGROW(str_sv, maxlen);
             len= XLookupString((XKeyEvent*) event, SvPVX(str_sv), maxlen-1, &sym, NULL);
         }
+        SvPVX(str_sv)[len]= '\0';
         SvCUR_set(str_sv, len);
         if (keysym_sv)
-            SvIV_set(str_sv, sym);
+            sv_setiv(keysym_sv, sym);
 
 unsigned int
 XKeysymToKeycode(dpy, keysym)

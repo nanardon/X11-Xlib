@@ -2,7 +2,7 @@
 
 use strict;
 use warnings;
-use Test::More tests => 5;
+use Test::More tests => 7;
 use X11::Xlib ':all';
 sub err(&) { my $code= shift; my $ret; { local $@= ''; eval { $code->() }; $ret= $@; } $ret }
 
@@ -58,6 +58,30 @@ subtest keymap => sub {
     my $kmap2= $dpy->_load_symbolic_keymap;
     is_deeply( $mapping, $kmap2, 'same as before' )
         or save_temp("keymap-after", explain $kmap2);
+    
+    done_testing;
+};
+
+subtest keymap_wrapper => sub {
+    # TODO: this is sloppy and doesn't prove much
+    ok( my $keymap= $dpy->keymap );
+    is( err{ $keymap->keymap_reload }, '', 'keymap_reload' );
+    is( err{ $keymap->keymap_save   }, '', 'keymap_save' );
+    is( err{ $keymap->modmap_sym_list('shift') }, '', 'modmap_sym_list' );
+    is( err{ $keymap->modmap_save   }, '', 'modmap_save' );
+    is( err{ $keymap->modmap_add_syms(control => 'Control_L') }, '', 'modmap_add_syms' );
+    is( err{ $keymap->modmap_del_syms(control => 'Control_L') }, '', 'modmap_del_syms' );
+    done_testing;
+};
+
+subtest xlib_lookup => sub {
+    # Pick some key from the modmap.  Probably every keyboard has at least shift or control?
+    ok( my $keycode= $dpy->XKeysymToKeycode(XStringToKeysym('A')), 'XKeysymToKeycode' );
+    my $key_event= { type => KeyPress, keycode => $keycode, display => $dpy };
+    my ($name, $keysym);
+    is( err{ XLookupString($key_event, $name, $keysym) }, '', 'XLookupString' );
+    like( $name, qr/\w/, 'XLookupString returned a name' );
+    ok( $keysym > 0, 'XLookupString returned a keysym' );
     
     done_testing;
 };

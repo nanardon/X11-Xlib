@@ -1,6 +1,7 @@
-package X11::Xlib::Display;
+package X11::Xlib::Keymap;
 use strict;
 use warnings;
+use Carp;
 
 # ABSTRACT - Object Oriented access to the X11 keymap
 
@@ -57,7 +58,7 @@ A hashref mapping from the symbolic name of a key to its scan code.
 sub keymap {
     my $self= shift;
     if (@_) { $self->{keymap}= shift; delete $self->{rkeymap}; }
-    $self->{keymap} ||= $self->display->_load_symbolic_keymap if defined wantarray;
+    $self->{keymap} ||= defined wantarray? $self->display->_load_symbolic_keymap : undef;
 }
 
 sub rkeymap {
@@ -100,8 +101,8 @@ setups, but I've not tested/confirmed this.
 
 sub modmap {
     my $self= shift;
-    $self->{modmap}= shift if @_;
-    $self->{modmap} ||= $self->display->XGetModifierMapping if defined wantarray;
+    if (@_) { $self->{modmap}= shift; delete $self->{modmap_ident}; }
+    $self->{modmap} ||= defined wantarray? $self->display->XGetModifierMapping : undef;
 }
 
 sub modmap_ident {
@@ -137,6 +138,24 @@ sub modmap_ident {
 
 =head1 METHODS
 
+=head2 new
+
+  my $keymap= X11::Xlib::Keymap->new(display => $dpy, %attrs);
+
+Initialize a keymap with the list of parameters.  L</display> is required
+for any load/save operations.  You can use most of the class with just the
+L</keymap> and </modmap> attributes.
+
+=cut
+
+sub new {
+    my $class= shift;
+    my %args= (@_ == 1 and ref($_[0]) eq 'HASH')? %{ $_[0] }
+        : ((@_ & 1) == 0)? @_
+        : croak "Expected hashref or even-length list";
+    bless \%args, $class;
+}
+
 =head2 find_keycode
 
   my $keycode= $display->find_keycode( $key_sym );
@@ -158,8 +177,8 @@ If you don't have modifier bits, pass 0.
 =cut
 
 sub find_keycode {
-    my ($self, $code)= @_;
-    return $self->rkeymap->{$code};
+    my ($self, $sym)= @_;
+    return $self->rkeymap->{$sym};
 }
 
 sub find_keysym {
@@ -276,7 +295,7 @@ Returns the number of key codes added.
 
 sub modmap_add_codes {
     my ($self, $modifier, @codes)= @_;
-    my $mod_id= $self->modifier_ident->{$modifier};
+    my $mod_id= $self->modmap_ident->{$modifier};
     croak "Modifier '$modifier' does not exist in this keymap"
         unless defined $mod_id;
     
@@ -285,7 +304,7 @@ sub modmap_add_codes {
     @$modcodes= grep { !$seen{$_}++ } @$modcodes;
     my $n= @$modcodes;
     push @$modcodes, grep { !$seen{$_}++ } @codes;
-    return @modcodes - $n;
+    return @$modcodes - $n;
 }
 
 sub modmap_add_syms {
@@ -298,7 +317,7 @@ sub modmap_add_syms {
     }
     croak "Key codes not found: ".join(' ', @notfound)
         if @notfound;
-    $self->modmap_add_codes(@codes);
+    $self->modmap_add_codes($modifier, @codes);
 }
 
 =head2 modmap_del_codes
@@ -328,13 +347,13 @@ sub modmap_del_codes {
     my $count= 0;
     my %del= map { $_ => 1 } @codes;
     if (defined $modifier) {
-        my $mod_id= $self->modifier_ident->[$modifier];
+        my $mod_id= $self->modmap_ident->{$modifier};
         croak "Modifier '$modifier' does not exist in this keymap"
             unless defined $mod_id;
-        $codes= $self->modmap->[$mod_id];
-        my $n= @$codes;
-        @$codes= grep { !$del{$_} } @$codes;
-        $count= $n - @$codes;
+        my $cur_codes= $self->modmap->[$mod_id];
+        my $n= @$cur_codes;
+        @$cur_codes= grep { !$del{$_} } @$cur_codes;
+        $count= $n - @$cur_codes;
     }
     else {
         for (@{ $self->modmap }) {
@@ -356,7 +375,7 @@ sub modmap_del_syms {
     }
     carp "Key codes not found: ".join(' ', @notfound)
         if @notfound;
-    $self->modmap_del_codes(@codes);
+    $self->modmap_del_codes($modifier, @codes);
 }
 
 =head2 modmap_save
@@ -376,7 +395,7 @@ Save the full L</keymap> and L</modmap>.
 sub modmap_save {
     my ($self, $new_modmap)= @_;
     $self->{modmap}= $new_modmap if defined $new_modmap;
-    $self->XSetModifierMapping($self->modmap);
+    $self->display->XSetModifierMapping($self->modmap);
 }
 
 sub save {

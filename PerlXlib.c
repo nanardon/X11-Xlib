@@ -169,6 +169,7 @@ void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_si
             // Cheat by using a mortal SV :-)
             tmp= sv_2mortal(newSV(struct_size + X11_Xlib_Struct_Padding));
             buf= SvPVX(tmp);
+            memset(buf, 0, struct_size);
             packer(buf, (HV*) sv, 0);
             return buf;
         }
