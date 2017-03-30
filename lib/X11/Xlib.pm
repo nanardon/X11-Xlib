@@ -194,8 +194,8 @@ X11::Xlib - Low-level access to the X11 library
   
   use X11::Xlib;
   my $display= X11::Xlib->new($conn_string);  # shortcut for X11::Xlib::Display->new
-  my $window= $display->new_window({ x => 0, y => 0, width => 50, height => 50);
-  $window->show();
+  $display->fake_motion(undef, 50, 50)
+  $display->flush;
 
 =head1 DESCRIPTION
 
@@ -213,8 +213,6 @@ on that, you get a more friendly wrapper around Xlib that helps you manage
 resource lifespan, wraps XIDs with perl objects, and does some sanity checking
 on the state of the library when you call methods.
 
-=cut
-
 =head1 ATTRIBUTES
 
 The X11::Xlib connection is a hashref with a few attributes and methods
@@ -222,7 +220,7 @@ independent of Xlib.
 
 =head2 autoclose
 
-Boolean flag that determines whether the destructor will call XCloseDisplay.
+Boolean flag that determines whether the destructor will call L</XCloseDisplay>.
 Defaults to true for connections returned by L</XOpenDisplay>.
 
 =head1 FUNCTIONS
@@ -252,7 +250,7 @@ would have to perform all cleanup with your stack tied up through Xlib, but
 this library cheats by using croak (C<longjmp>) to escape the callback and let
 you wrap up your script in a normal manner.  B<However>, after a fatal
 error Xlib's internal state could be damaged, so it is unsafe to make any more
-Xlib calls.  The library tries to help assert this by invalidating all the
+Xlib calls.  This library tries to help enforce that by invalidating all the
 connection objects.
 
 If you really need your program to keep running your best bet is to state-dump
@@ -950,7 +948,7 @@ Pure-perl implementation of the X11 protocol.
 
 =head1 TODO
 
-This module still only covers a small fraction of the Xlib API.
+This module still only covers a fraction of the Xlib API.
 Patches are welcome :)
 
 =head1 AUTHOR

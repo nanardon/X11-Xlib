@@ -3,9 +3,11 @@ use strict;
 use warnings;
 use FindBin;
 use File::Temp;
+use File::Find;
 
 my @constant_sets;
 my @function_sets;
+my @manifest;
 my $xs_boot= qq{  HV* stash= gv_stashpvn("X11::Xlib", 9, 1);\n};
 my %xs_ctor= (
     i => 'newSViv(%s)',
@@ -13,8 +15,11 @@ my %xs_ctor= (
     n => 'newSVnv(%s)',
 );
 
-{
-    open my $consts_fh, "<", "$FindBin::Bin/../PerlXlib_constants" or die;
+# Run from project root
+chdir "$FindBin::Bin/..";
+
+{ # Rebuild the exportable constants
+    open my $consts_fh, "<", "PerlXlib_constants" or die;
     while (<$consts_fh>) {
         chomp;
         if ($_ =~ /^\w/) {
@@ -28,8 +33,8 @@ my %xs_ctor= (
         }
     }
 }
-{
-    open my $xs_fh, "<", "$FindBin::Bin/../Xlib.xs" or die;
+{ # Rebuild the list of exportable Xfunctions
+    open my $xs_fh, "<", "Xlib.xs" or die;
     my $ignore= 1;
     while (<$xs_fh>) {
         if ($_ =~ /PACKAGE\s*=\s*(\S+)/) {
@@ -44,6 +49,11 @@ my %xs_ctor= (
                 unless $1 eq 'DESTROY';
         }
     }
+}
+{ # Rebuild the MANIFEST files
+    open my $manifest, "<", "MANIFEST" or die;
+    @manifest= grep { $_ !~ m,^(lib|t)/, } <$manifest>;
+    push @manifest, sort `find lib t -type f`;
 }
 
 sub wordwrap {
@@ -85,6 +95,8 @@ my $fn_pl= join '',
     map {
         wordwrap(4, 79, "  ".shift(@$_)." => [qw( ".join(' ', sort @$_)." )],\n")
     } sort { $a->[0] cmp $b->[0] } @function_sets;
+
 patch_file("Xlib.xs", 'GENERATED BOOT CONSTANTS', $xs_boot);
 patch_file("lib/X11/Xlib.pm", 'GENERATED XS CONSTANT LIST', $consts_pl);
 patch_file("lib/X11/Xlib.pm", 'GENERATED XS FUNCTION LIST', $fn_pl);
+{ open my $fh, ">MANIFEST" or die "$!"; print $fh @manifest; close $fh or die "$!"; }
