@@ -43,4 +43,20 @@ by calling an Xlib Free/Destroy function if it goes out of scope.
 The default is False, since this base class has no idea how to release
 any resources.
 
+=head1 AUTHOR
+
+Olivier Thauvin, E<lt>nanardon@nanardon.zarb.orgE<gt>
+
+Michael Conrad, E<lt>mike@nrdvana.netE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2009-2010 by Olivier Thauvin
+
+Copyright (C) 2017 by Michael Conrad
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.10.0 or,
+at your option, any later version of Perl 5 you may have available.
+
 =cut

@@ -4,13 +4,17 @@ use warnings;
 use X11::Xlib ();
 use Carp ();
 
+=head1 NAME
+
+X11::Xlib::Struct - Base class for X11 packed structures
+
 =head1 DESCRIPTION
 
 Base class for the various exposed C-structs of Xlib, which are represented
 as a blessed scalar-ref of the raw bytes of the struct.  This makes them more
 efficient than fully inflating/deflating perl hashrefs for every Xlib call.
 
-All accessors are defined in XS.
+All attribute accessors are defined in XS.
 
 =head1 METHODS
 
@@ -116,3 +120,23 @@ require X11::Xlib::XEvent;
 @X11::Xlib::XSizeHints::ISA= ( __PACKAGE__ );
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Olivier Thauvin, E<lt>nanardon@nanardon.zarb.orgE<gt>
+
+Michael Conrad, E<lt>mike@nrdvana.netE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2009-2010 by Olivier Thauvin
+
+Copyright (C) 2017 by Michael Conrad
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.10.0 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut

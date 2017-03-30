@@ -2,6 +2,10 @@ package X11::Xlib::XEvent;
 use X11::Xlib; # need constants loaded
 use parent 'X11::Xlib::Struct';
 
+=head1 NAME
+
+X11::Xlib::XEvent - Polymorphic class for XEvent structures
+
 =head1 DESCRiPTION
 
 This object wraps an XEvent.  XEvent is a union of many different C structs,
@@ -17,7 +21,7 @@ to new struct fields.
 
 Most of the "magic" occurs from Perl code, not XS, so it is possible to define
 new event types if this module lacks any in your local copy of Xlib.  You can
-also access the L</buffer> directly any time you want.  And, you don't even have
+also access the L</bytes> directly any time you want.  And, you don't even have
 to use this object at all; any scalar or scalarref of the correct length can be
 passed to the L<X11::Xlib> methods that expect an XEvent pointer.
 
@@ -31,7 +35,7 @@ passed to the L<X11::Xlib> methods that expect an XEvent pointer.
 
 You can construct XEvent as an empty buffer, or initialize it with a hash or
 hashref of fields.  Initialization is performed via L</pack>.  Un-set fields
-are initialized to zero, and the L</buffer> is always padded to the length
+are initialized to zero, and the L</bytes> is always padded to the length
 of an XEvent.
 
 =head2 bytes
@@ -630,3 +634,23 @@ Used for event type: VisibilityNotify
 # ----------------------------------------------------------------------------
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Olivier Thauvin, E<lt>nanardon@nanardon.zarb.orgE<gt>
+
+Michael Conrad, E<lt>mike@nrdvana.netE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2009-2010 by Olivier Thauvin
+
+Copyright (C) 2017 by Michael Conrad
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.10.0 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut

@@ -10,7 +10,9 @@ require X11::Xlib::Colormap;
 require X11::Xlib::Window;
 require X11::Xlib::Pixmap;
 
-# ABSTRACT - Object-Oriented behavior for X11::Xlib
+=head1 NAME
+
+X11::Xlib::Display - Object-Oriented behavior for X11::Xlib
 
 =head1 DESCRIPTION
 
@@ -709,3 +711,23 @@ sub get_cached_window {
 }
 
 1;
+
+__END__
+
+=head1 AUTHOR
+
+Olivier Thauvin, E<lt>nanardon@nanardon.zarb.orgE<gt>
+
+Michael Conrad, E<lt>mike@nrdvana.netE<gt>
+
+=head1 COPYRIGHT AND LICENSE
+
+Copyright (C) 2009-2010 by Olivier Thauvin
+
+Copyright (C) 2017 by Michael Conrad
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.10.0 or,
+at your option, any later version of Perl 5 you may have available.
+
+=cut

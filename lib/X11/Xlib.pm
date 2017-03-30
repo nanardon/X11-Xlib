@@ -197,6 +197,8 @@ X11::Xlib - Low-level access to the X11 library
   $display->fake_motion(undef, 50, 50)
   $display->flush;
 
+
+
 =head1 DESCRIPTION
 
 This module provides low-level access to Xlib functions.

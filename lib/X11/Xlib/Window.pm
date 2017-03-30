@@ -33,7 +33,7 @@ __END__
 
 =head1 NAME
 
-X11::Xlib::Window - Low-level access to X11 windows
+X11::Xlib::Window - XID wrapper for Window
 
 =head1 SYNOPSIS
 
