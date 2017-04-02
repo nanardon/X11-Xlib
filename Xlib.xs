@@ -574,7 +574,7 @@ XQueryKeymap(dpy)
 
 char *
 XKeysymToString(keysym)
-    unsigned long keysym
+    KeySym keysym
     CODE:
         RETVAL = XKeysymToString(keysym);
     OUTPUT:
@@ -587,6 +587,47 @@ XStringToKeysym(string)
         RETVAL = XStringToKeysym(string);
     OUTPUT:
         RETVAL
+
+void
+keysym_to_codepoint(keysym)
+    KeySym keysym
+    INIT:
+        int codepoint;
+    PPCODE:
+        codepoint= PerlXlib_keysym_to_codepoint(keysym);
+        PUSHs(codepoint >= 0? newSViv(codepoint) : &PL_sv_undef);
+
+void
+codepoint_to_keysym(codepoint)
+    int codepoint
+    INIT:
+        KeySym sym;
+    PPCODE:
+        sym= PerlXlib_codepoint_to_keysym(codepoint);
+        PUSHs(sym > 0? newSViv(sym) : &PL_sv_undef);
+
+void
+keysym_to_char(keysym)
+    KeySym keysym
+    INIT:
+        int codepoint;
+    PPCODE:
+        codepoint= PerlXlib_keysym_to_codepoint(keysym);
+        PUSHs(codepoint >= 0? newSVpvf("%c", codepoint) : &PL_sv_undef);
+
+void
+char_to_keysym(str)
+    SV *str
+    INIT:
+        int codepoint;
+        KeySym sym;
+        const char *s;
+        size_t len;
+    PPCODE:
+        s= SvPV(str, len);
+        codepoint= NATIVE_TO_UNI(DO_UTF8(str)? utf8_to_uvchr_buf(s, s+len, &len) : s[0]);
+        sym= PerlXlib_codepoint_to_keysym(codepoint);
+        PUSHs(codepoint > 0 && sym > 0? newSViv(sym) : &PL_sv_undef);
 
 int
 IsKeypadKey(keysym)

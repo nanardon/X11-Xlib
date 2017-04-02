@@ -202,6 +202,19 @@ void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_si
     return SvPVX(sv);
 }
 
+#include "keysym_to_codepoint.c"
+
+KeySym PerlXlib_codepoint_to_keysym(int uc) {
+    // Latin-1 is identical
+    if ((uc >= 0x0020 && uc <= 0x007E) || (uc >= 0x00A0 && uc <= 0x00FF))
+        return uc;
+    // Unicode in range 0..0xFFFFFF can be stored directly
+    if ((uc & 0xFFFFFF) == uc)
+        return 0x1000000 | uc;
+
+    return NoSymbol;
+}
+
 int PerlXlib_X_error_handler(Display *d, XErrorEvent *e) {
     dSP;
     ENTER;

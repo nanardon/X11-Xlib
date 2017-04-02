@@ -44,7 +44,7 @@ chdir "$FindBin::Bin/..";
         next if $ignore;
         if ($_ =~ / \((fn_\w+)\) ---/) {
             push @function_sets, [ $1 ];
-        } elsif ($_ =~ /^([A-Z]\w+)\(/) {
+        } elsif ($_ =~ /^([A-Za-z]\w+)\(/) {
             push @{ $function_sets[-1] }, $1
                 unless $1 eq 'DESTROY';
         }

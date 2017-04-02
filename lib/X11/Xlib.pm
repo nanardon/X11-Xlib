@@ -59,13 +59,13 @@ my %_functions= (
   fn_event => [qw( XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent
     XCheckWindowEvent XFlush XNextEvent XPutBackEvent XSelectInput XSendEvent
     XSync )],
-  fn_input => [qw(  )],
+  fn_input => [qw( keyboard_leds )],
   fn_keymap => [qw( XDisplayKeycodes XGetKeyboardMapping XGetModifierMapping
     XKeysymToKeycode XLookupString XRefreshKeyboardMapping XSetModifierMapping
     )],
   fn_keysym => [qw( IsFunctionKey IsKeypadKey IsMiscFunctionKey IsModifierKey
     IsPFKey IsPrivateKeypadKey XConvertCase XKeysymToString XStringToKeysym
-    )],
+    char_to_keysym codepoint_to_keysym keysym_to_char keysym_to_codepoint )],
   fn_pix => [qw( XCreateBitmapFromData XCreatePixmap
     XCreatePixmapFromBitmapData XFreePixmap )],
   fn_screen => [qw( DefaultColormap DefaultDepth DefaultGC DefaultScreen
@@ -197,7 +197,14 @@ X11::Xlib - Low-level access to the X11 library
   $display->fake_motion(undef, 50, 50)
   $display->flush;
 
-
+  # Remap Caps_Lock to a Smiley face
+  
+  use X11::Xlib;
+  my $display= X11::Xlib->new;
+  my $caps_code= $display->keymap->find_keycode('Caps_lock')
+    or die "Already remapped";
+  $display->keymap->keymap->[$caps_code]= ["U263A","U263A"];
+  $display->keymap->save;
 
 =head1 DESCRIPTION
 
@@ -595,7 +602,7 @@ C<< $visual_info->depth >> as the C<$depth> parameter, and create a matching
 L</Colormap> which you pass via the C<\%attrs> parameter.
 
 Since this function didn't have nearly enough parameters for the imaginations
-of the Xlib creators, they added the full L</XSetWindowAttributes> structure
+of the Xlib creators, they added the full L<X11::Xlib::XSetWindowAttributes> structure
 as a final argument.  But to save you the trouble of setting all I<those>
 fields, they added an C<$attr_mask> to indicate which fields you are using.
 
@@ -705,6 +712,96 @@ and C<$pressed> indicates if the key was pressed or released.
 The optional C<$EventSendDelay> parameter specifies the number of milliseconds to wait
 before sending the event. The default is 10 milliseconds.
 
+=head2 KEYSYM FUNCTIONS
+
+These utility functions help identify and convert KeySym values, and do not
+depend on a connection to an X server.
+
+=head3 XKeysymToString
+
+  XKeysymToString($keysym)
+
+Return the human-readable string for character number C<$keysym>.
+
+C<XKeysymToString> is the exact reverse of C<XStringToKeysym>.
+
+=head3 XStringToKeysym
+
+  XStringToKeysym($string)
+
+Return the keysym number for the human-readable character C<$string>.
+
+C<XStringToKeysym> is the exact reverse of C<XKeysymToString>.
+
+=head3 codepoint_to_keysym
+
+  my $keysym= codepoint_to_keysym(ord($char));
+
+Convert a Unicode codepoint to a keysym value.  This isn't a true Xlib
+function, but fills a gap in the API.  Every normal unicode codepoint has a
+keysym value, but if you pass an invalid codepoint you will get C<undef>.
+
+=head3 keysym_to_codepoint
+
+  my $cp= keysym_to_codepoint($keysym);
+  my $char= defined $cp? chr($cp) : undef;
+
+Convert a KeySym to a unicode codepoint.  Many KeySyms (like F1, Control, etc)
+do not have any character associated with them, and will return C<undef>.
+
+=head3 uchar_to_keysym
+
+Like L</codepoint_to_keysym> example above, but takes a string from which it
+calls L<ord()> on the first character.  Returns undef if the string doesn't
+have a first character.
+
+=head3 keysym_to_uchar
+
+Like L</keysym_to_codepoint> example above, but returns a string if there is
+a valid codepoint, and C<undef> otherwise.
+
+=head3 XConvertCase
+
+  XConvertCase($keysym, $lowercase_out, $uppercase_out);
+
+Return the lowercase and uppercase KeySyms values for C<$keysym>.
+
+=head3 IsFunctionKey
+
+  IsFunctionKey($keysym)
+
+Return true if C<$keysym> is a function key (F1 .. F35)
+
+=head3 IsKeypadKey
+
+  IsKeypadKey($keysym)
+
+Return true if C<$keysym> is on numeric keypad.
+
+=head3 IsMiscFunctionKey
+
+  IsMiscFunctionKey($keysym)
+
+Return true is key if... honestly don't know :\
+
+=head3 IsModifierKey
+
+  IsModifierKey($keysym)
+
+Return true if C<$keysym> is a modifier key (Shift, Alt).
+
+=head3 IsPFKey
+
+  IsPFKey($keysym)
+
+Xlib docs are fun.  No mention of what "PF" might be.
+
+=head3 IsPrivateKeypadKey
+
+  IsPrivateKeypadKey($keysym)
+
+True for vendor-private key codes.
+
 =head2 KEYCODE FUNCTIONS
 
 =head3 XQueryKeymap
@@ -771,64 +868,6 @@ overwritten with the numeric value of the KeySym.
   XKeysymToKeycode($display, $keysym)
 
 Return the key code corresponding to the character number C<$keysym>.
-
-=head3 XKeysymToString
-
-  XKeysymToString($keysym)
-
-Return the human-readable string for character number C<$keysym>.
-
-C<XKeysymToString> is the exact reverse of C<XStringToKeysym>.
-
-=head3 XStringToKeysym
-
-  XStringToKeysym($string)
-
-Return the keysym number for the human-readable character C<$string>.
-
-C<XStringToKeysym> is the exact reverse of C<XKeysymToString>.
-
-=head3 XConvertCase
-
-  XConvertCase($keysym, $lowercase_out, $uppercase_out);
-
-Return the lowercase and uppercase KeySyms values for C<$keysym>.
-
-=head3 IsFunctionKey
-
-  IsFunctionKey($keysym)
-
-Return true if C<$keysym> is a function key (F1 .. F35)
-
-=head3 IsKeypadKey
-
-  IsKeypadKey($keysym)
-
-Return true if C<$keysym> is on numeric keypad.
-
-=head3 IsMiscFunctionKey
-
-  IsMiscFunctionKey($keysym)
-
-Return true is key if... honestly don't know :\
-
-=head3 IsModifierKey
-
-  IsModifierKey($keysym)
-
-Return true if C<$keysym> is a modifier key (Shift, Alt).
-
-=head3 IsPFKey
-
-  IsPFKey($keysym)
-
-Xlib docs are fun.  No mention of what "PF" might be.
-
-=head3 IsPrivateKeypadKey
-
-  IsPrivateKeypadKey($keysym)
-
-True for vendor-private key codes.
 
 =head3 XBell
 

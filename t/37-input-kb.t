@@ -22,6 +22,45 @@ sub save_temp {
     diag "Saved diagnostics to $fname";
 }
 
+subtest keysym_mapping => sub {
+    # These values should never change.  Just make sure character
+    # and non-character values work.  On my Xlib, unicode values often
+    # become the text "Uxxxx" but sometimes have a symbolic name, so
+    # probably bad to depend on the list of unicode symbolic names.
+    is( XKeysymToString(0xFF09), "Tab", 'XKeysymToString Tab' );
+    is( XKeysymToString(0xFFBE), "F1",  'XKeysymToString F1' );
+    is( XStringToKeysym("Tab"), 0xFF09, 'XStringToKeysym Tab' );
+    is( XStringToKeysym("F1"),  0xFFBE, 'XStringToKeysym F1' );
+    
+    for (
+        [ 0x000FF09 => 0x000009, 'Tab' ],
+        [ 0x000FF1B => 0x00001B, 'Esc' ],
+        [ 0x000FF8D => 0x00000D, 'KP_Enter' ],
+        [ 0x000FFE1 => undef,    'Shift_L' ],
+        [ 0x0000034 => 0x000034, '4' ],
+        [ 0x000004D => 0x00004D, 'M' ],
+        [ 0x00002C6 => 0x000108, 'Ccircumflex' ],
+        [ 0x00004B6 => 0x0030AB, 'Katakana KA' ],
+        [ 0x10030AB => 0x0030AB, 'Katakana KA (direct Ucode mapping)' ],
+        [ 0x0000000 => undef,    'Invalid KeySym' ],
+    ) {
+        my ($keysym, $codepoint, $desc)= @$_;
+        if (defined $keysym) {
+            is( keysym_to_codepoint($keysym), $codepoint, "keysym_to_codepoint: $desc" );
+            is( keysym_to_char($keysym), $codepoint? chr($codepoint) : undef, "keysym_to_char: $desc" );
+        }
+        if (defined $codepoint and $desc !~ /^KP_/) {
+            my $sym= $codepoint < 0x20 || $codepoint > 0xFF? 0x1000000 | $codepoint
+                : $codepoint;
+            is( codepoint_to_keysym($codepoint), $sym, "codepoint_to_keysym: $desc" );
+            is( char_to_keysym(chr($codepoint)), $sym, "char_to_keysym: $desc" );
+        }
+    }
+    is( codepoint_to_keysym(-1), undef, 'Invalid unicode codepoint' );
+    is( char_to_keysym(''),      undef, 'Char of empty string' );
+    done_testing;
+};
+
 subtest modmap => sub {
     my $modmap;
     is( err{ $modmap= $dpy->XGetModifierMapping() }, '', 'XGetModifierMapping' )

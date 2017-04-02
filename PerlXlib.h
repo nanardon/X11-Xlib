@@ -15,6 +15,9 @@ extern SV * PerlXlib_obj_for_display(Display *dpy, int create);
 
 extern XID PerlXlib_sv_to_xid(SV *sv);
 
+extern int PerlXlib_keysym_to_codepoint(KeySym keysym);
+extern KeySym PerlXlib_codepoint_to_keysym(int codepoint);
+
 typedef void PerlXlib_struct_pack_fn(void*, HV*, Bool consume);
 
 extern void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer);
