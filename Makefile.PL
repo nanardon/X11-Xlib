@@ -70,5 +70,11 @@ WriteMakefile(
               'Michael Conrad <mike@nrdvana.net>'
             ]) : ()),
     CONFIGURE_REQUIRES => \%PREREQ_PM,
+    META_MERGE => {
+        resources => {
+            bugtracker => 'https://github.com/nanardon/X11-Xlib/issues',
+            repository => 'https://github.com/nanardon/X11-Xlib.git',
+        }
+    },
     $dep->get_makefile_vars,
 );
