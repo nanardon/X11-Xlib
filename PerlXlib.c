@@ -215,6 +215,56 @@ KeySym PerlXlib_codepoint_to_keysym(int uc) {
     return NoSymbol;
 }
 
+SV * PerlXlib_keysym_to_sv(KeySym sym, int symbolic) {
+    int sym_codepoint;
+    const char *symname;
+    if (sym == NoSymbol)
+        return &PL_sv_undef;
+    // Only convert to unicode character if reverse mapping matches forward mapping
+    if (symbolic >= 2
+        && (sym_codepoint= PerlXlib_keysym_to_codepoint(sym)) >= 0
+        && (PerlXlib_codepoint_to_keysym(sym_codepoint) == sym))
+        return newSVpvf("%c", sym_codepoint);
+    // Fall back to symbol name, but ensure reverse mapping here, as well
+    else if (symbolic >= 1
+        && sym > 0
+        && (symname= XKeysymToString(sym))
+        && (XStringToKeysym(symname) == sym))
+        return newSVpv(symname, 0);
+    // Else just use the symbol ID
+    else if (!symbolic || sym > 9)
+        return newSViv(sym);
+    // Else it's ambiguous!  Can't be loaded symbolicly.
+    else
+        return NULL;
+}
+
+KeySym PerlXlib_sv_to_keysym(SV *sv) {
+    size_t len;
+    long ival, codepoint;
+    KeySym sym;
+    char *name, *endp;
+    
+    if (!sv || !SvOK(sv))
+        return NoSymbol;
+    // First try to process it as an X11 symbol name
+    name= SvPV(sv, len);
+    sym= XStringToKeysym(name);
+    // Else, use multi-digit numbers directly, and single-digit as a char lookup
+    if (sym == NoSymbol) {
+        if (SvIOK(sv) && SvIV(sv) > 9)
+            sym= SvIV(sv);
+        else if ((ival= strtol(name, &endp, 0)) && (endp - name > 1) && *endp == 0)
+            sym= ival;
+        // If it is a single character, try looking up a keysym for it
+        else if ((DO_UTF8(sv)? sv_len_utf8(sv) : len) == 1) {
+            codepoint= NATIVE_TO_UNI(DO_UTF8(sv)? utf8_to_uvchr_buf(name, name+len, &len) : (name[0] & 0xFF));
+            sym= PerlXlib_codepoint_to_keysym(codepoint);
+        }
+    }
+    return sym;
+}
+
 int PerlXlib_X_error_handler(Display *d, XErrorEvent *e) {
     dSP;
     ENTER;

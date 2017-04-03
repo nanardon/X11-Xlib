@@ -17,6 +17,8 @@ extern XID PerlXlib_sv_to_xid(SV *sv);
 
 extern int PerlXlib_keysym_to_codepoint(KeySym keysym);
 extern KeySym PerlXlib_codepoint_to_keysym(int codepoint);
+extern SV * PerlXlib_keysym_to_sv(KeySym keysym, int symbolic);
+extern KeySym PerlXlib_sv_to_keysym(SV *sv);
 
 typedef void PerlXlib_struct_pack_fn(void*, HV*, Bool consume);
 

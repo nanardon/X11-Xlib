@@ -48,7 +48,14 @@ sub display {
 
 =head2 keymap
 
-Arrayref that maps from a key code (byte) to an arrayref of KeySyms names.
+Arrayref that maps from a key code (byte) to an arrayref of KeySyms.
+The meaning of the positions of the arrayref roughly correspond to
+
+  [ $normal_key, $key_with_shift, $mode2_normal_key, $mode2_key_with_shift ]
+
+where "mode2" indicates a dynamic switch of key layout of some sort.
+Additional elements of the array are vendor-specific.
+
 This table is exactly as loaded from the X11 server
 
 =head2 rkeymap
@@ -60,7 +67,7 @@ A hashref mapping from the symbolic name of a key to its scan code.
 sub keymap {
     my $self= shift;
     if (@_) { $self->{keymap}= shift; delete $self->{rkeymap}; }
-    $self->{keymap} ||= defined wantarray? $self->display->_load_symbolic_keymap : undef;
+    $self->{keymap} ||= defined wantarray? $self->display->load_keymap : undef;
 }
 
 sub rkeymap {
@@ -118,7 +125,7 @@ sub modmap_ident {
         if (grep { $_ && $_ eq 'Caps_Lock' } map { ($_ && defined $km->[$_])? @{ $km->[$_] } : () } @{ $mm->[1] }) {
             $ident{capslock}= 1;
         # Else check for the XK_Shift_Lock
-        } elsif (grep { $_ && $_ eq 'Shift_Lock' } map { ($_ && defined $km->[$_])? @{ $mm->[$_] } : () } @{ $mm->[1] }) {
+        } elsif (grep { $_ && $_ eq 'Shift_Lock' } map { ($_ && defined $km->[$_])? @{ $km->[$_] } : () } @{ $mm->[1] }) {
             $ident{shiftlock}= 1;
         }
         # Identify the group based on what keys belong to it
@@ -180,13 +187,14 @@ If you don't have modifier bits, pass 0.
 
 sub find_keycode {
     my ($self, $sym)= @_;
-    return $self->rkeymap->{$sym};
+    return $self->rkeymap->{$sym}
+        || $self->rkeymap->{X11::Xlib::XKeysymToString(X11::Xlib::char_to_keysym($sym))};
 }
 
 sub find_keysym {
     my $self= shift;
     my ($keycode, $modifiers)=
-        @_ == 1 && ref($_[0])->can('pack')? ( $_[0]->keycode, $_[0]->state )
+        @_ == 1 && ref($_[0]) && ref($_[0])->can('pack')? ( $_[0]->keycode, $_[0]->state )
         : @_ == 2? @_
         : croak "Expected XKeyEvent or (code,modifiers)";
     my $km= $self->keymap->[$keycode]
@@ -240,7 +248,7 @@ sub keymap_reload {
     my ($self, @codes)= @_;
     my ($min, $max)= @codes? ($codes[0], $codes[0]) : (0,255);
     for (@codes) { $min= $_ if $_ < $min; $max= $_ if $_ > $max; }
-    my $km= $self->display->_load_symbolic_keymap($min, $max);
+    my $km= $self->display->load_keymap(2, $min, $max);
     splice(@{$self->keymap}, $min, $max-$min+1, @$km);
     $self->keymap;
 }
@@ -250,7 +258,7 @@ sub keymap_save {
     my $km= $self->keymap;
     my ($min, $max)= @codes? ($codes[0], $codes[0]) : (0, $#$km);
     for (@codes) { $min= $_ if $_ < $min; $max= $_ if $_ > $max; }
-    $self->display->_save_symbolic_keymap($km, $min, $max);
+    $self->display->save_keymap($km, $min, $max);
 }
 
 =head2 modmap_sym_list
@@ -271,7 +279,7 @@ sub modmap_sym_list {
     my $km= $self->keymap;
     my $mod_id= $self->modmap_ident->{$modifier};
     return unless defined $mod_id;
-    return map { $km->[$_][0] } @{ $self->modmap->[$mod_id] };
+    return map { $km->[$_][0]? ( $km->[$_][0] ) : () } @{ $self->modmap->[$mod_id] };
 }
 
 =head2 modmap_add_codes

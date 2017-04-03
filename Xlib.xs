@@ -724,46 +724,56 @@ XGetKeyboardMapping(dpy, fkeycode, count = 1)
         XFree(keysym);
 
 void
-_load_symbolic_keymap(dpy, minkey=0, maxkey=255)
+load_keymap(dpy, symbolic=2, minkey=0, maxkey=255)
     Display *dpy
+    int symbolic
     int minkey
     int maxkey
     INIT:
         int xmin, xmax, i, j, nsym;
-        const char *symname;
-        KeySym *syms, *cursym;
+        KeySym *syms, sym;
         AV *tbl, *row;
+        SV *sv;
     PPCODE:
         XDisplayKeycodes(dpy, &xmin, &xmax);
         if (xmin < minkey) xmin= minkey;
         if (xmax > maxkey) xmax= maxkey;
         syms= XGetKeyboardMapping(dpy, xmin, xmax-xmin+1, &nsym);
+        if (!syms)
+            croak("XGetKeyboardMapping failed");
         tbl= newAV();
+        PUSHs(sv_2mortal(newRV_noinc((SV*) tbl)));
         av_extend(tbl, maxkey);
         for (i= minkey; i < xmin; i++)
             av_push(tbl, newSVsv(&PL_sv_undef));
         for (i= 0; i <= xmax-xmin; i++) {
             row= newAV();
+            av_push(tbl, newRV_noinc((SV*) row));
             av_extend(row, nsym-1);
             for (j= 0; j < nsym; j++) {
-                symname= syms[i*nsym+j] == NoSymbol? NULL : XKeysymToString(syms[i*nsym+j]);
-                if (symname)
-                    av_store(row, j, newSVpv(symname, 0));
+                if (syms[i*nsym+j]) {
+                    sv= PerlXlib_keysym_to_sv(syms[i*nsym+j], symbolic);
+                    if (!sv) {
+                        XFree(syms);
+                        croak("Your keymap includes KeySym 0x%x that can't be un-ambiguously represented by a string", syms[i*nsym+j]);
+                    }
+                    av_store(row, j, sv);
+                }
             }
-            av_push(tbl, newRV_noinc((SV*) row));
         }
         XFree(syms);
-        PUSHs(sv_2mortal(newRV_noinc((SV*) tbl)));
 
 void
-_save_symbolic_keymap(dpy, kmap, minkey=0, maxkey=255)
+save_keymap(dpy, kmap, minkey=0, maxkey=255)
     Display *dpy
     AV *kmap
     int minkey
     int maxkey
     INIT:
-        int xmin, xmax, amin, nsym, i, j, n, m;
+        int xmin, xmax, amin, nsym, i, j, n, m, codepoint, ival;
+        size_t len;
         const char *name;
+        char *endp;
         KeySym *syms, cursym;
         SV **elem, *buf;
         AV *row;
@@ -801,10 +811,9 @@ _save_symbolic_keymap(dpy, kmap, minkey=0, maxkey=255)
                 if (j < n) {
                     elem= av_fetch(row, j, 0);
                     if (elem && *elem && SvOK(*elem)) {
-                        name= SvPV_nolen(*elem);
-                        cursym= XStringToKeysym(name);
+                        cursym= PerlXlib_sv_to_keysym(*elem);
                         if (cursym == NoSymbol)
-                            croak("No such KeySym %s", name);
+                            croak("No such KeySym %s (slot %d of keycode %d)", name, j, i+xmin);
                     }
                 }
                 syms[ i * nsym + j ]= cursym;

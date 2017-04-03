@@ -2,9 +2,15 @@
 
 use strict;
 use warnings;
-use Test::More tests => 7;
+use Test::More tests => 8;
 use X11::Xlib ':all';
 sub err(&) { my $code= shift; my $ret; { local $@= ''; eval { $code->() }; $ret= $@; } $ret }
+
+my $TEST_DESTRUTIVE= !!$ENV{TEST_DESTRUTIVE};
+sub skip_destructive($) {
+    skip "TEST_DESTRUTIVE is false; skipping destrutive tests", shift
+        unless $TEST_DESTRUTIVE;
+}
 
 my $dpy= new_ok( 'X11::Xlib', [], 'connect to X11' );
 
@@ -68,14 +74,16 @@ subtest modmap => sub {
      && is( join('', map ref, @$modmap), 'ARRAY'x 8, '...of arrays' )
      or diag(explain $modmap), die "XGetModifierMapping failed.  Not continuing";
     
-    # Seems like a bad idea, but need to test....
-    is( err{ $dpy->XSetModifierMapping($modmap) }, '', 'XSetModifierMapping' );
+    SKIP: {
+        skip_destructive 2;
+        # Seems like a bad idea, but need to test....
+        is( err{ $dpy->XSetModifierMapping($modmap) }, '', 'XSetModifierMapping' );
 
-    # Make sure we didn't change it
-    my $modmap2= $dpy->XGetModifierMapping();
-    is_deeply( $modmap2, $modmap, 'same as last time' )
-        or BAIL_OUT "SORRY! We changed your X11 key modifiers!";
-    
+        # Make sure we didn't change it
+        my $modmap2= $dpy->XGetModifierMapping();
+        is_deeply( $modmap2, $modmap, 'same as last time' )
+            or BAIL_OUT "SORRY! We changed your X11 key modifiers!";
+    }
     done_testing;
 };
 
@@ -85,19 +93,21 @@ subtest keymap => sub {
     ok( @keysyms > 0, "Got keysyms for $min" );
     
     my $mapping;
-    is( err{ $mapping= $dpy->_load_symbolic_keymap }, '', '_load_symbolic_keymap' );
+    is( err{ $mapping= $dpy->load_keymap }, '', 'load_keymap' );
     ok( ref($mapping) eq 'ARRAY' && @$mapping > 0 && ref($mapping->[-1]) eq 'ARRAY', '...is array of arrays' )
         or save_temp("keymap-before", explain $mapping);
     
-    # Fingers crossed!
-    is( err{ $dpy->_save_symbolic_keymap($mapping) }, '', '_save_symbolic_keymap' )
-        or save_temp("keymap-before", explain $mapping);
-    
-    # Make sure we didn't change it
-    my $kmap2= $dpy->_load_symbolic_keymap;
-    is_deeply( $mapping, $kmap2, 'same as before' )
-        or save_temp("keymap-after", explain $kmap2);
-    
+    SKIP: {
+        skip_destructive 2;
+        # Fingers crossed!
+        is( err{ $dpy->save_keymap($mapping) }, '', 'save_keymap' )
+            or save_temp("keymap-before", explain $mapping);
+        
+        # Make sure we didn't change it
+        my $kmap2= $dpy->load_keymap;
+        is_deeply( $mapping, $kmap2, 'same as before' )
+            or do { save_temp("keymap-before", explain $mapping); save_temp("keymap-after", explain $kmap2); BAIL_OUT "Sorry! We dammaged your keymap.  You might need to log out to fix it"; };
+    }    
     done_testing;
 };
 
@@ -105,9 +115,15 @@ subtest keymap_wrapper => sub {
     # TODO: this is sloppy and doesn't prove much
     ok( my $keymap= $dpy->keymap );
     is( err{ $keymap->keymap_reload }, '', 'keymap_reload' );
-    is( err{ $keymap->keymap_save   }, '', 'keymap_save' );
+    SKIP: {
+        skip_destructive 1;
+        is( err{ $keymap->keymap_save   }, '', 'keymap_save' );
+    }
     is( err{ $keymap->modmap_sym_list('shift') }, '', 'modmap_sym_list' );
-    is( err{ $keymap->modmap_save   }, '', 'modmap_save' );
+    SKIP: {
+        skip_destructive 1;
+        is( err{ $keymap->modmap_save   }, '', 'modmap_save' );
+    }
     is( err{ $keymap->modmap_add_syms(control => 'Control_L') }, '', 'modmap_add_syms' );
     is( err{ $keymap->modmap_del_syms(control => 'Control_L') }, '', 'modmap_del_syms' );
     done_testing;

@@ -62,7 +62,7 @@ my %_functions= (
   fn_input => [qw( keyboard_leds )],
   fn_keymap => [qw( XDisplayKeycodes XGetKeyboardMapping XGetModifierMapping
     XKeysymToKeycode XLookupString XRefreshKeyboardMapping XSetModifierMapping
-    )],
+    load_keymap save_keymap )],
   fn_keysym => [qw( IsFunctionKey IsKeypadKey IsMiscFunctionKey IsModifierKey
     IsPFKey IsPrivateKeypadKey XConvertCase XKeysymToString XStringToKeysym
     char_to_keysym codepoint_to_keysym keysym_to_char keysym_to_codepoint )],
@@ -205,6 +205,21 @@ X11::Xlib - Low-level access to the X11 library
     or die "Already remapped";
   $display->keymap->keymap->[$caps_code]= ["U263A","U263A"];
   $display->keymap->save;
+
+  # Remap Caps_Lock to the table-flip emoji  (runs as daemon)
+  use X11::Xlib ':constants';
+  my $display= X11::Xlib->new;
+  my $caps_code= $display->keymap->find_keycode('Caps_lock') || 0x42;
+  $display->keymap->keymap->[$caps_code]= [];
+  
+  $display->keymap->save;
+  my $wnd= $display->new_window(class => InputOnly, event_mask => KeyPress);
+  while (1) {
+    my $e= $wnd->wait_event();
+    if ($e->type == KeyPress) {
+      
+    }
+  }
 
 =head1 DESCRIPTION
 
@@ -749,13 +764,13 @@ keysym value, but if you pass an invalid codepoint you will get C<undef>.
 Convert a KeySym to a unicode codepoint.  Many KeySyms (like F1, Control, etc)
 do not have any character associated with them, and will return C<undef>.
 
-=head3 uchar_to_keysym
+=head3 char_to_keysym
 
 Like L</codepoint_to_keysym> example above, but takes a string from which it
 calls L<ord()> on the first character.  Returns undef if the string doesn't
 have a first character.
 
-=head3 keysym_to_uchar
+=head3 keysym_to_char
 
 Like L</keysym_to_codepoint> example above, but returns a string if there is
 a valid codepoint, and C<undef> otherwise.
@@ -822,7 +837,63 @@ Lock, Mode).  The X11 server may return a variable number of codes per key,
 which you can determine by dividing the total number of values returned by this
 function by the C<$count>.
 
-For an easier interface, see L<X11::Xlib::Keymap>.
+For a more perl-friendly interface, see L</load_keymap>.  For object-oriented
+access, see L<X11::Xlib::Keymap>.
+
+=head3 XSetKeyboardMapping
+
+  XChangeKeyboardMapping($display, $first_keycode, $keysym_per_keycode, \@keysyms, $num_codes);
+  
+  # Best explained with an example...
+  my @keycodes= (
+    ord('a'), ord('A'), ord('a'), ord('A'),  # want to assign these to KeyCode 38
+    ord('s'), ord('S'), ord('s'), ord('S'),  # and these to KeyCode 39
+  );
+  XChangeKeyboardMapping($display, 38, 4, \@keycodes, scalar @keycodes);
+
+Update some/all of the KeySyms attached to one or more KeyCodes.
+In the example above, only the first 4 KeySyms of each KeyCode will be changed.
+Specify a larger number of C<$keysym_per_keycode> to overwrite more of them.
+
+For a more perl-friendly interface, see L</save_keymap>.  For object-oriented
+access, see L<X11::Xlib::Keymap>.
+
+=head3 load_keymap
+
+  my $keymap= load_keymap($display, $symbolic, $min_key, $max_key);
+  my $keymap= load_keymap($display, $symbolic); # all keys
+  my $keymap= load_keymap($display); # all keys, symbolic=2
+
+This is a wrapper around L</XGetKeyboardMapping> which returns an arrayref
+of arrayrefs, and also translates KeySym values into KeySym names or unicode
+characters.  If C<$symbolic> is 0, the elements of the arrays are numbers.
+If C<$symbolic> is 1, the elements are the KeySym name (or integers, if a name
+is not available).
+If C<$symbolic> is 2, the elements are characters for every KeySym that can be
+un-ambiguously represented by a character, else KeySym names, else integers.
+
+The minimum KeyCode of an X server is never below 8.  If you omit C<$min_key>
+it defaults to 0, and so the returned array will always have at least 8 undef
+values at the start.  This minor waste allows you to index into the array
+directly with a KeyCode.
+
+=head3 save_keymap
+
+  save_keymap($display, \@keymap, $min_key, $max_key);
+  save_keymap($display, \@keymap); # to update all keycodes
+
+This is a wrapper around L</XChangeKeyboardMapping> that accepts the same
+array-of-arrays returned by L</load_keymap>.  The first element of the array
+is assumed to be C<$min_key> B<unless the array is longer than C<$max_key> >
+in which case the array is assumed to start at 0 and you are requesting that
+only elements C<($min_key .. $max_key)> be sent to the X server.
+
+Each element of the inner array can be an integer KeySym, or a KeySym name
+recognized by L</XStringToKeysym>, or a single unicode character.
+If the KeySym is an integer, it must be at least two integer digits, which
+all real KeySyms should be (other that NoSymbol which has the value 0, and
+should be represented by C<undef>) to avoid ambiguity with the characters of
+the number keys.
 
 =head3 XGetModifierMapping
 
