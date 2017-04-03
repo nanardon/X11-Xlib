@@ -3,6 +3,7 @@ Display *             O_X11_Xlib
 DisplayOrNull         O_X11_XlibOrNull
 ScreenNumber          O_X11_Xlib_ScreenNumber
 Visual *              O_X11_Xlib_Opaque
+VisualOrNull          O_X11_Xlib_OpaqueOrNull
 GC                    O_X11_Xlib_Opaque
 XEvent *              O_X11_Xlib_Struct
 XVisualInfo *         O_X11_Xlib_Struct
@@ -77,3 +78,20 @@ O_X11_Xlib_Opaque
 OUTPUT
 O_X11_Xlib_Opaque
     sv_setref_pv($arg, \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\", (void*) $var);
+
+INPUT
+O_X11_Xlib_OpaqueOrNull
+    if (!SvOK($arg) || (SvIOK($arg) && !SvIV($arg)))
+        $var= NULL;
+    else if (sv_isa($arg, \"X11::Xlib::@{[ $type =~ /(\w+?)OrNull/ ]}\")) {
+        $var= ($type) SvIV((SV*)SvRV($arg));
+    } else {
+        croak( \"%s is not a %s\", \"$var\", \"X11::Xlib::@{[ $type =~ /(\w+)/ ]}\" );
+    }
+
+OUTPUT
+O_X11_Xlib_OpaqueOrNull
+    if ($var)
+        sv_setref_pv($arg, \"X11::Xlib::@{[ $type =~ /(\w+?)OrNull/ ]}\", (void*) $var);
+    else
+        sv_setsv($arg, &PL_sv_undef);

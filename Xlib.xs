@@ -417,7 +417,7 @@ XCreateWindow(dpy, parent, x, y, w, h, border, depth, class, visual, attr_mask, 
     int border
     int depth
     int class
-    Visual *visual
+    VisualOrNull visual
     int attr_mask
     XSetWindowAttributes *attrs
 

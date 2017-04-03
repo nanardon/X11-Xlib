@@ -560,6 +560,10 @@ sub new_window {
     $y ||= 0;
     $w ||= $args{min_width} || 0;
     $h ||= $args{min_height} || 0;
+    $border ||= 0;
+    $depth= X11::Xlib::CopyFromParent unless defined $depth;
+    $class= X11::Xlib::CopyFromParent unless defined $class;
+    $visual= X11::Xlib::CopyFromParent unless defined $visual;
 
     # Now extract fields specific to XSizeHints
     my %sizehints;
@@ -572,11 +576,8 @@ sub new_window {
 
     my $wnd= $self->XCreateWindow(
         $args{parent} || $self->root_window,
-        $x, $y, $w, $h,
-        $border || 0,
-        $depth || $self->depth,
-        (defined $class? $class : X11::Xlib::CopyFromParent),
-        $visual || $self->visual,
+        $x, $y, $w, $h, $border,
+        $depth, $class, $visual,
         $attrflags, \%attrs
     );
 
@@ -592,6 +593,16 @@ sub new_window {
 sub RootWindow {
     $_[0]->get_cached_window( &X11::Xlib::RootWindow );
 }
+
+=head3 XCreateWindow
+
+Like L<X11::Xlib/XCreateWindow>, but returns a L<X11::Xlib::Window> object.
+
+=head3 XCreateSimpleWindow
+
+Like L<X11::Xlib::XCreateSimpleWindow>, but returns a L<X11::Xlib::Window> object.
+
+=cut
 
 sub XCreateWindow {
     $_[0]->get_cached_window( &X11::Xlib::XCreateWindow, autofree => 1);
