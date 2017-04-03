@@ -187,8 +187,23 @@ If you don't have modifier bits, pass 0.
 
 sub find_keycode {
     my ($self, $sym)= @_;
-    return $self->rkeymap->{$sym}
-        || $self->rkeymap->{X11::Xlib::XKeysymToString(X11::Xlib::char_to_keysym($sym))};
+    my $code= $self->rkeymap->{$sym};
+    return $code if defined $code;
+    # If length==1, assume it is a character and then try the name and symbol value
+    if (length $sym == 1) {
+        my $sym_val= X11::Xlib::char_to_keysym($sym);
+        my $sym_name= X11::Xlib::XKeysymToString($sym_val);
+        $code= $self->rkeymap->{$sym_name} if $sym_val && defined $sym_name;
+        $code= $self->rkeymap->{$sym_val} if $sym_val && !defined $code;
+    }
+    # Else assume it is a symbol name and try to find the symbol character
+    else {
+        my $sym_val= X11::Xlib::XStringToKeysym($sym);
+        my $sym_char= X11::Xlib::keysym_to_char($sym_val);
+        $code= $self->rkeymap->{$sym_char} if $sym_val && defined $sym_char;
+        $code= $self->rkeymap->{$sym_val} if $sym_val && !defined $code;
+    }
+    return $code;
 }
 
 sub find_keysym {

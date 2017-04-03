@@ -6,6 +6,7 @@ typemap
 Xlib.xs
 PerlXlib.h
 PerlXlib.c
+keysym_to_codepoint.c
 META.yml                                 Module YAML meta-data (added by MakeMaker)
 META.json                                Module JSON meta-data (added by MakeMaker)
 lib/X11/Xlib.pm

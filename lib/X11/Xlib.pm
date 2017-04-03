@@ -8,7 +8,7 @@ use base qw(Exporter DynaLoader);
 use Carp;
 use Try::Tiny;
 
-our $VERSION = '0.09_05';
+our $VERSION = '0.09_06';
 
 sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
 
@@ -205,25 +205,10 @@ X11::Xlib - Low-level access to the X11 library
   
   use X11::Xlib;
   my $display= X11::Xlib->new;
-  my $caps_code= $display->keymap->find_keycode('Caps_lock')
-    or die "Already remapped";
-  $display->keymap->keymap->[$caps_code]= ["U263A","U263A"];
+  my $caps_code= $display->keymap->find_keycode('Caps_lock') // 0x42;
+  $display->keymap->modmap_del_codes(lock => $caps_code);
+  $display->keymap->keymap->[$caps_code]= [("U263A") x 4];
   $display->keymap->save;
-
-  # Remap Caps_Lock to the table-flip emoji  (runs as daemon)
-  use X11::Xlib ':constants';
-  my $display= X11::Xlib->new;
-  my $caps_code= $display->keymap->find_keycode('Caps_lock') || 0x42;
-  $display->keymap->keymap->[$caps_code]= [];
-  
-  $display->keymap->save;
-  my $wnd= $display->new_window(class => InputOnly, event_mask => KeyPress);
-  while (1) {
-    my $e= $wnd->wait_event();
-    if ($e->type == KeyPress) {
-      
-    }
-  }
 
 =head1 DESCRIPTION
 
