@@ -550,26 +550,6 @@ XTestFakeKeyEvent(dpy, kc, pressed, EventSendDelay = 10)
     int pressed
     int EventSendDelay
 
-void
-XBell(dpy, percent)
-    Display *  dpy
-    int percent
-
-void
-XQueryKeymap(dpy)
-    Display *  dpy
-    PREINIT:
-        char keys_return[32];
-        int i, j;
-    PPCODE:
-        XQueryKeymap(dpy, keys_return);
-        for(i=0; i<32; i++) {
-            for (j=0; j<8;j++) {
-                if (keys_return[i] & (1 << j))
-                    XPUSHs(sv_2mortal(newSViv(i * 8 + j)));
-            }
-        }
-
 # KeySym Utility Functions (fn_keysym) ---------------------------------------
 
 char *
@@ -667,9 +647,98 @@ XConvertCase(ksym, lowercase, uppercase)
 
 # Input Functions (fn_input) -------------------------------------------------
 
+void
+XQueryKeymap(dpy)
+    Display *  dpy
+    PREINIT:
+        char keys_return[32];
+        int i, j;
+    PPCODE:
+        XQueryKeymap(dpy, keys_return);
+        for(i=0; i<32; i++) {
+            for (j=0; j<8;j++) {
+                if (keys_return[i] & (1 << j))
+                    XPUSHs(sv_2mortal(newSViv(i * 8 + j)));
+            }
+        }
+
+int
+XGrabKeyboard(dpy, wnd, owner_events, pointer_mode, keyboard_mode, timestamp)
+    Display *dpy
+    Window wnd
+    Bool owner_events
+    int pointer_mode
+    int keyboard_mode
+    Time timestamp
+
+void
+XUngrabKeyboard(dpy, timestamp)
+    Display *dpy
+    Time timestamp
+
+void
+XGrabKey(dpy, keycode, modifiers, grab_window, owner_events, pointer_mode=GrabModeAsync, keyboard_mode=GrabModeAsync)
+    Display *dpy
+    int keycode
+    unsigned modifiers
+    Window grab_window
+    Bool owner_events
+    int pointer_mode
+    int keyboard_mode
+
+void
+XUngrabKey(dpy, keycode, modifiers, grab_window)
+    Display *dpy
+    int keycode
+    unsigned modifiers
+    Window grab_window
+
+int
+XGrabPointer(dpy, wnd, owner_events, event_mask, pointer_mode, keyboard_mode, confine_to, cursor, timestamp)
+    Display *dpy
+    Window wnd
+    Bool owner_events
+    unsigned int event_mask
+    int pointer_mode
+    int keyboard_mode
+    Window confine_to
+    Cursor cursor
+    Time timestamp
+
+void
+XUngrabPointer(dpy, timestamp)
+    Display *dpy
+    Time timestamp
+
+void
+XGrabButton(dpy, button, modifiers, wnd, owner_events, event_mask, pointer_mode, keyboard_mode, confine_to, cursor)
+    Display *dpy
+    unsigned button
+    unsigned modifiers
+    Window wnd
+    Bool owner_events
+    unsigned event_mask
+    int pointer_mode
+    int keyboard_mode
+    Window confine_to
+    Cursor cursor
+
+void
+XUngrabButton(dpy, button, modifiers, wnd)
+    Display *dpy
+    unsigned button
+    unsigned modifiers
+    Window wnd
+
+void
+XAllowEvents(dpy, event_mode, timestamp)
+    Display *dpy
+    int event_mode
+    Time timestamp
+
 unsigned long
 keyboard_leds(dpy)
-    Display *  dpy;
+    Display *dpy;
     PREINIT:
         XKeyboardState state;
     CODE:
@@ -680,7 +749,7 @@ keyboard_leds(dpy)
 
 void
 _auto_repeat(dpy)
-    Display *  dpy;
+    Display *dpy;
     PREINIT:
         XKeyboardState state;
         int i, j;
@@ -692,6 +761,11 @@ _auto_repeat(dpy)
                     XPUSHs(sv_2mortal(newSViv(i * 8 + j)));
             }
         }
+
+void
+XBell(dpy, percent)
+    Display *  dpy
+    int percent
 
 # Keyboard Mapping Functions (fn_keymap) -------------------------------------
 
@@ -2724,6 +2798,10 @@ BOOT:
   newCONSTSUB(stash, "PropertyChangeMask", newSViv(PropertyChangeMask));
   newCONSTSUB(stash, "ColormapChangeMask", newSViv(ColormapChangeMask));
   newCONSTSUB(stash, "OwnerGrabButtonMask", newSViv(OwnerGrabButtonMask));
+  newCONSTSUB(stash, "AnyModifier", newSViv(AnyModifier));
+  newCONSTSUB(stash, "AnyKey", newSViv(AnyKey));
+  newCONSTSUB(stash, "NoSymbol", newSViv(NoSymbol));
+  newCONSTSUB(stash, "XK_VoidSymbol", newSViv(XK_VoidSymbol));
   newCONSTSUB(stash, "ShiftMask", newSViv(ShiftMask));
   newCONSTSUB(stash, "LockMask", newSViv(LockMask));
   newCONSTSUB(stash, "ControlMask", newSViv(ControlMask));
@@ -2737,6 +2815,16 @@ BOOT:
   newCONSTSUB(stash, "Button3Mask", newSViv(Button3Mask));
   newCONSTSUB(stash, "Button4Mask", newSViv(Button4Mask));
   newCONSTSUB(stash, "Button5Mask", newSViv(Button5Mask));
+  newCONSTSUB(stash, "GrabModeSync", newSViv(GrabModeSync));
+  newCONSTSUB(stash, "GrabModeAsync", newSViv(GrabModeAsync));
+  newCONSTSUB(stash, "AsyncPointer", newSViv(AsyncPointer));
+  newCONSTSUB(stash, "SyncPointer", newSViv(SyncPointer));
+  newCONSTSUB(stash, "ReplayPointer", newSViv(ReplayPointer));
+  newCONSTSUB(stash, "AsyncKeyboard", newSViv(AsyncKeyboard));
+  newCONSTSUB(stash, "SyncKeyboard", newSViv(SyncKeyboard));
+  newCONSTSUB(stash, "ReplayKeyboard", newSViv(ReplayKeyboard));
+  newCONSTSUB(stash, "SyncBoth", newSViv(SyncBoth));
+  newCONSTSUB(stash, "AsyncBoth", newSViv(AsyncBoth));
   newCONSTSUB(stash, "BadAccess", newSViv(BadAccess));
   newCONSTSUB(stash, "BadAlloc", newSViv(BadAlloc));
   newCONSTSUB(stash, "BadAtom", newSViv(BadAtom));

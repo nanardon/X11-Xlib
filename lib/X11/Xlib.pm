@@ -29,9 +29,6 @@ my %_constants= (
     KeymapNotify LeaveNotify MapNotify MappingNotify MotionNotify NoExpose
     PropertyNotify ReparentNotify ResizeRequest SelectionClear SelectionNotify
     SelectionRequest UnmapNotify VisibilityNotify )],
-  const_event_input_state => [qw( Button1Mask Button2Mask Button3Mask
-    Button4Mask Button5Mask ControlMask LockMask Mod1Mask Mod2Mask Mod3Mask
-    Mod4Mask Mod5Mask ShiftMask )],
   const_event_mask => [qw( Button1MotionMask Button2MotionMask
     Button3MotionMask Button4MotionMask Button5MotionMask ButtonMotionMask
     ButtonPressMask ButtonReleaseMask ColormapChangeMask EnterWindowMask
@@ -40,6 +37,11 @@ my %_constants= (
     PointerMotionMask PropertyChangeMask ResizeRedirectMask
     StructureNotifyMask SubstructureNotifyMask SubstructureRedirectMask
     VisibilityChangeMask )],
+  const_input => [qw( AnyKey AnyModifier AsyncBoth AsyncKeyboard AsyncPointer
+    Button1Mask Button2Mask Button3Mask Button4Mask Button5Mask ControlMask
+    GrabModeAsync GrabModeSync LockMask Mod1Mask Mod2Mask Mod3Mask Mod4Mask
+    Mod5Mask NoSymbol ReplayKeyboard ReplayPointer ShiftMask SyncBoth
+    SyncKeyboard SyncPointer XK_VoidSymbol )],
   const_sizehint => [qw( PAspect PBaseSize PMaxSize PMinSize PPosition
     PResizeInc PSize PWinGravity USPosition USSize )],
   const_visual => [qw( VisualAllMask VisualBitsPerRGBMask VisualBlueMaskMask
@@ -59,7 +61,9 @@ my %_functions= (
   fn_event => [qw( XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent
     XCheckWindowEvent XFlush XNextEvent XPutBackEvent XSelectInput XSendEvent
     XSync )],
-  fn_input => [qw( keyboard_leds )],
+  fn_input => [qw( XAllowEvents XBell XGrabButton XGrabKey XGrabKeyboard
+    XGrabPointer XQueryKeymap XUngrabButton XUngrabKey XUngrabKeyboard
+    XUngrabPointer keyboard_leds )],
   fn_keymap => [qw( XDisplayKeycodes XGetKeyboardMapping XGetModifierMapping
     XKeysymToKeycode XLookupString XRefreshKeyboardMapping XSetModifierMapping
     load_keymap save_keymap )],
@@ -76,8 +80,8 @@ my %_functions= (
   fn_win => [qw( XCreateSimpleWindow XCreateWindow XDestroyWindow XGetGeometry
     XGetWMNormalHints XGetWMSizeHints XMapWindow XSetWMNormalHints
     XSetWMSizeHints XUnmapWindow )],
-  fn_xtest => [qw( XBell XQueryKeymap XTestFakeButtonEvent XTestFakeKeyEvent
-    XTestFakeMotionEvent )],
+  fn_xtest => [qw( XTestFakeButtonEvent XTestFakeKeyEvent XTestFakeMotionEvent
+    )],
 # END GENERATED XS FUNCTION LIST
 );
 our @EXPORT_OK= map { @$_ } values %_constants, values %_functions;
@@ -824,6 +828,58 @@ True for vendor-private key codes.
   XQueryKeymap($display)
 
 Return a list of the key codes currently pressed on the keyboard.
+
+=head3 XGrabKeyboard
+
+  $bool= XGrabKeyboard($display, $window, $owner_events, $pointer_mode, $keyboard_mode, $timestamp)
+
+=head3 XUngrabKeyboard
+
+  XUngrabKeyboard($display, $timestamp)
+
+=head3 XGrabKey
+
+  XGrabKey($display, $keycode, $modifiers, $window, $owner_events, $pointer_mode, $keyboard_mode)
+
+Register a window to receive any matching key events, optionally hiding them
+from the normal target window.
+
+C<$keycode> is the keyboard scan code to watch for, or L<AnyKey>.
+C<$modifiers> is a bit mask combined from C<ControlMask>, C<LockMask>,
+C<Mod1Mask>, C<Mod2Mask>, C<Mod3Mask>, C<Mod4Mask>, C<Mod5Mask>, C<ShiftMask>,
+or the special mask C<AnyModifier> which means any I<or none> of the modifiers.
+C<$window> is the XID or L<X11::Xlib::Window> to direct events toward.
+C<$owner_events> is a boolean of whether to also let the normal target of the
+key event receive them.  C<$pointer_mode> and C<$keyboard_mode> are either
+C<GrabModeSync> or C<GrabModeAsync>.
+
+=head3 XUngrabKey
+
+  XUngrabKey($display, $keycode, $modifiers, $window)
+
+Cancel a grab registered by L</XGrabKey>.
+
+=head3 XGrabPointer
+
+  $bool= XGrabPointer($display, $window, $owner_events, $event_mask,
+    $pointer_mode, keyboard_mode, confine_to, cursor, timestamp)
+
+=head3 XUngrabPointer
+
+  XUngrabPointer(dpy, timestamp)
+
+=head3 XGrabButton
+
+  XGrabButton($display, $button, $modifiers, $window, $owner_events,
+    $event_mask, $pointer_mode, $keyboard_mode, $confine_to, $cursor)
+
+=head3 XUngrabButton
+
+  XUngrabButton($display, $button, $modifiers, $window)
+
+=head3 XAllowEvents
+
+  XAllowEvents($display, $event_mode, $timestamp)
 
 =head3 XGetKeyboardMapping
 

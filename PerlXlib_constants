@@ -56,7 +56,11 @@ const_event_mask
  i PropertyChangeMask
  i ColormapChangeMask
  i OwnerGrabButtonMask
-const_event_input_state
+const_input
+ i AnyModifier
+ i AnyKey
+ i NoSymbol
+ i XK_VoidSymbol
  i ShiftMask
  i LockMask
  i ControlMask
@@ -70,6 +74,16 @@ const_event_input_state
  i Button3Mask
  i Button4Mask
  i Button5Mask
+ i GrabModeSync
+ i GrabModeAsync
+ i AsyncPointer
+ i SyncPointer
+ i ReplayPointer
+ i AsyncKeyboard
+ i SyncKeyboard
+ i ReplayKeyboard
+ i SyncBoth
+ i AsyncBoth
 const_error
  i BadAccess
  i BadAlloc
