@@ -252,9 +252,9 @@ type(event, value=NULL)
         event->type= SvIV(value);
         newpkg= PerlXlib_xevent_pkg_for_type(event->type);
         if (oldpkg != newpkg) {
-          // re-initialize all fields in the area that changed
+          /* re-initialize all fields in the area that changed */
           memset( ((char*)(void*)event) + sizeof(XAnyEvent), 0, sizeof(XEvent)-sizeof(XAnyEvent) );
-          // re-bless the object if the thing passed to us was actually an object
+          /* re-bless the object if the thing passed to us was actually an object */
           if (sv_derived_from(ST(0), "X11::Xlib::XEvent"))
             sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
         }
@@ -362,13 +362,13 @@ const char* PerlXlib_xevent_pkg_for_type(int type) {
   }
 }
 
-// First, pack type, then pack fields for XAnyEvent, then any fields known for that type
+/* First, pack type, then pack fields for XAnyEvent, then any fields known for that type */
 void PerlXlib_${goal}_pack($goal *s, HV *fields, Bool consume) {
     SV **fp;
     int newtype;
     const char *oldpkg, *newpkg;
 
-    // Type gets special handling
+    /* Type gets special handling */
     fp= hv_fetch(fields, "type", 4, 0);
     if (fp && *fp) {
       newtype= SvIV(*fp);
@@ -377,7 +377,7 @@ void PerlXlib_${goal}_pack($goal *s, HV *fields, Bool consume) {
         newpkg= PerlXlib_xevent_pkg_for_type(newtype);
         s->type= newtype;
         if (oldpkg != newpkg) {
-          // re-initialize all fields in the area that changed
+          /* re-initialize all fields in the area that changed */
           memset( ((char*)(void*)s) + sizeof(XAnyEvent), 0, sizeof(XEvent)-sizeof(XAnyEvent) );
         }
       }
@@ -429,8 +429,9 @@ sub generate_unpack_c {
     # First, pack type, then pack fields for XAnyEvent, then any fields known for that type
     my $c= <<"@";
 void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
-    // hv_store may return NULL if there is an error, or if the hash is tied.
-    // If it does, we need to clean up the value!
+    /* hv_store may return NULL if there is an error, or if the hash is tied.
+     * If it does, we need to clean up the value!
+     */
     SV *sv= NULL;
     if (!hv_store(fields, "type", 4, (sv= newSViv(s->type)), 0)) goto store_fail;
 @
@@ -556,7 +557,7 @@ _pack(e, fields, consume)
         oldpkg= PerlXlib_xevent_pkg_for_type(e->type);
         PerlXlib_XEvent_pack(e, fields, consume);
         newpkg= PerlXlib_xevent_pkg_for_type(e->type);
-        // re-bless the object if the thing passed to us was actually an object
+        /* re-bless the object if the thing passed to us was actually an object */
         if (oldpkg != newpkg && sv_derived_from(ST(0), "X11::Xlib::XEvent"))
             sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
 

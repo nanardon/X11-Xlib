@@ -1,6 +1,7 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#include "ppport.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -23,7 +24,7 @@ extern Display * PerlXlib_get_magic_dpy(SV *sv, Bool not_null) {
     if (not_null) {
         if (SvTRUE(get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD)))
             croak("Cannot call further Xlib functions after fatal Xlib error");
-        if (mg) // has magic, but NULL pointer
+        if (mg) /* has magic, but NULL pointer */
             croak("X11 connection was closed");
         if (!sv_derived_from(sv, "X11::Xlib"))
             croak("Invalid X11 connection; must be instance of X11::Xlib");
@@ -41,7 +42,7 @@ extern SV * PerlXlib_set_magic_dpy(SV *sv, Display *dpy) {
     if (!sv_isobject(sv))
         croak("Can't add magic Display* to non-object");
     
-    // Search for existing Magic that would hold this pointer
+    /* Search for existing Magic that would hold this pointer */
     for (mg = SvMAGIC(SvRV(sv)); mg; mg = mg->mg_moremagic) {
         if (mg->mg_type == PERL_MAGIC_ext && mg->mg_virtual == &PerlXlib_dpy_mg_vtbl) {
             old_dpy= (Display*) mg->mg_ptr;
@@ -50,25 +51,26 @@ extern SV * PerlXlib_set_magic_dpy(SV *sv, Display *dpy) {
         }
     }
     
-    // If value remains unchanged, nothing to do
+    /* If value remains unchanged, nothing to do */
     if (dpy == old_dpy) return sv;
-    // If magic doesn't exist, add it
+    /* If magic doesn't exist, add it */
     if (!mg)
         sv_magicext(SvRV(sv), NULL, PERL_MAGIC_ext, &PerlXlib_dpy_mg_vtbl, (const char *) dpy, 0);
     
     cache= get_hv("X11::Xlib::_connections", GV_ADD);
-    // Object might be cached under old dpy key.  Remove the cache reference.
+    /* Object might be cached under old dpy key.  Remove the cache reference. */
     if (old_dpy)
         hv_delete(cache, (void*) &old_dpy, sizeof(old_dpy), G_DISCARD);
     
-    // Cache a weak ref to this object keyed by the new Display* value
+    /* Cache a weak ref to this object keyed by the new Display* value */
     if (dpy) {
         fp= hv_fetch(cache, (void*) &dpy, sizeof(dpy), 1);
         if (!fp) croak("failed to add item to hash (tied?)");
         if (*fp && SvROK(*fp) && SvRV(*fp) != SvRV(sv))
             warn("Replacing cached connection object for Display* 0x%p!", dpy);
-        // New weak-ref to this object
-        // Docs warn that sv_setsv might de-allocate mortal sources, so inc ref count temporarily
+        /* New weak-ref to this object
+         * Docs warn that sv_setsv might de-allocate mortal sources, so inc ref count temporarily
+         */
         SvREFCNT_inc(sv);
         if (!*fp) *fp= newSVsv(sv); else sv_setsv(*fp, sv);
         sv_2mortal(sv);
@@ -77,27 +79,28 @@ extern SV * PerlXlib_set_magic_dpy(SV *sv, Display *dpy) {
     return sv;
 }
 
-// Converting a Display* to a \X11::Xlib is difficult because we want
-// to re-use the existing object.  We cache them in %X11::Xlib::_connections.
-// This function returns a mortal strong-reference to an instance of X11::Xlib (or subclass)
+/* Converting a Display* to a \X11::Xlib is difficult because we want
+ * to re-use the existing object.  We cache them in %X11::Xlib::_connections.
+ * This function returns a mortal strong-reference to an instance of X11::Xlib (or subclass)
+ */
 extern SV * PerlXlib_obj_for_display(Display *dpy, int create) {
     SV **fp, *self;
     if (!dpy) {
-        // Translate NULL to undef
+        /* Translate NULL to undef */
         return &PL_sv_undef;
     }
     else {
         fp= hv_fetch(get_hv("X11::Xlib::_connections", GV_ADD), (void*) &dpy, sizeof(dpy), 0);
-        // Return existing object if we have one for this Display* already
+        /* Return existing object if we have one for this Display* already */
         if (fp && *fp && SvROK(*fp)) {
-            // create strong-ref from weakref
+            /* create strong-ref from weakref */
             return sv_mortalcopy(*fp);
         }
         else if (create) {
-            // Always create instance of X11::Xlib.  X11::Xlib::Display can re-bless as needed.
+            /* Always create instance of X11::Xlib.  X11::Xlib::Display can re-bless as needed. */
             self= sv_2mortal(newRV_noinc((SV*) newHV()));
             sv_bless(self, gv_stashpv("X11::Xlib", GV_ADD));
-            PerlXlib_set_magic_dpy(self, dpy); // This also adds it to the _connections cache
+            PerlXlib_set_magic_dpy(self, dpy); /* This also adds it to the _connections cache */
             return self;
         }
         else {
@@ -106,7 +109,7 @@ extern SV * PerlXlib_obj_for_display(Display *dpy, int create) {
     }
 }
 
-// Allow unsigned integer, or hashref with field ->{xid}
+/* Allow unsigned integer, or hashref with field ->{xid} */
 XID PerlXlib_sv_to_xid(SV *sv) {
     SV **xid_field;
 
@@ -121,29 +124,31 @@ XID PerlXlib_sv_to_xid(SV *sv) {
     return (XID) SvUV(*xid_field);
 }
 
-// Xlib warns that some structs might change size, and provide "XAllocFoo"
-//   functions.  However, this only solves the case of Xlib access violations
-//   from an old perl module on a new Xlib.  New perl modules on old Xlib would
-//   still write beyond the buffer (on the perl side) and corrupt memory.
-//   Annoyingly, Xlib doesn't seem to have any way to query the size of the struct,
-//   only allocate it.
-// Instead of using XAllocFoo sillyness (and the memory management hassle it
-//   would cause), just pad the struct with some extra bytes.
-// Perl modules will probably always be compiled fresh anyway.
+/* Xlib warns that some structs might change size, and provide "XAllocFoo"
+ *   functions.  However, this only solves the case of Xlib access violations
+ *   from an old perl module on a new Xlib.  New perl modules on old Xlib would
+ *   still write beyond the buffer (on the perl side) and corrupt memory.
+ *   Annoyingly, Xlib doesn't seem to have any way to query the size of the struct,
+ *   only allocate it.
+ * Instead of using XAllocFoo sillyness (and the memory management hassle it
+ *   would cause), just pad the struct with some extra bytes.
+ * Perl modules will probably always be compiled fresh anyway.
+ */
 #ifndef X11_Xlib_Struct_Padding
 #define X11_Xlib_Struct_Padding 64
 #endif
-// Coercions allowed for RValue:
-//   foo( "buffer_of_the_correct_length_or_more" );
-//   foo( \"ref_to_buffer_of_the_correct_length_or_more" );
-//   foo( \%hashref_of_fields );
-//   foo( bless(\"buffer_of_correct_length_or_more", "pkg_or_subclass") )
-// Coercions allowed for LValue:
-//   foo( my $x= undef );
-//   foo( "buffer_of_correct_length_or_more" );
-//   foo( \(my $x= undef) );
-//   foo( \"buffer_of_correct_length_or_more" );
-//   foo( bless(\"buffer_of_correct_length_or_more", "any_struct_class") )
+/* Coercions allowed for RValue:
+ *   foo( "buffer_of_the_correct_length_or_more" );
+ *   foo( \"ref_to_buffer_of_the_correct_length_or_more" );
+ *   foo( \%hashref_of_fields );
+ *   foo( bless(\"buffer_of_correct_length_or_more", "pkg_or_subclass") )
+ * Coercions allowed for LValue:
+ *   foo( my $x= undef );
+ *   foo( "buffer_of_correct_length_or_more" );
+ *   foo( \(my $x= undef) );
+ *   foo( \"buffer_of_correct_length_or_more" );
+ *   foo( bless(\"buffer_of_correct_length_or_more", "any_struct_class") )
+ */
 void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer) {
     SV *tmp, *ref= NULL;
     void* buf;
@@ -152,9 +157,9 @@ void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_si
     if (SvROK(sv)) {
         ref= sv;
         sv= SvRV(sv);
-        // Follow scalar refs, to get to the buffer of a blessed object
+        /* Follow scalar refs, to get to the buffer of a blessed object */
         if (SvTYPE(sv) == SVt_PVMG) {
-            // If it is a blessed object, ensure the type matches
+            /* If it is a blessed object, ensure the type matches */
             if (sv_isobject(ref) && !sv_isa(ref, pkg)) {
                 if (!sv_derived_from(ref, lvalue? "X11::Xlib::Struct" : pkg)) {
                     buf= SvPV(ref, n);
@@ -162,30 +167,32 @@ void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_si
                 }
             }
         }
-        // Also accept a hashref, which we pass to "pack"
+        /* Also accept a hashref, which we pass to "pack" */
         else if (SvTYPE(sv) == SVt_PVHV) {
             if (lvalue) croak("Can't coerce hashref to %s lvalue", pkg);
-            // Need a buffer that lasts for the rest of our XS call stack.
-            // Cheat by using a mortal SV :-)
+            /* Need a buffer that lasts for the rest of our XS call stack.
+             * Cheat by using a mortal SV :-)
+             */
             tmp= sv_2mortal(newSV(struct_size + X11_Xlib_Struct_Padding));
             buf= SvPVX(tmp);
             memset(buf, 0, struct_size);
             packer(buf, (HV*) sv, 0);
             return buf;
         }
-        else if (SvTYPE(sv) >= SVt_PVAV) { // not a scalar
+        else if (SvTYPE(sv) >= SVt_PVAV) { /* not a scalar */
             buf= SvPV(ref, n);
             croak("Can't coerce %.*s to %s %s", n, buf, pkg, lvalue? "lvalue":"rvalue");
         }
     }
     
-    // If uninitialized, initialize to a blessed struct object,
-    //  unless we're looking at \undef in which case just initialize to a string
+    /* If uninitialized, initialize to a blessed struct object,
+     *  unless we're looking at \undef in which case just initialize to a string
+     */
     if (!SvOK(sv)) {
         if (!lvalue) croak("Can't coerce %sundef to %s rvalue", ref? "\\" : "", pkg);
         if (!ref) {
             ref= sv, sv= newSVrv(sv, pkg);
-            // sv is now the referenced scalar, which is undef, and gets inflated next
+            /* sv is now the referenced scalar, which is undef, and gets inflated next */
         }
         sv_setpvn(sv, "", 0);
         SvGROW(sv, struct_size+X11_Xlib_Struct_Padding);
@@ -196,7 +203,7 @@ void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_si
         croak("Paramters requiring %s can only be coerced from string, string ref, hashref, or undef", pkg);
     else if (SvCUR(sv) < struct_size)
         croak("Scalars used as %s must be at least length %d (got %d)", pkg, struct_size, SvCUR(sv));
-    // Make sure we have the padding even if the user tinkered with the buffer
+    /* Make sure we have the padding even if the user tinkered with the buffer */
     SvPV_force(sv, n);
     SvGROW(sv, struct_size+X11_Xlib_Struct_Padding);
     return SvPVX(sv);
@@ -205,10 +212,10 @@ void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_si
 #include "keysym_to_codepoint.c"
 
 KeySym PerlXlib_codepoint_to_keysym(int uc) {
-    // Latin-1 is identical
+    /* Latin-1 is identical */
     if ((uc >= 0x0020 && uc <= 0x007E) || (uc >= 0x00A0 && uc <= 0x00FF))
         return uc;
-    // Unicode in range 0..0xFFFFFF can be stored directly
+    /* Unicode in range 0..0xFFFFFF can be stored directly */
     if ((uc & 0xFFFFFF) == uc)
         return 0x1000000 | uc;
 
@@ -220,21 +227,21 @@ SV * PerlXlib_keysym_to_sv(KeySym sym, int symbolic) {
     const char *symname;
     if (sym == NoSymbol)
         return &PL_sv_undef;
-    // Only convert to unicode character if reverse mapping matches forward mapping
+    /* Only convert to unicode character if reverse mapping matches forward mapping */
     if (symbolic >= 2
         && (sym_codepoint= PerlXlib_keysym_to_codepoint(sym)) >= 0
         && (PerlXlib_codepoint_to_keysym(sym_codepoint) == sym))
         return newSVpvf("%c", sym_codepoint);
-    // Fall back to symbol name, but ensure reverse mapping here, as well
+    /* Fall back to symbol name, but ensure reverse mapping here, as well */
     else if (symbolic >= 1
         && sym > 0
         && (symname= XKeysymToString(sym))
         && (XStringToKeysym(symname) == sym))
         return newSVpv(symname, 0);
-    // Else just use the symbol ID
+    /* Else just use the symbol ID */
     else if (!symbolic || sym > 9)
         return newSViv(sym);
-    // Else it's ambiguous!  Can't be loaded symbolicly.
+    /* Else it's ambiguous!  Can't be loaded symbolicly. */
     else
         return NULL;
 }
@@ -247,16 +254,16 @@ KeySym PerlXlib_sv_to_keysym(SV *sv) {
     
     if (!sv || !SvOK(sv))
         return NoSymbol;
-    // First try to process it as an X11 symbol name
+    /* First try to process it as an X11 symbol name */
     name= SvPV(sv, len);
     sym= XStringToKeysym(name);
-    // Else, use multi-digit numbers directly, and single-digit as a char lookup
+    /* Else, use multi-digit numbers directly, and single-digit as a char lookup */
     if (sym == NoSymbol) {
         if (SvIOK(sv) && SvIV(sv) > 9)
             sym= SvIV(sv);
         else if ((ival= strtol(name, &endp, 0)) && (endp - name > 1) && *endp == 0)
             sym= ival;
-        // If it is a single character, try looking up a keysym for it
+        /* If it is a single character, try looking up a keysym for it */
         else if ((DO_UTF8(sv)? sv_len_utf8(sv) : len) == 1) {
             codepoint= NATIVE_TO_UNI(DO_UTF8(sv)? utf8_to_uvchr_buf(name, name+len, &len) : (name[0] & 0xFF));
             sym= PerlXlib_codepoint_to_keysym(codepoint);
@@ -306,13 +313,14 @@ int PerlXlib_X_IO_error_handler(Display *d) {
     call_pv("X11::Xlib::_error_fatal", G_VOID|G_DISCARD|G_EVAL|G_KEEPERR);
     FREETMPS;
     LEAVE;
-    croak("Fatal X11 I/O Error"); // longjmp past Xlib, which wants to kill us
-    return 0; // never reached.  Make compiler happy.
+    croak("Fatal X11 I/O Error"); /* longjmp past Xlib, which wants to kill us */
+    return 0; /* never reached.  Make compiler happy. */
 }
 
-// Install the Xlib error handlers, only if they have not already been installed.
-// Use perl scalars to store this status, to avoid threading issues and to
-// give users potential to inspect.
+/* Install the Xlib error handlers, only if they have not already been installed.
+ * Use perl scalars to store this status, to avoid threading issues and to
+ * give users potential to inspect.
+ */
 void PerlXlib_install_error_handlers(Bool nonfatal, Bool fatal) {
     SV *nonfatal_installed= get_sv("X11::Xlib::_error_nonfatal_installed", GV_ADD);
     SV *fatal_installed= get_sv("X11::Xlib::_error_fatal_installed", GV_ADD);
@@ -326,8 +334,8 @@ void PerlXlib_install_error_handlers(Bool nonfatal, Bool fatal) {
     }
 }
 
-//----------------------------------------------------------------------------
-// BEGIN GENERATED X11_Xlib_XEvent
+/*--------------------------------------------------------------------------*/
+/* BEGIN GENERATED X11_Xlib_XEvent */
 
 const char* PerlXlib_xevent_pkg_for_type(int type) {
   switch (type) {
@@ -369,13 +377,13 @@ const char* PerlXlib_xevent_pkg_for_type(int type) {
   }
 }
 
-// First, pack type, then pack fields for XAnyEvent, then any fields known for that type
+/* First, pack type, then pack fields for XAnyEvent, then any fields known for that type */
 void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
     SV **fp;
     int newtype;
     const char *oldpkg, *newpkg;
 
-    // Type gets special handling
+    /* Type gets special handling */
     fp= hv_fetch(fields, "type", 4, 0);
     if (fp && *fp) {
       newtype= SvIV(*fp);
@@ -384,7 +392,7 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
         newpkg= PerlXlib_xevent_pkg_for_type(newtype);
         s->type= newtype;
         if (oldpkg != newpkg) {
-          // re-initialize all fields in the area that changed
+          /* re-initialize all fields in the area that changed */
           memset( ((char*)(void*)s) + sizeof(XAnyEvent), 0, sizeof(XEvent)-sizeof(XAnyEvent) );
         }
       }
@@ -742,8 +750,9 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
 }
 
 void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
-    // hv_store may return NULL if there is an error, or if the hash is tied.
-    // If it does, we need to clean up the value!
+    /* hv_store may return NULL if there is an error, or if the hash is tied.
+     * If it does, we need to clean up the value!
+     */
     SV *sv= NULL;
     if (!hv_store(fields, "type", 4, (sv= newSViv(s->type)), 0)) goto store_fail;
     if (!hv_store(fields, "display"   ,  7, (sv=SvREFCNT_inc(PerlXlib_obj_for_display(s->xany.display, 0))), 0)) goto store_fail;
@@ -960,9 +969,9 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
         croak("Can't store field in supplied hash (tied maybe?)");
 }
 
-// END GENERATED X11_Xlib_XEvent
-//----------------------------------------------------------------------------
-// BEGIN GENERATED X11_Xlib_XVisualInfo
+/* END GENERATED X11_Xlib_XEvent */
+/*--------------------------------------------------------------------------*/
+/* BEGIN GENERATED X11_Xlib_XVisualInfo */
 
 void PerlXlib_XVisualInfo_pack(XVisualInfo *s, HV *fields, Bool consume) {
     SV **fp;
@@ -999,8 +1008,9 @@ void PerlXlib_XVisualInfo_pack(XVisualInfo *s, HV *fields, Bool consume) {
 }
 
 void PerlXlib_XVisualInfo_unpack(XVisualInfo *s, HV *fields) {
-    // hv_store may return NULL if there is an error, or if the hash is tied.
-    // If it does, we need to clean up the value.
+    /* hv_store may return NULL if there is an error, or if the hash is tied.
+     * If it does, we need to clean up the value.
+     */
     SV *sv= NULL;
     if (!hv_store(fields, "bits_per_rgb", 12, (sv=newSViv(s->bits_per_rgb)), 0)) goto store_fail;
     if (!hv_store(fields, "blue_mask" ,  9, (sv=newSVuv(s->blue_mask)), 0)) goto store_fail;
@@ -1018,9 +1028,9 @@ void PerlXlib_XVisualInfo_unpack(XVisualInfo *s, HV *fields) {
         croak("Can't store field in supplied hash (tied maybe?)");
 }
 
-// END GENERATED X11_Xlib_XVisualInfo
-//----------------------------------------------------------------------------
-// BEGIN GENERATED X11_Xlib_XSetWindowAttributes
+/* END GENERATED X11_Xlib_XVisualInfo
+/*--------------------------------------------------------------------------*/
+/* BEGIN GENERATED X11_Xlib_XSetWindowAttributes */
 
 void PerlXlib_XSetWindowAttributes_pack(XSetWindowAttributes *s, HV *fields, Bool consume) {
     SV **fp;
@@ -1072,8 +1082,9 @@ void PerlXlib_XSetWindowAttributes_pack(XSetWindowAttributes *s, HV *fields, Boo
 }
 
 void PerlXlib_XSetWindowAttributes_unpack(XSetWindowAttributes *s, HV *fields) {
-    // hv_store may return NULL if there is an error, or if the hash is tied.
-    // If it does, we need to clean up the value.
+    /* hv_store may return NULL if there is an error, or if the hash is tied.
+     * If it does, we need to clean up the value.
+     */
     SV *sv= NULL;
     if (!hv_store(fields, "background_pixel", 16, (sv=newSVuv(s->background_pixel)), 0)) goto store_fail;
     if (!hv_store(fields, "background_pixmap", 17, (sv=newSVuv(s->background_pixmap)), 0)) goto store_fail;
@@ -1096,9 +1107,9 @@ void PerlXlib_XSetWindowAttributes_unpack(XSetWindowAttributes *s, HV *fields) {
         croak("Can't store field in supplied hash (tied maybe?)");
 }
 
-// END GENERATED X11_Xlib_XSetWindowAttributes
-//----------------------------------------------------------------------------
-// BEGIN GENERATED X11_Xlib_XSizeHints
+/* END GENERATED X11_Xlib_XSetWindowAttributes */
+/*--------------------------------------------------------------------------*/
+/* BEGIN GENERATED X11_Xlib_XSizeHints */
 
 void PerlXlib_XSizeHints_pack(XSizeHints *s, HV *fields, Bool consume) {
     SV **fp;
@@ -1159,8 +1170,9 @@ void PerlXlib_XSizeHints_pack(XSizeHints *s, HV *fields, Bool consume) {
 }
 
 void PerlXlib_XSizeHints_unpack(XSizeHints *s, HV *fields) {
-    // hv_store may return NULL if there is an error, or if the hash is tied.
-    // If it does, we need to clean up the value.
+    /* hv_store may return NULL if there is an error, or if the hash is tied.
+     * If it does, we need to clean up the value.
+     */
     SV *sv= NULL;
 if (s->flags & PBaseSize) {     if (!hv_store(fields, "base_height", 11, (sv=newSViv(s->base_height)), 0)) goto store_fail;
  }if (s->flags & PBaseSize) {     if (!hv_store(fields, "base_width", 10, (sv=newSViv(s->base_width)), 0)) goto store_fail;
@@ -1186,5 +1198,5 @@ if (s->flags & PSize) {     if (!hv_store(fields, "height"    ,  6, (sv=newSViv(
         croak("Can't store field in supplied hash (tied maybe?)");
 }
 
-// END GENERATED X11_Xlib_XSizeHints
-//----------------------------------------------------------------------------
+/* END GENERATED X11_Xlib_XSizeHints
+/*--------------------------------------------------------------------------*/

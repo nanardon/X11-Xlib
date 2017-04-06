@@ -231,8 +231,9 @@ sub generate_unpack_c {
     # First, pack type, then pack fields for XAnyEvent, then any fields known for that type
     my $c= <<"@";
 void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
-    // hv_store may return NULL if there is an error, or if the hash is tied.
-    // If it does, we need to clean up the value.
+    /* hv_store may return NULL if there is an error, or if the hash is tied.
+     * If it does, we need to clean up the value.
+     */
     SV *sv= NULL;
 @
     for my $c_name (sort keys %members) {

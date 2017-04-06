@@ -103,7 +103,7 @@ static short symtab[]= {
   0x002A,0x002B,0x002C,0x002D,0x002E,0x002F,0x0030,0x0031,0x0032,0x0033,0x0034,0x0035,0x0036,0x0037,0x0038,0x0039,-1,-1,-1,0x003D
 };
 int PerlXlib_keysym_to_codepoint(KeySym keysym) {
-    // If Latin-1 or direct-to-unicode, skip table lookup
+    /* If Latin-1 or direct-to-unicode, skip table lookup */
     if ((keysym >= 0x0020 && keysym <= 0x007e) ||
         (keysym >= 0x00a0 && keysym <= 0x00ff))
         return keysym;

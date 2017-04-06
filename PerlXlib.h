@@ -4,11 +4,11 @@
  * promises yet.
  */
 
-typedef Display* DisplayOrNull; // Used by typemap for stricter conversion
+typedef Display* DisplayOrNull; /* Used by typemap for stricter conversion */
 typedef Visual* VisualOrNull;
-typedef int ScreenNumber; // used by typemap to coerce X11::Xlib::Screen
+typedef int ScreenNumber; /* used by typemap to coerce X11::Xlib::Screen */
 
-// Methods to create/alter the magic Display* attached to X11::Xlib objects
+/* Methods to create/alter the magic Display* attached to X11::Xlib objects */
 
 extern Display * PerlXlib_get_magic_dpy(SV *sv, Bool not_null);
 extern SV * PerlXlib_set_magic_dpy(SV *sv, Display *dpy);
@@ -28,7 +28,7 @@ extern void PerlXlib_install_error_handlers(Bool nonfatal, Bool fatal);
 
 extern const char* PerlXlib_xevent_pkg_for_type(int type);
 
-// Pack and Unpack functions for structs
+/* Pack and Unpack functions for structs */
 
 extern void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume);
 extern void PerlXlib_XEvent_unpack(XEvent *s, HV *fields);

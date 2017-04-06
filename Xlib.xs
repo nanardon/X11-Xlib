@@ -1,6 +1,10 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
+#define NEED_newCONSTSUB
+#define NEED_newRV_noinc_GLOBAL
+#define NEED_sv_pvn_force_flags_GLOBAL
+#include "ppport.h"
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
@@ -39,7 +43,7 @@ _pointer_value(obj)
     PPCODE:
         dpy= PerlXlib_get_magic_dpy(obj, 0);
         if (!dpy && SvROK(obj) && SvTYPE(SvRV(obj)) == SVt_PVHV) {
-            // in the case of a dead connection, the pointer value moves to a hash field
+            /* in the case of a dead connection, the pointer value moves to a hash field */
             fp= hv_fetch((HV*)SvRV(obj), "_pointer_value", 14, 0);
         }
         PUSHs(dpy? sv_2mortal(newSVpvn((const char*)&dpy, sizeof(dpy)))
@@ -82,7 +86,7 @@ XCloseDisplay(dpy_sv)
     CODE:
         dpy= PerlXlib_get_magic_dpy(dpy_sv, 1);
         XCloseDisplay(dpy);
-        PerlXlib_set_magic_dpy(dpy_sv, NULL); // mark as closed
+        PerlXlib_set_magic_dpy(dpy_sv, NULL); /* mark as closed */
         hv_delete((HV*)SvRV(dpy_sv), "autoclose", 9, G_DISCARD);
 
 # Event Functions (fn_event) -------------------------------------------------
@@ -486,10 +490,10 @@ XGetWMSizeHints(dpy, wnd, hints_out, supplied_out, property)
         RETVAL
 
 void
-XSetWMSizeHints(dpy, wnd, hints, property)
+XSetWMSizeHints(dpy, wnd, szhints, property)
     Display * dpy
     Window wnd
-    XSizeHints *hints
+    XSizeHints *szhints
     Atom property
 
 int
@@ -500,26 +504,26 @@ XGetWMNormalHints(dpy, wnd, hints_out, supplied_out)
     SV *supplied_out
     INIT:
         long supplied;
-        XSizeHints hints, *dest;
+        XSizeHints szhints, *dest;
     CODE:
-        RETVAL = XGetWMNormalHints(dpy, wnd, &hints, &supplied);
+        RETVAL = XGetWMNormalHints(dpy, wnd, &szhints, &supplied);
         if (RETVAL) {
             dest= (XSizeHints*) PerlXlib_get_struct_ptr(
                 hints_out, 1,
                 "X11::Xlib::XSizeHints", sizeof(XSizeHints),
                 (PerlXlib_struct_pack_fn*) PerlXlib_XSizeHints_pack
             );
-            memcpy(dest, &hints, sizeof(hints));
+            memcpy(dest, &szhints, sizeof(szhints));
             sv_setiv(supplied_out, supplied);
         }
     OUTPUT:
         RETVAL
 
 void
-XSetWMNormalHints(dpy, wnd, hints)
+XSetWMNormalHints(dpy, wnd, szhints)
     Display * dpy
     Window wnd
-    XSizeHints *hints
+    XSizeHints *szhints
 
 void
 XDestroyWindow(dpy, wnd)
@@ -601,11 +605,11 @@ char_to_keysym(str)
     INIT:
         int codepoint;
         KeySym sym;
-        const char *s;
+        char *s;
         size_t len;
     PPCODE:
         s= SvPV(str, len);
-        codepoint= NATIVE_TO_UNI(DO_UTF8(str)? utf8_to_uvchr_buf(s, s+len, &len) : s[0]);
+        codepoint= NATIVE_TO_UNI(DO_UTF8(str)? utf8n_to_uvuni(s, len, &len, 0) : s[0]);
         sym= PerlXlib_codepoint_to_keysym(codepoint);
         PUSHs(codepoint > 0 && sym > 0? newSViv(sym) : &PL_sv_undef);
 
@@ -858,15 +862,16 @@ save_keymap(dpy, kmap, minkey=0, maxkey=255)
         XDisplayKeycodes(dpy, &xmin, &xmax);
         if (xmin < minkey) xmin= minkey;
         if (xmax > maxkey) xmax= maxkey;
-        // If the length of the array is equal to maxkey-minkey, then assume the elements
-        // are exactly min..max.  Else if the array is longer, assume the array starts at 0
-        // and min..max are indexes into the array
+        /* If the length of the array is equal to maxkey-minkey, then assume the elements
+         * are exactly min..max.  Else if the array is longer, assume the array starts at 0
+         * and min..max are indexes into the array
+         */
         amin= (m == maxkey - minkey)? minkey : 0;
         if (maxkey - amin > m && maxkey < 255)
             croak("max exceeds array length");
         if (xmax - amin > m)
             xmax= m - amin;
-        // Find the longest array in the bunch
+        /* Find the longest array in the bunch */
         nsym= 0;
         for (i= 0; i < xmax-xmin+1; i++) {
             elem= av_fetch(kmap, i + (xmin-amin), 0);
@@ -875,7 +880,7 @@ save_keymap(dpy, kmap, minkey=0, maxkey=255)
             n= av_len((AV*) SvRV(*elem))+1;
             if (nsym < n) nsym= n;
         }
-        // Allocate buffer in a temp SV in case we croak
+        /* Allocate buffer in a temp SV in case we croak */
         buf= newSV(nsym * (xmax-xmin+1) * sizeof(KeySym));
         syms= (KeySym*) SvPVX(buf);
         for (i= 0; i < xmax-xmin+1; i++) {
@@ -932,7 +937,7 @@ XSetModifierMapping(dpy, tbl)
         modmap.max_keypermod= 0;
         modmap.modifiermap= keycodes;
         XDisplayKeycodes(dpy, &minkey, &maxkey);
-        // Find the longest array.  Also validate.
+        /* Find the longest array.  Also validate. */
         if (av_len(tbl) != 7)
             croak("Expected arrayref of length 8");
         for (i= 0; i < 8; i++) {
@@ -955,8 +960,9 @@ XSetModifierMapping(dpy, tbl)
                 }
             }
         }
-        // If the number of modifiers is less than the max, shrink the table
-        // rows to match.
+        /* If the number of modifiers is less than the max, shrink the table
+         * rows to match.
+         */
         if (modmap.max_keypermod < 8) {
             n= modmap.max_keypermod;
             if (n == 0)
@@ -991,7 +997,7 @@ XLookupString(event, str_sv, keysym_sv= NULL)
         maxlen= len < 16? 16 : len;
         SvGROW(str_sv, maxlen);
         len= XLookupString((XKeyEvent*) event, SvPVX(str_sv), maxlen-1, &sym, NULL);
-        // If full buffer, try one more time with quadruple buffer space
+        /* If full buffer, try one more time with quadruple buffer space */
         if (len == maxlen-1) {
             maxlen <<= 2;
             SvGROW(str_sv, maxlen);
@@ -1048,7 +1054,7 @@ _error_names()
             E(BadWindow)
 #undef E
         }
-        PUSHs(sv_2mortal((SV*)newRV((SV*)codes)));
+        PUSHs(sv_2mortal((SV*)newRV_inc((SV*)codes)));
 
 void
 _install_error_handlers(nonfatal,fatal)
@@ -1101,7 +1107,7 @@ _pack(e, fields, consume)
         oldpkg= PerlXlib_xevent_pkg_for_type(e->type);
         PerlXlib_XEvent_pack(e, fields, consume);
         newpkg= PerlXlib_xevent_pkg_for_type(e->type);
-        // re-bless the object if the thing passed to us was actually an object
+        /* re-bless the object if the thing passed to us was actually an object */
         if (oldpkg != newpkg && sv_derived_from(ST(0), "X11::Xlib::XEvent"))
             sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
 
@@ -1914,9 +1920,9 @@ type(event, value=NULL)
         event->type= SvIV(value);
         newpkg= PerlXlib_xevent_pkg_for_type(event->type);
         if (oldpkg != newpkg) {
-          // re-initialize all fields in the area that changed
+          /* re-initialize all fields in the area that changed */
           memset( ((char*)(void*)event) + sizeof(XAnyEvent), 0, sizeof(XEvent)-sizeof(XAnyEvent) );
-          // re-bless the object if the thing passed to us was actually an object
+          /* re-bless the object if the thing passed to us was actually an object */
           if (sv_derived_from(ST(0), "X11::Xlib::XEvent"))
             sv_bless(ST(0), gv_stashpv(newpkg, GV_ADD));
         }
