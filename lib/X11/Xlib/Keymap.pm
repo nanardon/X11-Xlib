@@ -2,6 +2,7 @@ package X11::Xlib::Keymap;
 use strict;
 use warnings;
 use Carp;
+use Scalar::Util 'weaken';
 
 =head1 NAME
 
@@ -11,10 +12,10 @@ X11::Xlib::Keymap - Object Oriented access to the X11 keymap
 
 For better or for worse, (hah, who am I kidding; worse) the X11 protocol gives
 applications the direct keyboard scan codes from the input device, and
-provides two tables to let applications do thwir own interpretation of the
+provides two tables to let applications do their own interpretation of the
 codes.  The first table ("keymap") maps the scan codes (single byte) to one or
 more symbolic constants describing the glyph on the key.  Choosing which of
-the several symbols to use dpeends on which "modifiers" are in effect.
+the several symbols to use depends on which "modifiers" are in effect.
 The second table is the "modifier map", which lists keys (scan codes, again)
 that are part of each of the eight modifier groups.  Two modifier groups
 (Shift and Control) have constant meaning, but the rest require some creative
@@ -28,9 +29,8 @@ While there are always less than 255 hardware scan codes, the set of device-
 independent KeySym codes is huge (including Unicode as a subset).
 Since the KeySym constants can't be practically exported by a Perl module,
 this API mostly tries to let you use the symbolic names of keys, or unicode
-characters.  Xlib can translate Keysyms to/from text with client-side lookup
-tables, so using L<X11::Xlib/XKeysymToString> / L<X11::Xlib/XStringToKeysym>
-is a practical alternative.
+characters.  Translating KeySym names and characters to/from KeySym values is
+a client-side operation.
 
 =head1 ATTRIBUTES
 
@@ -91,7 +91,7 @@ of key codes that are part of that modifier.
 =head2 modmap_ident
 
 A hashref of logical modifier group names to array index within the modmap.
-On a modern English Linux desktop you will likely find:
+On a modern US-English Linux desktop you will likely find:
 
   shift    => 0,
   lock     => 1, capslock => 1,
@@ -153,7 +153,7 @@ sub modmap_ident {
 
 Initialize a keymap with the list of parameters.  L</display> is required
 for any load/save operations.  You can use most of the class with just the
-L</keymap> and </modmap> attributes.
+L</keymap> and L</modmap> attributes.
 
 =cut
 
@@ -162,15 +162,19 @@ sub new {
     my %args= (@_ == 1 and ref($_[0]) eq 'HASH')? %{ $_[0] }
         : ((@_ & 1) == 0)? @_
         : croak "Expected hashref or even-length list";
+    weaken( $args{display} ) if defined $args{display};
     bless \%args, $class;
 }
 
 =head2 find_keycode
 
-  my $keycode= $display->find_keycode( $key_sym );
+  my $keycode= $display->find_keycode( $key_sym_or_char );
 
-Return a keycode for the KeySym name.  If more than one key code maps to
-the KeySym, this returns an arbitrary one of them.
+Return a keycode for the parameter, which is either a KeySym name
+(L<XStringToKeysym|X11::Xlib/XStringToKeysym>) or a string holding a unicode character
+(L<char_to_keysym|X11::Xlib/char_to_keysym>).  If more than one key code can map to
+the KeySym, this returns an arbitrary one of them.  Returns undef if
+no matches were found.
 
 =head2 find_keysym
 
@@ -179,7 +183,7 @@ the KeySym, this returns an arbitrary one of them.
 
 Returns the symbolic name of a key, given its scan code and current modifier bits.
 
-For convenience, you can pass an L<X11::Xlib::XEvent/XKeyEvent> object.
+For convenience, you can pass an L<XKeyEvent|X11::Xlib::XEvent/XKeyEvent> object.
 
 If you don't have modifier bits, pass 0.
 
@@ -243,9 +247,9 @@ sub find_keysym {
   $keymap->keymap_reload(@codes);  # reload range from min to max
 
 Reload all or a portion of the keymap.
-If C<@codes> are given, then only load from min(@codes) to max(@codes).
+If C<@codes> are given, then only load from C<min(@codes)> to C<max(@codes)>.
 (The cost of loading the extra codes not in the list is assumed to be
- less than the cost of multipe round trips to the server to pick only
+ less than the cost of multiple round trips to the server to pick only
  the specific codes)
 
 =head2 keymap_save
@@ -253,7 +257,7 @@ If C<@codes> are given, then only load from min(@codes) to max(@codes).
   $keymap->keymap_save(@codes);    # Save changes to keymap (not modmap)
 
 Save any changes to L</keymap> back to the server.
-If C<@codes> are given, then only save from min(@codes) to max(@codes).
+If C<@codes> are given, then only save from C<min(@codes)> to C<max(@codes)>.
 
 See L</save> to save both the L</keymap> and L</modmap>.
 
@@ -284,7 +288,7 @@ Get the default keysym names for all the keys bound to the C<$modifier>.
 Modifier is one of 'shift','lock','control','mod1','mod2','mod3','mod4','mod5',
  'alt','meta','capslock','shiftlock','win','super','numlock','hyper'.
 
-Any modifier after mod5 in that list may not be defined for your keymap
+Any modifier after mod5 in that list might not be defined for your keymap
 (and return an empty list, rather than an error).
 
 =cut
@@ -299,7 +303,7 @@ sub modmap_sym_list {
 
 =head2 modmap_add_codes
 
-  $keymap->modmap_add_codes( $modifier, @key_codes );
+  my $n_added= $keymap->modmap_add_codes( $modifier, @key_codes );
 
 Adds key codes (and remove duplicates) to one of the eight modifier groups.
 C<$modifier> is one of the values listed above.
@@ -309,7 +313,7 @@ Returns the number of key codes added.
 
 =head2 modmap_add_syms
 
-  $keymap->modmap_add_syms( $modifier, @keysym_names );
+  my $n_added= $keymap->modmap_add_syms( $modifier, @keysym_names );
 
 Convert keysym names to key codes and then call L</modmap_add_codes>.
 
@@ -347,7 +351,7 @@ sub modmap_add_syms {
 
 =head2 modmap_del_codes
 
-  $keymap->modmap_del_syms( $modifier, @key_codes );
+  my $n_removed= $keymap->modmap_del_syms( $modifier, @key_codes );
 
 Removes the listed key codes from the named modifier, or from all modifiers
 if C<$modifier> is undef.
@@ -358,7 +362,7 @@ Returns number of key codes removed.
 
 =head2 modmap_del_syms
 
-  $display->modmap_del_syms( $modifier, @keysym_names );
+  my $n_removed= $display->modmap_del_syms( $modifier, @keysym_names );
 
 Convert keysym names to key codes and then call L</modmap_del_codes>.
 

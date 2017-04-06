@@ -67,19 +67,6 @@ sub screen {
     @_ > 1? $_[0]{screens}[$_[1]] : $_[0]{default_screen};
 }
 
-=head2 on_key_event
-
-  $display->on_key_event(sub {
-    my ($display, $event, $is_press, $character)= @_;
-    ...
-  });
-
-Handler for key events.  Not used until you call L</dispatch_event>.
-
-=head2 on_mouse_event
-
-  $display->on_mouse_event
-
 =head2 on_error
 
   $display->on_error(sub {
@@ -91,18 +78,7 @@ Handler for key events.  Not used until you call L</dispatch_event>.
     }
   });
 
-Optional callback to handle error conditions in the X11 protocol, or fatal
-Xlib errors.  If the C<$event> argument is not null, it was a protocol error
-and you can recover.  If the C<$event> argument is undef, it was a fatal Xlib
-error and the program must terminate.
-
-Setting a value for this attribute automatically installs the Xlib error
-handler.
-
-Note that this callback is called from XS context, so your exceptions will
-not travel up the stack.  Also note that on Xlib fatal errors, you cannot
-call any more Xlib functions on the current connection, or on any connection
-at all once the callback returns.  See L<X11::Xlib/install_error_handlers>.
+See L<X11::Xlib/on_error>.
 
 =head1 METHODS
 
@@ -598,7 +574,7 @@ sub XCreateSimpleWindow {
     $_[0]->get_cached_window( &X11::Xlib::XCreateSimpleWindow, autofree => 1);
 }
 
-=head2 INPUT STATE/CONTROL
+=head2 INPUT
 
 =head3 keymap
 
@@ -623,7 +599,7 @@ Xlib do all the heavy lifting.
 
 sub keymap {
     my $self= shift;
-    if (@_) { $self->{keymap}= shift; delete $self->{keymap_reverse}; }
+    if (@_) { $self->{keymap}= shift; }
     $self->{keymap} ||= $self->_build_keymap if defined wantarray;
 }
 

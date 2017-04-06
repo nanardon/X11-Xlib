@@ -8,7 +8,7 @@ use base qw(Exporter DynaLoader);
 use Carp;
 use Try::Tiny;
 
-our $VERSION = '0.09_06';
+our $VERSION = '0.10';
 
 sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
 
@@ -272,7 +272,15 @@ on an individual connection.  On a nonfatal error, both the connection and
 global error handlers are invoked.  On a fatal error, all error handlers are
 invoked.
 
-However... see L</ERROR HANDLING>
+Setting a value for this attribute automatically installs the Xlib error
+handler, which isn't enabled by default.
+
+Note that this callback is called from XS context, so your exceptions will
+not travel up the stack.  Also note that on Xlib fatal errors, you cannot
+call any more Xlib functions on the current connection, or on any connection
+at all once the callback returns.
+
+Be sure to read notes under L</"ERROR HANDLING">
 
 =head1 FUNCTIONS
 
@@ -306,7 +314,7 @@ If unset, Xlib uses the C<$DISPLAY> environement variable.
 
 If the handle goes out of scope, its destructor calls C<XCloseDisplay>, unless
 you already called C<XCloseDisplay> or the X connection was lost.  (Be sure to
-read the notes under L</install_error_handlers>
+read the notes on L</"ERROR HANDLING">)
 
 =head3 XCloseDisplay
 
@@ -734,27 +742,30 @@ depend on a connection to an X server.
 
 =head3 XKeysymToString
 
-  XKeysymToString($keysym)
+  my $ident= XKeysymToString($keysym)
 
-Return the human-readable string for character number C<$keysym>.
+Return the ASCII identifier of the KeySym (as in X11/keysym.h) minus the
+leading "XK_" prefix, or undef of that fails for some reason.
 
 C<XKeysymToString> is the exact reverse of C<XStringToKeysym>.
 
 =head3 XStringToKeysym
 
-  XStringToKeysym($string)
+  my $keysym= XStringToKeysym($string)
 
-Return the keysym number for the human-readable character C<$string>.
+Return the keysym number for the symbolic identifier C<$string>.
+(as per X11/keysym.h, minus the XK_ prefix)
 
-C<XStringToKeysym> is the exact reverse of C<XKeysymToString>.
+C<XStringToKeysym> is the reverse of C<XKeysymToString>.
 
 =head3 codepoint_to_keysym
 
   my $keysym= codepoint_to_keysym(ord($char));
 
-Convert a Unicode codepoint to a keysym value.  This isn't a true Xlib
-function, but fills a gap in the API.  Every normal unicode codepoint has a
-keysym value, but if you pass an invalid codepoint you will get C<undef>.
+Convert a Unicode codepoint to a KeySym value.  This isn't a true Xlib
+function, but fills a gap in the API since Xlib is pretty weak on unicode
+handling.  Every normal unicode codepoint has a keysym value, but if you
+pass an invalid codepoint you will get C<undef>.
 
 =head3 keysym_to_codepoint
 
@@ -763,6 +774,7 @@ keysym value, but if you pass an invalid codepoint you will get C<undef>.
 
 Convert a KeySym to a unicode codepoint.  Many KeySyms (like F1, Control, etc)
 do not have any character associated with them, and will return C<undef>.
+Again, not actually part of Xlib, but provided here for convenience.
 
 =head3 char_to_keysym
 
@@ -779,7 +791,7 @@ a valid codepoint, and C<undef> otherwise.
 
   XConvertCase($keysym, $lowercase_out, $uppercase_out);
 
-Return the lowercase and uppercase KeySyms values for C<$keysym>.
+Return the lowercase and uppercase KeySym values for C<$keysym>.
 
 =head3 IsFunctionKey
 
@@ -817,7 +829,7 @@ Xlib docs are fun.  No mention of what "PF" might be.
 
 True for vendor-private key codes.
 
-=head2 KEYCODE FUNCTIONS
+=head2 INPUT FUNCTIONS
 
 =head3 XQueryKeymap
 
@@ -828,6 +840,8 @@ Return a list of the key codes currently pressed on the keyboard.
 =head3 XGrabKeyboard
 
   $bool= XGrabKeyboard($display, $window, $owner_events, $pointer_mode, $keyboard_mode, $timestamp)
+
+Direct foxus to the specified window.  See X11 docs.
 
 =head3 XUngrabKeyboard
 
@@ -840,7 +854,7 @@ Return a list of the key codes currently pressed on the keyboard.
 Register a window to receive any matching key events, optionally hiding them
 from the normal target window.
 
-C<$keycode> is the keyboard scan code to watch for, or L<AnyKey>.
+C<$keycode> is the keyboard scan code to watch for, or C<AnyKey>.
 C<$modifiers> is a bit mask combined from C<ControlMask>, C<LockMask>,
 C<Mod1Mask>, C<Mod2Mask>, C<Mod3Mask>, C<Mod4Mask>, C<Mod5Mask>, C<ShiftMask>,
 or the special mask C<AnyModifier> which means any I<or none> of the modifiers.
@@ -877,28 +891,32 @@ Cancel a grab registered by L</XGrabKey>.
 
   XAllowEvents($display, $event_mode, $timestamp)
 
+If grab modes used above are C<GrabModeSync> then further X11 input processing
+is halted until you call this function.  See X11 docs.
+
 =head3 XGetKeyboardMapping
 
   XGetKeyboardMapping($display, $keycode, $count)
 
-Return an array of KeySym numbers corresponding to C<$count> keys, starting
-at C<$keycode>.
+Return an array of KeySym numbers corresponding to C<$count> key codes,
+starting at C<$keycode>.
 
-Each value in the array corresponds to a combination of key modifiers (Shift,
-Lock, Mode).  The X11 server may return a variable number of codes per key,
-which you can determine by dividing the total number of values returned by this
-function by the C<$count>.
+Each position in the per-key array corresponds to a combination of key
+modifiers (Shift, Lock, Mode).  The X11 server may return a variable number
+of codes per key, which you can determine by dividing the total number of
+values returned by this function by the C<$count>.
 
 For a more perl-friendly interface, see L</load_keymap>.  For object-oriented
 access, see L<X11::Xlib::Keymap>.
 
-=head3 XSetKeyboardMapping
+=head3 XChangeKeyboardMapping
 
   XChangeKeyboardMapping($display, $first_keycode, $keysym_per_keycode, \@keysyms, $num_codes);
   
   # Best explained with an example...
+  # KeySym in 0x20..0x7E map directly from Latin1
   my @keycodes= (
-    ord('a'), ord('A'), ord('a'), ord('A'),  # want to assign these to KeyCode 38
+    ord('a'), ord('A'), ord('a'), ord('A'),  # want to assign these KeySym to KeyCode 38
     ord('s'), ord('S'), ord('s'), ord('S'),  # and these to KeyCode 39
   );
   XChangeKeyboardMapping($display, 38, 4, \@keycodes, scalar @keycodes);
@@ -918,7 +936,7 @@ access, see L<X11::Xlib::Keymap>.
 
 This is a wrapper around L</XGetKeyboardMapping> which returns an arrayref
 of arrayrefs, and also translates KeySym values into KeySym names or unicode
-characters.  If C<$symbolic> is 0, the elements of the arrays are numbers.
+characters.  If C<$symbolic> is 0, the elements of the arrays are KeySym numbers.
 If C<$symbolic> is 1, the elements are the KeySym name (or integers, if a name
 is not available).
 If C<$symbolic> is 2, the elements are characters for every KeySym that can be
@@ -945,13 +963,14 @@ recognized by L</XStringToKeysym>, or a single unicode character.
 If the KeySym is an integer, it must be at least two integer digits, which
 all real KeySyms should be (other that NoSymbol which has the value 0, and
 should be represented by C<undef>) to avoid ambiguity with the characters of
-the number keys.
+the number keys.  i.e. "4" means "the KeySym for the character 4" rather than
+the KeySym value 4.
 
 =head3 XGetModifierMapping
 
   my $mapping= XGetModifierMapping($display);
 
-Return an arrayref of 8 arrayrefs, one for each of the possible modifiers.
+Return an arrayref of 8 arrayrefs, one for each modifier group.
 The inner arrayrefs can contain a variable number of key codes which belong
 to the modifier group.  See L<X11::Xlib::Keymap> for an explanation.
 
@@ -988,9 +1007,9 @@ overwritten with the numeric value of the KeySym.
 
 =head3 XKeysymToKeycode
 
-  XKeysymToKeycode($display, $keysym)
+  my $keycode= XKeysymToKeycode($display, $keysym)
 
-Return the key code corresponding to the character number C<$keysym>.
+Return the key code corresponding to C<$keysym> in the current mapping.
 
 =head3 XBell
 
