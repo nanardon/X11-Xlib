@@ -4,7 +4,7 @@ use strict;
 use warnings;
 use Scalar::Util 'isweak';
 use IO::Handle;
-use Test::More tests => 19;
+use Test::More tests => 20;
 
 sub err(&) { my $code= shift; my $ret; { local $@= ''; eval { $code->() }; $ret= $@; } $ret }
 
@@ -25,7 +25,7 @@ ok( !$X11::Xlib::_error_fatal_trapped,      'no fatal error' );
 X11::Xlib->on_error(sub {
     my ($dpy, $event)= @_;
     unless ($event) {
-        note("begin Fatal error handler");
+        note("begin global Fatal error handler");
         
         is( $dpy, $conn, 'received same connection object' );
         
@@ -35,6 +35,13 @@ X11::Xlib->on_error(sub {
         is( err{ $conn2->XSync }, '', 'can still use other connections, right now' );
 
         note("end fatal error handler");
+    }
+});
+$conn->on_error(sub {
+    my ($dpy, $event)= @_;
+    unless ($event) {
+        note("begin connection Fatal error handler");
+        is( $dpy, $conn, 'received same connection object' );
     }
 });
 

@@ -101,7 +101,7 @@ our (
     $_error_nonfatal_installed, # boolean, whether handler is installed
     $_error_fatal_installed,    # boolean, whether handler is installed
     $_error_fatal_trapped,      # boolean, whether Xlib is dead from fatal error
-    $on_error_cb,               # application-supplied callback
+    $on_error,                  # application-supplied callback
 );
 
 sub new {
@@ -124,24 +124,37 @@ sub DESTROY {
 }
 
 sub on_error {
-    shift if $_[0] eq __PACKAGE__;
-    my $callback= shift;
-    if (defined $callback) {
-        ref($callback) eq 'CODE' or croak "Expected coderef";
-        X11::Xlib::_install_error_handlers(1,1);
-    }
-    $on_error_cb= $callback;
+    # Can be called as
+    #  PKG::on_error # get global
+    #  PKG::on_error($coderef) # set global
+    #  PKG->on_error # get global
+    #  PKG->on_error($coderef) # set global
+    #  $dpy->on_error # get instance
+    #  $dpy->on_error($coderef) # set instance
+    my $self= $_[0] && !ref $_[0] && $_[0]->isa(__PACKAGE__)? shift
+        : $_[0] && ref $_[0] && ref($_[0])->isa(__PACKAGE__)? shift
+        : __PACKAGE__;
+    return ref $self? $self->{on_error} : $on_error
+        unless @_;
+    my $cb= shift;
+    ref $cb eq 'CODE'
+        or croak "Expected coderef for callback parameter";
+    X11::Xlib::_install_error_handlers(1,1);
+    $on_error= $cb if !ref $self;
+    $self->{on_error}= $cb if ref $self;
+    $cb;
 }
+
 # called by XS, if error handler is installed
 sub _error_nonfatal {
     my $event= shift;
     my $dpy= $event->display;
-    if ($on_error_cb) {
-        try { $on_error_cb->($dpy, $event); }
+    if ($on_error) {
+        try { $on_error->($dpy, $event); }
         catch { warn $_; };
     }
-    if ($dpy && $dpy->can('on_error_cb') && $dpy->on_error_cb) {
-        try { $dpy->on_error_cb->($dpy, $event); }
+    if ($dpy && $dpy->on_error) {
+        try { $dpy->on_error->($dpy, $event); }
         catch { warn $_; };
     }
 }
@@ -150,14 +163,14 @@ sub _error_fatal {
     my $conn= shift;
     $conn->_mark_dead; # this connection is dead immediately
 
-    if ($on_error_cb) {
-        try { $on_error_cb->($conn); }
+    if ($on_error) {
+        try { $on_error->($conn); }
         catch { warn $_; };
     }
     # also call a user callback in any Display object
     for my $dpy (values %_connections) {
-        next unless defined $dpy && $dpy->can('on_error_cb') && defined $dpy->on_error_cb;
-        try { $dpy->on_error_cb->($dpy); }
+        next unless defined $dpy && defined $dpy->on_error;
+        try { $dpy->on_error->($dpy); }
         catch { warn $_; };
     }
 
@@ -236,39 +249,37 @@ independent of Xlib.
 Boolean flag that determines whether the destructor will call L</XCloseDisplay>.
 Defaults to true for connections returned by L</XOpenDisplay>.
 
+=head2 on_error
+
+  # Global error handler
+  X11::Xlib::on_error(\&my_callback);
+  
+  # Per-connection error handler
+  my $display= X11::Xlib->new;
+  $display->on_error(\&my_callback);
+  
+  sub my_callback {
+    my ($display, $event)= @_;
+    ...
+  }
+
+
+By default, Xlib aborts the program on a fatal error.  Use this method to
+install an error-handling callback to gracefully catch and deal with errors.
+On non-fatal errors, C<$event> will be the error event from the server.
+On fatal errors, C<$event> will be C<undef>.  You can also install a handler
+on an individual connection.  On a nonfatal error, both the connection and
+global error handlers are invoked.  On a fatal error, all error handlers are
+invoked.
+
+However... see L</ERROR HANDLING>
+
 =head1 FUNCTIONS
 
 =head2 new
 
 This is an alias for C<< X11::Xlib::Display->new >>, to help encourage using
 the object oriented interface.
-
-=head2 install_error_handlers
-
-  X11::Xlib::install_error_handlers( $bool_nonfatal, $bool_fatal );
-
-Error handling in Xlib is pretty bad.  The first problem is that non-fatal
-errors are reported asynchronously in an API masquerading as if they were
-synchronous function calls.
-This is mildly annoying.  This library eases the pain by giving you a nice
-L<XEvent|X11::Xlib::XEvent> object to work with, and the ability to deliver
-the errors to a callback on your display or window object.
-
-The second much larger problem is that fatal errors (like losing the connection
-to the server) cause a mandatory termination of the host program.  Seriously.
-The default behavior of Xlib is to print a message and abort, but even if you
-install the C error handler to try to gracefully recover, when the error
-handler returns Xlib still kills your program.  Under normal circumstances you
-would have to perform all cleanup with your stack tied up through Xlib, but
-this library cheats by using croak (C<longjmp>) to escape the callback and let
-you wrap up your script in a normal manner.  B<However>, after a fatal
-error Xlib's internal state could be damaged, so it is unsafe to make any more
-Xlib calls.  This library tries to help enforce that by invalidating all the
-connection objects.
-
-If you really need your program to keep running your best bet is to state-dump
-to shared memory and then C<exec()> a fresh copy of your script and reload the
-dumped state.  Or use XCB instead of Xlib.
 
 =head1 XLIB API
 
@@ -1062,6 +1073,31 @@ When using the object-oriented C<Display>, these are wrapped by L<X11::Xlib::Pix
 An B<XID> referencing a Window.  Used for painting, event/input delivery, and
 having data tagged to them.  Not abused nearly as much as the Win32 API abuses
 its Window structures.  See L<X11::Xlib::Window> for details.
+
+=head1 ERROR HANDLING
+
+Error handling in Xlib is pretty bad.  The first problem is that non-fatal
+errors are reported asynchronously in an API masquerading as if they were
+synchronous function calls.
+This is mildly annoying.  This library eases the pain by giving you a nice
+L<XEvent|X11::Xlib::XEvent> object to work with, and the ability to deliver
+the errors to a callback on your display or window object.
+
+The second much larger problem is that fatal errors (like losing the connection
+to the server) cause a mandatory termination of the host program.  Seriously.
+The default behavior of Xlib is to print a message and abort, but even if you
+install the C error handler to try to gracefully recover, when the error
+handler returns Xlib still kills your program.  Under normal circumstances you
+would have to perform all cleanup with your stack tied up through Xlib, but
+this library cheats by using croak (C<longjmp>) to escape the callback and let
+you wrap up your script in a normal manner.  B<However>, after a fatal
+error Xlib's internal state could be damaged, so it is unsafe to make any more
+Xlib calls.  This library tries to help enforce that by invalidating all the
+connection objects.
+
+If you really need your program to keep running your best bet is to state-dump
+to shared memory and then C<exec()> a fresh copy of your script and reload the
+dumped state.  Or use XCB instead of Xlib.
 
 =head1 SYSTEM DEPENDENCIES
 

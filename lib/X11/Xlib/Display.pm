@@ -104,20 +104,6 @@ not travel up the stack.  Also note that on Xlib fatal errors, you cannot
 call any more Xlib functions on the current connection, or on any connection
 at all once the callback returns.  See L<X11::Xlib/install_error_handlers>.
 
-=cut
-
-sub on_error_cb {
-    my ($self, $callback)= @_;
-    if (@_ > 1) {
-        if (defined $callback) {
-            ref($callback) eq 'CODE' or croak "Expected coderef";
-            X11::Xlib::_install_error_handlers(1,1);
-        }
-        $self->{on_error_cb}= $callback;
-    }
-    $_[0]{on_error_cb}
-}
-
 =head1 METHODS
 
 =head2 new
