@@ -8,7 +8,7 @@ use base qw(Exporter DynaLoader);
 use Carp;
 use Try::Tiny;
 
-our $VERSION = '0.10';
+our $VERSION = '0.11';
 
 sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
 
@@ -286,8 +286,8 @@ Be sure to read notes under L</"ERROR HANDLING">
 
 =head2 new
 
-This is an alias for C<< X11::Xlib::Display->new >>, to help encourage using
-the object oriented interface.
+This is an alias for C<< X11::Xlib::Display->new >>, to help encourage use
+of the object oriented interface.
 
 =head1 XLIB API
 
