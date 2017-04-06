@@ -1,4 +1,4 @@
-X11-Xlib version 0.01
+X11-Xlib
 =====================
 
 This module provide low-level access to X11 libary functions.
@@ -22,10 +22,12 @@ This module requires these other libraries:
     Xtest
     Xext
 
-COPYRIGHT AND LICENCE
+COPYRIGHT AND LICENSE
 
 Copyright (C) 2009-2010 by Olivier Thauvin
 
+Copyright (C) 2017 by Michael Conrad
+
 This library is free software; you can redistribute it and/or modify
-it under the same terms as Perl itself, either Perl version 5.7.1 or,
+it under the same terms as Perl itself, either Perl version 5.10.0 or,
 at your option, any later version of Perl 5 you may have available.
