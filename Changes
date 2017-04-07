@@ -1,5 +1,8 @@
 Revision history for Perl extension X11::Xlib.
 
+0.13 - 2017-04-07
+    - Fix prereq lists in Makefile.PL and META files.
+
 0.12 - 2017-04-07
     - Unicode handling compatibility for perl 5.8
 

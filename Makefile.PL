@@ -5,23 +5,34 @@ use warnings;
 
 use ExtUtils::MakeMaker;
 
-our %PREREQ_PM;
+our (%CONFIGURE_REQUIRES, %TEST_REQUIRES, %PREREQ_PM);
 BEGIN {
+    %CONFIGURE_REQUIRES= (
+        'Devel::CheckLib'     => '1.03',
+        'ExtUtils::Depends'   => '0.405',
+        'ExtUtils::MakeMaker' => 0,
+    );
+    %TEST_REQUIRES= (
+        'Test::More'   => 0,
+    );
     %PREREQ_PM= (
-        'ExtUtils::Depends' => '0.405',
-        'Devel::CheckLib'   => '1.03',
+        'Try::Tiny'    => 0,
+        'Carp'         => 0,
+        'Scalar::Util' => 0,
+        'strict'       => 0,
+        'warnings'     => 0,
     );
 
     # If the prereqs for this script are missing,
     # write out a Makefile that tells CPAN to install them
-    my $use_prereqs_code= join('', map { "use $_ '$PREREQ_PM{$_}'; " } keys %PREREQ_PM).'1;';
+    my $use_prereqs_code= join('', map { "use $_ '$CONFIGURE_REQUIRES{$_}'; " } keys %CONFIGURE_REQUIRES).'1;';
     print $use_prereqs_code."\n";
     unless (eval $use_prereqs_code) {
        warn "$@\n";
        WriteMakefile(
              NAME         => 'X11::Xlib',
              PREREQ_FATAL => 1,
-             PREREQ_PM    => \%PREREQ_PM,
+             PREREQ_PM    => \%CONFIGURE_REQUIRES,
        );
        exit 1; # not reached
     }
@@ -59,22 +70,36 @@ $dep->save_config('build/IFiles.pm');
 
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
-WriteMakefile(
+my %WriteMakefileArgs = (
     NAME         => 'X11::Xlib',
     VERSION_FROM => 'lib/X11/Xlib.pm',    # finds $VERSION
-    PREREQ_PM    => {},                   # e.g., Module::Name => 1.1
     ($] >= 5.005 ?                        ## Add these new keywords supported since 5.005
           (ABSTRACT_FROM => 'lib/X11/Xlib.pm',    # retrieve abstract from module
             AUTHOR => [
               'Olivier Thauvin <nanardon@nanardon.zarb.org>',
               'Michael Conrad <mike@nrdvana.net>'
             ]) : ()),
-    CONFIGURE_REQUIRES => \%PREREQ_PM,
+    
+    # Split out or combine dependencies depending on version of MakeMaker
+    ( eval { ExtUtils::MakeMaker->VERSION(6.63_03) } ? (
+        CONFIGURE_REQUIRES => \%CONFIGURE_REQUIRES,
+        TEST_REQUIRES      => \%TEST_REQUIRES,
+        PREREQ_PM          => \%PREREQ_PM,
+    ) : eval { ExtUtils::MakeMaker->VERSION(6.52) } ? (
+        CONFIGURE_REQUIRES => \%CONFIGURE_REQUIRES,
+        PREREQ_PM          => { %PREREQ_PM, %TEST_REQUIRES },
+    ) : (
+        PREREQ_PM          => { %PREREQ_PM, %TEST_REQUIRES, %CONFIGURE_REQUIRES },
+    )),
+    
     META_MERGE => {
         resources => {
             bugtracker => 'https://github.com/nanardon/X11-Xlib/issues',
             repository => 'https://github.com/nanardon/X11-Xlib.git',
         }
     },
+    
     $dep->get_makefile_vars,
 );
+
+WriteMakefile( %WriteMakefileArgs );
