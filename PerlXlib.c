@@ -265,7 +265,7 @@ KeySym PerlXlib_sv_to_keysym(SV *sv) {
             sym= ival;
         /* If it is a single character, try looking up a keysym for it */
         else if ((DO_UTF8(sv)? sv_len_utf8(sv) : len) == 1) {
-            codepoint= NATIVE_TO_UNI(DO_UTF8(sv)? utf8_to_uvchr_buf(name, name+len, &len) : (name[0] & 0xFF));
+            codepoint= NATIVE_TO_UNI(DO_UTF8(sv)? utf8n_to_uvchr(name, len, &len, 0) : (name[0] & 0xFF));
             sym= PerlXlib_codepoint_to_keysym(codepoint);
         }
     }

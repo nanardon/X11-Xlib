@@ -1,5 +1,8 @@
 Revision history for Perl extension X11::Xlib.
 
+0.12 - 2017-04-07
+    - Unicode handling compatibility for perl 5.8
+
 0.11 - 2017-04-06
     - Include ppport.h in MANIFEST
 

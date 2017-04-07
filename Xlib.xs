@@ -609,7 +609,7 @@ char_to_keysym(str)
         size_t len;
     PPCODE:
         s= SvPV(str, len);
-        codepoint= NATIVE_TO_UNI(DO_UTF8(str)? utf8n_to_uvuni(s, len, &len, 0) : s[0]);
+        codepoint= NATIVE_TO_UNI(DO_UTF8(str)? utf8n_to_uvchr(s, len, &len, 0) : (s[0] & 0xFF));
         sym= PerlXlib_codepoint_to_keysym(codepoint);
         PUSHs(codepoint > 0 && sym > 0? newSViv(sym) : &PL_sv_undef);
 
