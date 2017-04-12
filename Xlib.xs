@@ -644,6 +644,14 @@ XUndefineCursor(dpy, wnd)
     Window wnd
 
 void
+XReparentWindow(dpy, wnd, parent, x, y)
+    Display *dpy
+    Window wnd
+    Window parent
+    int x
+    int y
+
+void
 XConfigureWindow(dpy, wnd, value_mask, values)
     Display *dpy
     Window wnd

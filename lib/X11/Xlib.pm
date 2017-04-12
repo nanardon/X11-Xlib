@@ -89,10 +89,11 @@ my %_functions= (
     XCreateSimpleWindow XCreateWindow XDefineCursor XDestroyWindow
     XGetGeometry XGetWMNormalHints XGetWMSizeHints XGetWindowAttributes
     XLowerWindow XMapWindow XMoveResizeWindow XMoveWindow XQueryTree
-    XRaiseWindow XResizeWindow XRestackWindows XSetWMNormalHints
-    XSetWMSizeHints XSetWindowBackground XSetWindowBackgroundPixmap
-    XSetWindowBorder XSetWindowBorderPixmap XSetWindowBorderWidth
-    XSetWindowColormap XUndefineCursor XUnmapWindow )],
+    XRaiseWindow XReparentWindow XResizeWindow XRestackWindows
+    XSetWMNormalHints XSetWMSizeHints XSetWindowBackground
+    XSetWindowBackgroundPixmap XSetWindowBorder XSetWindowBorderPixmap
+    XSetWindowBorderWidth XSetWindowColormap XTranslateCoordinates
+    XUndefineCursor XUnmapWindow )],
   fn_xtest => [qw( XTestFakeButtonEvent XTestFakeKeyEvent XTestFakeMotionEvent
     )],
 # END GENERATED XS FUNCTION LIST
@@ -776,6 +777,14 @@ Set the background pixel color (integer) for the window.
 =head3 XUndefineCursor
 
   XUndefineCursor($display, $window)
+
+=head3 XReparentWindow
+
+  XReparentWindow($display, $wnd, $new_parent, $x, $y);
+
+Unmap, change parent, and remap C<$wnd> to be a child of C<$parent>.
+The X and Y arguments set the new location of the window relative to the
+parent client space.
 
 =head3 XConfigureWindow
 
