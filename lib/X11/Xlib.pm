@@ -39,6 +39,8 @@ my %_constants= (
     VisibilityChangeMask )],
   const_ext_composite => [qw( CompositeRedirectAutomatic
     CompositeRedirectManual )],
+  const_ext_shape => [qw( ShapeBounding ShapeClip ShapeInput ShapeIntersect
+    ShapeInvert ShapeSet ShapeSubtract ShapeUnion )],
   const_input => [qw( AnyKey AnyModifier AsyncBoth AsyncKeyboard AsyncPointer
     Button1Mask Button2Mask Button3Mask Button4Mask Button5Mask ControlMask
     GrabModeAsync GrabModeSync LockMask Mod1Mask Mod2Mask Mod3Mask Mod4Mask

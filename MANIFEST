@@ -32,6 +32,7 @@ t/0-Pod.t
 t/1-X11-Xlib.t
 t/20-xevent.t
 t/21-xvisualinfo.t
+t/22-xrectangle.t
 t/30-connection.t
 t/31-xlib-fatal.t
 t/35-event-queue.t

@@ -12,6 +12,9 @@
 #ifdef HAVE_XCOMPOSITE
 #include <X11/extensions/Xcomposite.h>
 #endif
+#ifdef HAVE_XFIXES
+#include <X11/extensions/Xfixes.h>
+#endif
 
 #include "PerlXlib.h"
 
@@ -1395,6 +1398,98 @@ XCompositeReleaseOverlayWindow(dpy, wnd)
     Display *dpy
     Window wnd
 
+#else /* XCOMPOSITE_VERSION */
+
+#define CompositeRedirectAutomatic 0
+#define CompositeRedirectManual 1
+
+#endif /* XCOMPOSITE_VERSION */
+
+# Xfixes Extension () --------------------------------------------------------
+
+#ifdef XFIXES_VERSION
+
+void
+XFixesQueryExtension(dpy)
+    Display *dpy
+    INIT:
+        int event_base, error_base;
+    PPCODE:
+        if (XFixesQueryExtension(dpy, &event_base, &error_base)) {
+            XPUSHs(sv_2mortal(newSViv(event_base)));
+            XPUSHs(sv_2mortal(newSViv(error_base)));
+        }
+
+void
+XFixesQueryVersion(dpy)
+    Display *dpy
+    INIT:
+        int major, minor;
+    PPCODE:
+        if (XFixesQueryVersion(dpy, &major, &minor)) {
+            XPUSHs(sv_2mortal(newSViv(major)));
+            XPUSHs(sv_2mortal(newSViv(minor)));
+        }
+
+int
+XFixesVersion()
+
+#if XFIXES_MAJOR >= 2
+
+XserverRegion
+XFixesCreateRegion(dpy, rect_av)
+    Display *dpy
+    AV *rect_av
+    INIT:
+        XRectangle *rects, *rect;
+        int nrects, i;
+        SV **elem;
+    PPCODE:
+        nrects= av_len(rect_av)+1;
+        if (nrects) {
+            Newx(rects, nrects, XRectangle);
+            SAVEFREEPV(rects);
+            for (i= 0; i < nrects; i++) {
+                elem= av_fetch(rect_av, i, 0);
+                if (!elem) croak("Can't read array elem %d", i);
+                rect= (XRectangle*) PerlXlib_get_struct_ptr(
+                    *elem, 0,
+                    "X11::Xlib::XRectangle", sizeof(XRectangle),
+                    (PerlXlib_struct_pack_fn*) PerlXlib_XRectangle_pack
+                );
+                memcpy(rects+i, rect, sizeof(XRectangle));
+            }
+        } else {
+            rects= NULL;
+        }
+        XFixesCreateRegion(dpy, rects, nrects);
+
+void
+XFixesDestroyRegion(dpy, region)
+    Display *dpy
+    XserverRegion region
+
+void
+XFixesSetWindowShapeRegion(dpy, wnd, shape_kind, x_off, y_off, region)
+    Display *dpy
+    Window wnd
+    int shape_kind
+    int x_off
+    int y_off
+    XserverRegion region
+
+#endif  /* XFIXES_MAJOR >= 2 */
+#endif  /* XFIXES_VERSION */
+
+#ifndef SHAPE_MAJOR_VERSION
+#define ShapeSet                        0
+#define ShapeUnion                      1
+#define ShapeIntersect                  2
+#define ShapeSubtract                   3
+#define ShapeInvert                     4
+#define ShapeBounding                   0
+#define ShapeClip                       1
+#define ShapeInput                      2
 #endif
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::Visual
@@ -3607,11 +3702,6 @@ y(s, value=NULL)
 # END GENERATED X11_Xlib_XRectangle
 # ----------------------------------------------------------------------------
 
-#ifndef COMPOSITE_VERSION
-#define CompositeRedirectAutomatic 0
-#define CompositeRedirectManual 1
-#endif
-
 BOOT:
 # BEGIN GENERATED BOOT CONSTANTS
   HV* stash= gv_stashpvn("X11::Xlib", 9, 1);
@@ -3788,5 +3878,13 @@ BOOT:
   newCONSTSUB(stash, "PWinGravity", newSViv(PWinGravity));
   newCONSTSUB(stash, "CompositeRedirectAutomatic", newSViv(CompositeRedirectAutomatic));
   newCONSTSUB(stash, "CompositeRedirectManual", newSViv(CompositeRedirectManual));
+  newCONSTSUB(stash, "ShapeSet", newSViv(ShapeSet));
+  newCONSTSUB(stash, "ShapeUnion", newSViv(ShapeUnion));
+  newCONSTSUB(stash, "ShapeIntersect", newSViv(ShapeIntersect));
+  newCONSTSUB(stash, "ShapeSubtract", newSViv(ShapeSubtract));
+  newCONSTSUB(stash, "ShapeInvert", newSViv(ShapeInvert));
+  newCONSTSUB(stash, "ShapeBounding", newSViv(ShapeBounding));
+  newCONSTSUB(stash, "ShapeClip", newSViv(ShapeClip));
+  newCONSTSUB(stash, "ShapeInput", newSViv(ShapeInput));
 # END GENERATED BOOT CONSTANTS
 #

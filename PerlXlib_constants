@@ -182,3 +182,12 @@ const_sizehint
 const_ext_composite
  i CompositeRedirectAutomatic
  i CompositeRedirectManual
+const_ext_shape
+ i ShapeSet
+ i ShapeUnion
+ i ShapeIntersect
+ i ShapeSubtract
+ i ShapeInvert
+ i ShapeBounding
+ i ShapeClip
+ i ShapeInput

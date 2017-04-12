@@ -60,15 +60,20 @@ check_lib_or_exit(
 
 my @libs= qw( X11 Xtst Xext );
 my @have;
-
-warn "Checking for extension Xcomposite\n";
-if (check_lib(lib => 'Xcomposite', header => [ 'X11/extensions/Xcomposite.h' ])) {
-    warn "  found!\n";
-    push @libs, 'Xcomposite';
-    push @have, 'XCOMPOSITE';
-} else {
-    warn "  no available.\n";
+sub add_optional_lib {
+    my ($lib, $header)= @_;
+    warn "Checking for extension $lib\n";
+    if (check_lib( lib => $lib, header => (ref $header? $header : [ $header ]) )) {
+        warn "  found!\n";
+        push @libs, $lib;
+        push @have, uc($lib);
+    } else {
+        warn "  not available.\n";
+    }
 }
+
+add_optional_lib( Xcomposite => 'X11/extensions/Xcomposite.h' );
+add_optional_lib( Xfixes     => 'X11/extensions/Xfixes.h' );
 
 $dep->set_libs(join(' ', map { "-l$_" } @libs));
 $dep->add_c('PerlXlib.c');
