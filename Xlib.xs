@@ -457,6 +457,11 @@ XCreateSimpleWindow(dpy, parent, x, y, w, h, border_width= 0, border_color= 0, b
     int background_color
 
 void
+XDestroyWindow(dpy, wnd)
+    Display * dpy
+    Window wnd
+
+void
 XMapWindow(dpy, wnd)
     Display * dpy
     Window wnd
@@ -493,17 +498,17 @@ XGetGeometry(dpy, wnd, root_out=NULL, x_out=NULL, y_out=NULL, width_out=NULL, he
             if (height_out) sv_setuv(height_out, h);
             if (border_out) sv_setuv(border_out, bw);
             if (depth_out)  sv_setuv(depth_out, d);
-            PUSHs(newSViv(ret));
+            PUSHs(sv_2mortal(newSViv(ret)));
         }
         /* perl-style API */
         else if (ret) {
-            PUSHs(newSVuv(root));
-            PUSHs(newSViv(x));
-            PUSHs(newSViv(y));
-            PUSHs(newSVuv(w));
-            PUSHs(newSVuv(h));
-            PUSHs(newSVuv(bw));
-            PUSHs(newSVuv(d));
+            PUSHs(sv_2mortal(newSVuv(root)));
+            PUSHs(sv_2mortal(newSViv(x)));
+            PUSHs(sv_2mortal(newSViv(y)));
+            PUSHs(sv_2mortal(newSVuv(w)));
+            PUSHs(sv_2mortal(newSVuv(h)));
+            PUSHs(sv_2mortal(newSVuv(bw)));
+            PUSHs(sv_2mortal(newSVuv(d)));
         }
 
 int
@@ -670,10 +675,10 @@ XQueryTree(dpy, wnd)
         int nchildren, i;
     PPCODE:
         if (XQueryTree(dpy, wnd, &root, &parent, &children, &nchildren)) {
-            PUSHs(newSViv(root));
-            PUSHs(newSViv(parent));
+            PUSHs(sv_2mortal(newSViv(root)));
+            PUSHs(sv_2mortal(newSViv(parent)));
             for (i= 0; i < nchildren; i++)
-                PUSHs(newSViv(children[i]));
+                XPUSHs(sv_2mortal(newSViv(children[i])));
             if (children) XFree(children);
         }
 
@@ -713,9 +718,21 @@ XRestackWindows(dpy, windows_av)
         XRestackWindows(dpy, wndarray, n);
 
 void
-XDestroyWindow(dpy, wnd)
-    Display * dpy
-    Window wnd
+XTranslateCoordinates(dpy, src_wnd, dest_wnd, src_x, src_y)
+    Display *dpy
+    Window src_wnd
+    Window dest_wnd
+    int src_x
+    int src_y
+    INIT:
+        int dest_x, dest_y;
+        Window child;
+    PPCODE:
+        if (XTranslateCoordinates(dpy, src_wnd, dest_wnd, src_x, src_y, &dest_x, &dest_y, &child)) {
+            PUSHs(sv_2mortal(newSViv(dest_x)));
+            PUSHs(sv_2mortal(newSViv(dest_y)));
+            PUSHs(sv_2mortal(newSViv(child)));
+        }
 
 # XTest Functions (fn_xtest) -------------------------------------------------
 
@@ -766,7 +783,8 @@ keysym_to_codepoint(keysym)
         int codepoint;
     PPCODE:
         codepoint= PerlXlib_keysym_to_codepoint(keysym);
-        PUSHs(codepoint >= 0? newSViv(codepoint) : &PL_sv_undef);
+        if (codepoint >= 0) PUSHs(sv_2mortal(newSViv(codepoint)));
+        else PUSHs(&PL_sv_undef);
 
 void
 codepoint_to_keysym(codepoint)
@@ -775,7 +793,8 @@ codepoint_to_keysym(codepoint)
         KeySym sym;
     PPCODE:
         sym= PerlXlib_codepoint_to_keysym(codepoint);
-        PUSHs(sym > 0? newSViv(sym) : &PL_sv_undef);
+        if (sym > 0) PUSHs(sv_2mortal(newSViv(sym)));
+        else PUSHs(&PL_sv_undef);
 
 void
 keysym_to_char(keysym)
@@ -784,7 +803,8 @@ keysym_to_char(keysym)
         int codepoint;
     PPCODE:
         codepoint= PerlXlib_keysym_to_codepoint(keysym);
-        PUSHs(codepoint >= 0? newSVpvf("%c", codepoint) : &PL_sv_undef);
+        if (codepoint >= 0) PUSHs(sv_2mortal(newSVpvf("%c", codepoint)));
+        else PUSHs(&PL_sv_undef);
 
 void
 char_to_keysym(str)
@@ -798,7 +818,8 @@ char_to_keysym(str)
         s= SvPV(str, len);
         codepoint= NATIVE_TO_UNI(DO_UTF8(str)? utf8n_to_uvchr(s, len, &len, 0) : (s[0] & 0xFF));
         sym= PerlXlib_codepoint_to_keysym(codepoint);
-        PUSHs(codepoint > 0 && sym > 0? newSViv(sym) : &PL_sv_undef);
+        if (codepoint > 0 && sym > 0) PUSHs(sv_2mortal(newSViv(sym)));
+        else PUSHs(&PL_sv_undef);
 
 int
 IsKeypadKey(keysym)
@@ -883,6 +904,26 @@ XUngrabKey(dpy, keycode, modifiers, grab_window)
     int keycode
     unsigned modifiers
     Window grab_window
+
+void
+XQueryPointer(dpy, wnd)
+    Display *dpy
+    Window wnd
+    INIT:
+        Window root, child;
+        int root_x, root_y, win_x, win_y;
+        unsigned mask;
+    PPCODE:
+        if (XQueryPointer(dpy, wnd, &root, &child, &root_x, &root_y, &win_x, &win_y, &mask)) {
+            EXTEND(SP, 7);
+            PUSHs(sv_2mortal(newSVuv(root)));
+            PUSHs(sv_2mortal(newSVuv(child)));
+            PUSHs(sv_2mortal(newSViv(root_x)));
+            PUSHs(sv_2mortal(newSViv(root_y)));
+            PUSHs(sv_2mortal(newSViv(win_x)));
+            PUSHs(sv_2mortal(newSViv(win_y)));
+            PUSHs(sv_2mortal(newSVuv(mask)));
+        }
 
 int
 XGrabPointer(dpy, wnd, owner_events, event_mask, pointer_mode, keyboard_mode, confine_to, cursor, timestamp)
@@ -1040,7 +1081,7 @@ save_keymap(dpy, kmap, minkey=0, maxkey=255)
         const char *name;
         char *endp;
         KeySym *syms, cursym;
-        SV **elem, *buf;
+        SV **elem;
         AV *row;
     PPCODE:
         m= av_len(kmap);
@@ -1067,9 +1108,8 @@ save_keymap(dpy, kmap, minkey=0, maxkey=255)
             n= av_len((AV*) SvRV(*elem))+1;
             if (nsym < n) nsym= n;
         }
-        /* Allocate buffer in a temp SV in case we croak */
-        buf= newSV(nsym * (xmax-xmin+1) * sizeof(KeySym));
-        syms= (KeySym*) SvPVX(buf);
+        Newx(syms, nsym * (xmax-xmin+1), KeySym);
+        SAVEFREEPV(syms); /* in case we croak before exiting */
         for (i= 0; i < xmax-xmin+1; i++) {
             row= (AV*) SvRV(*av_fetch(kmap, i + (xmin-amin), 0));
             for (j= 0, n= av_len(row)+1; j < nsym; j++) {
