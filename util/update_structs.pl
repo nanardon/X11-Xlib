@@ -6,4 +6,5 @@ $d/generate_struct_xs.pl XSizeHints < /usr/include/X11/Xutil.h
 $d/generate_struct_xs.pl XWindowChanges < /usr/include/X11/Xlib.h
 $d/generate_struct_xs.pl XWindowAttributes < /usr/include/X11/Xlib.h
 $d/generate_struct_xs.pl XSetWindowAttributes < /usr/include/X11/Xlib.h
+$d/generate_struct_xs.pl XRectangle < /usr/include/X11/Xlib.h
 echo done

@@ -3518,6 +3518,94 @@ y(s, value=NULL)
 
 # END GENERATED X11_Xlib_XSizeHints
 # ----------------------------------------------------------------------------
+# BEGIN GENERATED X11_Xlib_XRectangle
+
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::XRectangle
+
+int
+_sizeof(ignored=NULL)
+    SV* ignored;
+    CODE:
+        RETVAL = sizeof(XRectangle);
+    OUTPUT:
+        RETVAL
+
+void
+_initialize(s)
+    SV *s
+    INIT:
+        void *sptr;
+    PPCODE:
+        sptr= PerlXlib_get_struct_ptr(s, 1, "X11::Xlib::XRectangle", sizeof(XRectangle),
+            (PerlXlib_struct_pack_fn*) &PerlXlib_XRectangle_pack
+        );
+        memset((void*) sptr, 0, sizeof(XRectangle));
+
+void
+_pack(s, fields, consume=0)
+    XRectangle *s
+    HV *fields
+    Bool consume
+    PPCODE:
+        PerlXlib_XRectangle_pack(s, fields, consume);
+
+void
+_unpack(s, fields)
+    XRectangle *s
+    HV *fields
+    PPCODE:
+        PerlXlib_XRectangle_unpack(s, fields);
+
+void
+height(s, value=NULL)
+    XRectangle *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->height= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->height)));
+    }
+
+void
+width(s, value=NULL)
+    XRectangle *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->width= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->width)));
+    }
+
+void
+x(s, value=NULL)
+    XRectangle *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->x= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->x)));
+    }
+
+void
+y(s, value=NULL)
+    XRectangle *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->y= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->y)));
+    }
+
+# END GENERATED X11_Xlib_XRectangle
+# ----------------------------------------------------------------------------
 
 #ifndef COMPOSITE_VERSION
 #define CompositeRedirectAutomatic 0

@@ -1356,5 +1356,40 @@ if (s->flags & PSize) {     if (!hv_store(fields, "height"    ,  6, (sv=newSViv(
         croak("Can't store field in supplied hash (tied maybe?)");
 }
 
-/* END GENERATED X11_Xlib_XSizeHints
+/* END GENERATED X11_Xlib_XSizeHints */
+/*--------------------------------------------------------------------------*/
+/* BEGIN GENERATED X11_Xlib_XRectangle */
+
+void PerlXlib_XRectangle_pack(XRectangle *s, HV *fields, Bool consume) {
+    SV **fp;
+
+    fp= hv_fetch(fields, "height", 6, 0);
+    if (fp && *fp) { s->height= SvUV(*fp); if (consume) hv_delete(fields, "height", 6, G_DISCARD); }
+
+    fp= hv_fetch(fields, "width", 5, 0);
+    if (fp && *fp) { s->width= SvUV(*fp); if (consume) hv_delete(fields, "width", 5, G_DISCARD); }
+
+    fp= hv_fetch(fields, "x", 1, 0);
+    if (fp && *fp) { s->x= SvIV(*fp); if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
+
+    fp= hv_fetch(fields, "y", 1, 0);
+    if (fp && *fp) { s->y= SvIV(*fp); if (consume) hv_delete(fields, "y", 1, G_DISCARD); }
+}
+
+void PerlXlib_XRectangle_unpack(XRectangle *s, HV *fields) {
+    /* hv_store may return NULL if there is an error, or if the hash is tied.
+     * If it does, we need to clean up the value.
+     */
+    SV *sv= NULL;
+    if (!hv_store(fields, "height"    ,  6, (sv=newSVuv(s->height)), 0)) goto store_fail;
+    if (!hv_store(fields, "width"     ,  5, (sv=newSVuv(s->width)), 0)) goto store_fail;
+    if (!hv_store(fields, "x"         ,  1, (sv=newSViv(s->x)), 0)) goto store_fail;
+    if (!hv_store(fields, "y"         ,  1, (sv=newSViv(s->y)), 0)) goto store_fail;
+    return;
+    store_fail:
+        if (sv) sv_2mortal(sv);
+        croak("Can't store field in supplied hash (tied maybe?)");
+}
+
+/* END GENERATED X11_Xlib_XRectangle */
 /*--------------------------------------------------------------------------*/

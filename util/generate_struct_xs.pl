@@ -151,8 +151,8 @@ if ($def_bits{$goal}) {
     }
 }
 
-my %int_types= map { $_ => 1 } qw( int long Bool char );
-my %unsigned_types= map { $_ => 1 } 'unsigned', 'unsigned int', 'unsigned long',
+my %int_types= map { $_ => 1 } qw( int short long Bool char );
+my %unsigned_types= map { $_ => 1 } 'unsigned', 'unsigned int', 'unsigned long', 'unsigned short',
 	qw( Time VisualID );
 my %xid_types= map { $_ => 1 } qw( Window Drawable Colormap Cursor Atom Pixmap );
 

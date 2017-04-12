@@ -42,3 +42,5 @@ extern void PerlXlib_XWindowChanges_pack(XWindowChanges *s, HV *fields, Bool con
 extern void PerlXlib_XWindowChanges_unpack(XWindowChanges *s, HV *fields);
 extern void PerlXlib_XSizeHints_pack(XSizeHints *s, HV *fields, Bool consume);
 extern void PerlXlib_XSizeHints_unpack(XSizeHints *s, HV *fields);
+extern void PerlXlib_XRectangle_pack(XRectangle *s, HV *fields, Bool consume);
+extern void PerlXlib_XRectangle_unpack(XRectangle *s, HV *fields);
