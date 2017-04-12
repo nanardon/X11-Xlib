@@ -40,8 +40,9 @@ my %_constants= (
   const_input => [qw( AnyKey AnyModifier AsyncBoth AsyncKeyboard AsyncPointer
     Button1Mask Button2Mask Button3Mask Button4Mask Button5Mask ControlMask
     GrabModeAsync GrabModeSync LockMask Mod1Mask Mod2Mask Mod3Mask Mod4Mask
-    Mod5Mask NoSymbol ReplayKeyboard ReplayPointer ShiftMask SyncBoth
-    SyncKeyboard SyncPointer XK_VoidSymbol )],
+    Mod5Mask NoSymbol PointerRoot ReplayKeyboard ReplayPointer RevertToNone
+    RevertToParent RevertToPointerRoot ShiftMask SyncBoth SyncKeyboard
+    SyncPointer XK_VoidSymbol )],
   const_sizehint => [qw( PAspect PBaseSize PMaxSize PMinSize PPosition
     PResizeInc PSize PWinGravity USPosition USSize )],
   const_visual => [qw( VisualAllMask VisualBitsPerRGBMask VisualBlueMaskMask
@@ -68,8 +69,8 @@ my %_functions= (
     XCheckWindowEvent XEventsQueued XFlush XNextEvent XPending XPutBackEvent
     XQueueLength XSelectInput XSendEvent XSync )],
   fn_input => [qw( XAllowEvents XBell XGrabButton XGrabKey XGrabKeyboard
-    XGrabPointer XQueryKeymap XUngrabButton XUngrabKey XUngrabKeyboard
-    XUngrabPointer keyboard_leds )],
+    XGrabPointer XQueryKeymap XQueryPointer XSetInputFocus XUngrabButton
+    XUngrabKey XUngrabKeyboard XUngrabPointer keyboard_leds )],
   fn_keymap => [qw( XDisplayKeycodes XGetKeyboardMapping XGetModifierMapping
     XKeysymToKeycode XLookupString XRefreshKeyboardMapping XSetModifierMapping
     load_keymap save_keymap )],
@@ -474,7 +475,9 @@ incoming event queue.
 
   XSelectInput($display, $window, $event_mask)
 
-Change the event mask for a window.
+Change the event mask for a window.  Note that event masks are B<per-client>,
+so one client can listen to a window with a different mask than a second
+client listening to the same window.
 
 =head2 SCREEN ATTRIBUTES
 
@@ -994,6 +997,22 @@ Xlib docs are fun.  No mention of what "PF" might be.
 True for vendor-private key codes.
 
 =head2 INPUT FUNCTIONS
+
+=head3 XSetInputFocus
+
+  XSetInputFocus($display, $wnd_focus, $revert_to, $time);
+
+Change input focus and set last-focus-time if C<$time> is after the current
+last-focus-time and before the current time of the X server.
+
+C<$time> can be CurrentTime to use the X server's clock.
+
+C<$wnd_focus> can be None to discard all keyboard input until a new window is
+focused, or PointerRoot to actively track the root window of whatever screen
+the pointer moves to.
+
+Once the target window becomes un-viewable, the C<$revert_to> setting takes
+effect, and can be RevertToParent, RevertToPointerRoot, or RevertToNone.
 
 =head3 XQueryKeymap
 

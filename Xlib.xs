@@ -873,6 +873,13 @@ XConvertCase(ksym, lowercase, uppercase)
 # Input Functions (fn_input) -------------------------------------------------
 
 void
+XSetInputFocus(dpy, focus, revert_to, time)
+    Display *dpy
+    Window focus
+    int revert_to
+    Time time
+
+void
 XQueryKeymap(dpy)
     Display *  dpy
     PREINIT:
@@ -3512,6 +3519,10 @@ BOOT:
   newCONSTSUB(stash, "ReplayKeyboard", newSViv(ReplayKeyboard));
   newCONSTSUB(stash, "SyncBoth", newSViv(SyncBoth));
   newCONSTSUB(stash, "AsyncBoth", newSViv(AsyncBoth));
+  newCONSTSUB(stash, "PointerRoot", newSViv(PointerRoot));
+  newCONSTSUB(stash, "RevertToParent", newSViv(RevertToParent));
+  newCONSTSUB(stash, "RevertToPointerRoot", newSViv(RevertToPointerRoot));
+  newCONSTSUB(stash, "RevertToNone", newSViv(RevertToNone));
   newCONSTSUB(stash, "BadAccess", newSViv(BadAccess));
   newCONSTSUB(stash, "BadAlloc", newSViv(BadAlloc));
   newCONSTSUB(stash, "BadAtom", newSViv(BadAtom));

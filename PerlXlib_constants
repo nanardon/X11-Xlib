@@ -86,6 +86,10 @@ const_input
  i ReplayKeyboard
  i SyncBoth
  i AsyncBoth
+ i PointerRoot
+ i RevertToParent
+ i RevertToPointerRoot
+ i RevertToNone
 const_error
  i BadAccess
  i BadAlloc
