@@ -17,6 +17,7 @@ Cursor                O_X11_Xlib_XID
 Colormap              O_X11_Xlib_XID
 Drawable              O_X11_Xlib_XID
 VisualID              O_X11_Xlib_XID
+XserverRegion         O_X11_Xlib_XID
 Atom                  T_UV
 Time                  T_UV
 Bool                  T_BOOL

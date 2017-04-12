@@ -58,7 +58,19 @@ check_lib_or_exit(
     lib    => 'Xext'
 );
 
-$dep->set_libs('-lX11 -lXtst -lXext');
+my @libs= qw( X11 Xtst Xext );
+my @have;
+
+warn "Checking for extension Xcomposite\n";
+if (check_lib(lib => 'Xcomposite', header => [ 'X11/extensions/Xcomposite.h' ])) {
+    warn "  found!\n";
+    push @libs, 'Xcomposite';
+    push @have, 'XCOMPOSITE';
+} else {
+    warn "  no available.\n";
+}
+
+$dep->set_libs(join(' ', map { "-l$_" } @libs));
 $dep->add_c('PerlXlib.c');
 $dep->add_xs('Xlib.xs');
 $dep->add_pm(map { my $n= $_; $n =~ s/^lib/\$(INST_LIB)/; $_ => $n } <lib/*/*.pm>, <lib/*/*/*.pm>);
@@ -91,6 +103,7 @@ my %WriteMakefileArgs = (
     ) : (
         PREREQ_PM          => { %PREREQ_PM, %TEST_REQUIRES, %CONFIGURE_REQUIRES },
     )),
+    DEFINE => join(' ', (map { "-DHAVE_$_" } @have)),
     
     META_MERGE => {
         resources => {

@@ -9,6 +9,10 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/XTest.h>
+#ifdef HAVE_XCOMPOSITE
+#include <X11/extensions/Xcomposite.h>
+#endif
+
 #include "PerlXlib.h"
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib
@@ -1317,6 +1321,81 @@ _install_error_handlers(nonfatal,fatal)
     Bool fatal
     CODE:
         PerlXlib_install_error_handlers(nonfatal, fatal);
+
+# Xcomposite Extension (fn_ext_composite) ------------------------------------
+
+#ifdef XCOMPOSITE_VERSION
+
+void
+XCompositeQueryExtension(dpy)
+    Display *dpy
+    INIT:
+        int event_base, error_base;
+    PPCODE:
+        if (XCompositeQueryExtension(dpy, &event_base, &error_base)) {
+            XPUSHs(sv_2mortal(newSViv(event_base)));
+            XPUSHs(sv_2mortal(newSViv(error_base)));
+        }
+
+void
+XCompositeQueryVersion(dpy)
+    Display *dpy
+    INIT:
+        int major, minor;
+    PPCODE:
+        if (XCompositeQueryVersion(dpy, &major, &minor)) {
+            XPUSHs(sv_2mortal(newSViv(major)));
+            XPUSHs(sv_2mortal(newSViv(minor)));
+        }
+
+int
+XCompositeVersion()
+
+void
+XCompositeRedirectWindow(dpy, wnd, update)
+    Display *dpy
+    Window wnd
+    int update
+
+void
+XCompositeRedirectSubwindows(dpy, wnd, update)
+    Display *dpy
+    Window wnd
+    int update
+
+void
+XCompositeUnredirectWindow(dpy, wnd, update)
+    Display *dpy
+    Window wnd
+    int update
+
+void
+XCompositeUnredirectSubwindows(dpy, wnd, update)
+    Display *dpy
+    Window wnd
+    int update
+
+XserverRegion
+XCompositeCreateRegionFromBorderClip(dpy, wnd)
+    Display *dpy
+    Window wnd
+
+Pixmap
+XCompositeNameWindowPixmap(dpy, wnd)
+    Display *dpy
+    Window wnd
+
+Window
+XCompositeGetOverlayWindow(dpy, wnd)
+    Display *dpy
+    Window wnd
+
+void
+XCompositeReleaseOverlayWindow(dpy, wnd)
+    Display *dpy
+    Window wnd
+
+#endif
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::Visual
 
