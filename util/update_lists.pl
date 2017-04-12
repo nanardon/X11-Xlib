@@ -42,7 +42,7 @@ chdir "$FindBin::Bin/..";
             $ignore= $1 ne 'X11::Xlib';
         }
         next if $ignore;
-        if ($_ =~ / \((fn_\w+)\) ---/) {
+        if ($_ =~ / \((\w*)\) ---/) {
             push @function_sets, [ $1 ];
         } elsif ($_ =~ /^([A-Za-z]\w+)\(/) {
             push @{ $function_sets[-1] }, $1
@@ -94,7 +94,7 @@ my $consts_pl= join '',
 my $fn_pl= join '',
     map {
         wordwrap(4, 79, "  ".shift(@$_)." => [qw( ".join(' ', sort @$_)." )],\n")
-    } sort { $a->[0] cmp $b->[0] } @function_sets;
+    } sort { $a->[0] cmp $b->[0] } grep { length $_->[0] } @function_sets;
 
 patch_file("Xlib.xs", 'GENERATED BOOT CONSTANTS', $xs_boot);
 patch_file("lib/X11/Xlib.pm", 'GENERATED XS CONSTANT LIST', $consts_pl);

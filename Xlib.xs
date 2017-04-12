@@ -1322,7 +1322,7 @@ _install_error_handlers(nonfatal,fatal)
     CODE:
         PerlXlib_install_error_handlers(nonfatal, fatal);
 
-# Xcomposite Extension (fn_ext_composite) ------------------------------------
+# Xcomposite Extension () ----------------------------------------------------
 
 #ifdef XCOMPOSITE_VERSION
 
@@ -3519,6 +3519,11 @@ y(s, value=NULL)
 # END GENERATED X11_Xlib_XSizeHints
 # ----------------------------------------------------------------------------
 
+#ifndef COMPOSITE_VERSION
+#define CompositeRedirectAutomatic 0
+#define CompositeRedirectManual 1
+#endif
+
 BOOT:
 # BEGIN GENERATED BOOT CONSTANTS
   HV* stash= gv_stashpvn("X11::Xlib", 9, 1);
@@ -3693,5 +3698,7 @@ BOOT:
   newCONSTSUB(stash, "PAspect", newSViv(PAspect));
   newCONSTSUB(stash, "PBaseSize", newSViv(PBaseSize));
   newCONSTSUB(stash, "PWinGravity", newSViv(PWinGravity));
+  newCONSTSUB(stash, "CompositeRedirectAutomatic", newSViv(CompositeRedirectAutomatic));
+  newCONSTSUB(stash, "CompositeRedirectManual", newSViv(CompositeRedirectManual));
 # END GENERATED BOOT CONSTANTS
 #

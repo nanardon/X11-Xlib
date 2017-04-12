@@ -37,6 +37,8 @@ my %_constants= (
     PointerMotionMask PropertyChangeMask ResizeRedirectMask
     StructureNotifyMask SubstructureNotifyMask SubstructureRedirectMask
     VisibilityChangeMask )],
+  const_ext_composite => [qw( CompositeRedirectAutomatic
+    CompositeRedirectManual )],
   const_input => [qw( AnyKey AnyModifier AsyncBoth AsyncKeyboard AsyncPointer
     Button1Mask Button2Mask Button3Mask Button4Mask Button5Mask ControlMask
     GrabModeAsync GrabModeSync LockMask Mod1Mask Mod2Mask Mod3Mask Mod4Mask
@@ -67,7 +69,7 @@ my %_functions= (
     XSetCloseDownMode XVendorRelease )],
   fn_event => [qw( XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent
     XCheckWindowEvent XEventsQueued XFlush XNextEvent XPending XPutBackEvent
-    XQueueLength XSelectInput XSendEvent XSync )],
+    XQLength XSelectInput XSendEvent XSync )],
   fn_input => [qw( XAllowEvents XBell XGrabButton XGrabKey XGrabKeyboard
     XGrabPointer XQueryKeymap XQueryPointer XSetInputFocus XUngrabButton
     XUngrabKey XUngrabKeyboard XUngrabPointer keyboard_leds )],
@@ -106,7 +108,7 @@ our %EXPORT_TAGS= (
     functions => [ map { @$_ } values %_functions ],
     all => \@EXPORT_OK,
 );
-our @EXPORT= @{ $EXPORT_TAGS{fn_keysym} };
+our @EXPORT= @{ $EXPORT_TAGS{fn_keysym} }; # backward compatibility
 
 # Used by XS.  In the spirit of letting perl users violate encapsulation
 #  as needed, the XS code exposes its globals to Perl.
@@ -877,7 +879,9 @@ Unmap and destroy a window.
 =head2 XTEST INPUT SIMULATION
 
 These methods create fake server-wide input events, useful for automated testing.
-They are available through the XTEST extension.
+They are available through the XTest extension.  Currently this extension is a
+mandatory requirement for installing this module, and so these functions are
+always available.
 
 Don't forget to call L</XFlush> after these methods, if you want the events to
 happen immediately.
@@ -1208,6 +1212,59 @@ Return the key code corresponding to C<$keysym> in the current mapping.
   XBell($display, $percent)
 
 Make the X server emit a sound.
+
+=head2 EXTENSION XCOMPOSITE
+
+This is an optional extension.  If you have Xcomposite available when this
+module was installed, then the following functions will be available.
+None of these functions are exportable.
+
+=head3 XCompositeVersion
+
+  my $version_integer= X11::Xlib::XCompositeVersion()
+    if X11::Xlib->can('X11::Xlib::XCompositeVersion');
+
+=head3 XCompositeQueryExtension
+
+  my ($event_base, $error_base)= $display->XCompositeQueryExtension
+    if $display->can('XCompositeQueryExtension');
+
+=head3 XCompositeQueryVersion
+
+  my ($major, $minor)= $display->XCompositeQueryExtension
+    if $display->can('XCompositeQueryExtension');
+
+=head3 XCompositeRedirectWindow
+
+  $display->XCompositeRedirectWindow($window, $update);
+
+=head3 XCompositeRedirectSubwindows
+
+  $display->XCompositeRedirectSubwindows($window, $update);
+
+=head3 XCompositeUnredirectWindow
+
+  $display->XCompositeUnredirectWindow($window, $update);
+
+=head3 XCompositeUnredirectSubwindows
+
+  $display->XCompositeUnredirectSubwindows($window, $update);
+
+=head3 XCompositeCreateRegionFromBorderClip
+
+  my $XserverRegion= $display->XCompositeCreateRegionFromBorderClip($window);
+
+=head3 XCompositeNameWindowPixmap
+
+  my $pixmap= $display->XCompositeNameWindowPixmap($window);
+
+=head3 XCompositeGetOverlayWindow
+
+  my $window= $display->XCompositeGetOverlayWindow($window);
+
+=head3 XCompositeReleaseOverlayWindow
+
+  $display->XCompositeReleaseOverlayWindow($window);
 
 =head1 STRUCTURES
 
