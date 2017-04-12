@@ -65,8 +65,8 @@ my %_functions= (
   fn_conn => [qw( ConnectionNumber XCloseDisplay XOpenDisplay XServerVendor
     XSetCloseDownMode XVendorRelease )],
   fn_event => [qw( XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent
-    XCheckWindowEvent XFlush XNextEvent XPutBackEvent XSelectInput XSendEvent
-    XSync )],
+    XCheckWindowEvent XEventsQueued XFlush XNextEvent XPending XPutBackEvent
+    XQueueLength XSelectInput XSendEvent XSync )],
   fn_input => [qw( XAllowEvents XBell XGrabButton XGrabKey XGrabKeyboard
     XGrabPointer XQueryKeymap XUngrabButton XUngrabKey XUngrabKeyboard
     XUngrabPointer keyboard_leds )],
@@ -384,6 +384,28 @@ Determines what resources are freed upon disconnect.  See X11 documentation.
 Most of these functions return an L</XEvent> by way of an "out" parameter that
 gets overwritten during the call, in the style of C.  The variable receiving the
 event does not need to be initialized.
+
+=head3 XQLength
+
+  my $count= XQLength($display);
+
+Return number of events already in the incoming queue, without trying to read
+more.
+
+=head3 XPending
+
+  my $count= XPending($display);
+
+Return number of events in incoming queue after performing a flush and a read.
+
+=head3 XEventsQueued
+
+  my $count= XEventsQueued($display, $mode);
+
+C<$mode> is one of QueuedAlready, QueuedAfterFlush, or QueuedAfterReading.
+QueuedAlready simply returns the queue size.  QueuedAfterReading performs a
+read, then returns the count.  QueuedAfterFlush performs a flush and a read,
+then returns the count.
 
 =head3 XNextEvent
 

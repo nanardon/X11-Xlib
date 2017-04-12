@@ -104,6 +104,19 @@ XCloseDisplay(dpy_sv)
 
 # Event Functions (fn_event) -------------------------------------------------
 
+int
+XQLength(dpy)
+    Display *dpy
+
+int
+XPending(dpy)
+    Display *dpy
+
+int
+XEventsQueued(dpy, mode)
+    Display *dpy
+    int mode
+
 void
 XNextEvent(dpy, event_sv)
     Display * dpy
