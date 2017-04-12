@@ -1030,6 +1030,164 @@ void PerlXlib_XVisualInfo_unpack(XVisualInfo *s, HV *fields) {
 
 /* END GENERATED X11_Xlib_XVisualInfo
 /*--------------------------------------------------------------------------*/
+/* BEGIN GENERATED X11_Xlib_XWindowChanges */
+
+void PerlXlib_XWindowChanges_pack(XWindowChanges *s, HV *fields, Bool consume) {
+    SV **fp;
+
+    fp= hv_fetch(fields, "border_width", 12, 0);
+    if (fp && *fp) { s->border_width= SvIV(*fp); if (consume) hv_delete(fields, "border_width", 12, G_DISCARD); }
+
+    fp= hv_fetch(fields, "height", 6, 0);
+    if (fp && *fp) { s->height= SvIV(*fp); if (consume) hv_delete(fields, "height", 6, G_DISCARD); }
+
+    fp= hv_fetch(fields, "sibling", 7, 0);
+    if (fp && *fp) { s->sibling= PerlXlib_sv_to_xid(*fp); if (consume) hv_delete(fields, "sibling", 7, G_DISCARD); }
+
+    fp= hv_fetch(fields, "stack_mode", 10, 0);
+    if (fp && *fp) { s->stack_mode= SvIV(*fp); if (consume) hv_delete(fields, "stack_mode", 10, G_DISCARD); }
+
+    fp= hv_fetch(fields, "width", 5, 0);
+    if (fp && *fp) { s->width= SvIV(*fp); if (consume) hv_delete(fields, "width", 5, G_DISCARD); }
+
+    fp= hv_fetch(fields, "x", 1, 0);
+    if (fp && *fp) { s->x= SvIV(*fp); if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
+
+    fp= hv_fetch(fields, "y", 1, 0);
+    if (fp && *fp) { s->y= SvIV(*fp); if (consume) hv_delete(fields, "y", 1, G_DISCARD); }
+}
+
+void PerlXlib_XWindowChanges_unpack(XWindowChanges *s, HV *fields) {
+    /* hv_store may return NULL if there is an error, or if the hash is tied.
+     * If it does, we need to clean up the value.
+     */
+    SV *sv= NULL;
+    if (!hv_store(fields, "border_width", 12, (sv=newSViv(s->border_width)), 0)) goto store_fail;
+    if (!hv_store(fields, "height"    ,  6, (sv=newSViv(s->height)), 0)) goto store_fail;
+    if (!hv_store(fields, "sibling"   ,  7, (sv=newSVuv(s->sibling)), 0)) goto store_fail;
+    if (!hv_store(fields, "stack_mode", 10, (sv=newSViv(s->stack_mode)), 0)) goto store_fail;
+    if (!hv_store(fields, "width"     ,  5, (sv=newSViv(s->width)), 0)) goto store_fail;
+    if (!hv_store(fields, "x"         ,  1, (sv=newSViv(s->x)), 0)) goto store_fail;
+    if (!hv_store(fields, "y"         ,  1, (sv=newSViv(s->y)), 0)) goto store_fail;
+    return;
+    store_fail:
+        if (sv) sv_2mortal(sv);
+        croak("Can't store field in supplied hash (tied maybe?)");
+}
+
+/* END GENERATED X11_Xlib_XWindowChanges */
+/*--------------------------------------------------------------------------*/
+/* BEGIN GENERATED X11_Xlib_XWindowAttributes */
+
+void PerlXlib_XWindowAttributes_pack(XWindowAttributes *s, HV *fields, Bool consume) {
+    SV **fp;
+
+    fp= hv_fetch(fields, "all_event_masks", 15, 0);
+    if (fp && *fp) { s->all_event_masks= SvIV(*fp); if (consume) hv_delete(fields, "all_event_masks", 15, G_DISCARD); }
+
+    fp= hv_fetch(fields, "backing_pixel", 13, 0);
+    if (fp && *fp) { s->backing_pixel= SvUV(*fp); if (consume) hv_delete(fields, "backing_pixel", 13, G_DISCARD); }
+
+    fp= hv_fetch(fields, "backing_planes", 14, 0);
+    if (fp && *fp) { s->backing_planes= SvUV(*fp); if (consume) hv_delete(fields, "backing_planes", 14, G_DISCARD); }
+
+    fp= hv_fetch(fields, "backing_store", 13, 0);
+    if (fp && *fp) { s->backing_store= SvIV(*fp); if (consume) hv_delete(fields, "backing_store", 13, G_DISCARD); }
+
+    fp= hv_fetch(fields, "bit_gravity", 11, 0);
+    if (fp && *fp) { s->bit_gravity= SvIV(*fp); if (consume) hv_delete(fields, "bit_gravity", 11, G_DISCARD); }
+
+    fp= hv_fetch(fields, "border_width", 12, 0);
+    if (fp && *fp) { s->border_width= SvIV(*fp); if (consume) hv_delete(fields, "border_width", 12, G_DISCARD); }
+
+    fp= hv_fetch(fields, "class", 5, 0);
+    if (fp && *fp) { s->class= SvIV(*fp); if (consume) hv_delete(fields, "class", 5, G_DISCARD); }
+
+    fp= hv_fetch(fields, "colormap", 8, 0);
+    if (fp && *fp) { s->colormap= PerlXlib_sv_to_xid(*fp); if (consume) hv_delete(fields, "colormap", 8, G_DISCARD); }
+
+    fp= hv_fetch(fields, "depth", 5, 0);
+    if (fp && *fp) { s->depth= SvIV(*fp); if (consume) hv_delete(fields, "depth", 5, G_DISCARD); }
+
+    fp= hv_fetch(fields, "do_not_propagate_mask", 21, 0);
+    if (fp && *fp) { s->do_not_propagate_mask= SvIV(*fp); if (consume) hv_delete(fields, "do_not_propagate_mask", 21, G_DISCARD); }
+
+    fp= hv_fetch(fields, "height", 6, 0);
+    if (fp && *fp) { s->height= SvIV(*fp); if (consume) hv_delete(fields, "height", 6, G_DISCARD); }
+
+    fp= hv_fetch(fields, "map_installed", 13, 0);
+    if (fp && *fp) { s->map_installed= SvIV(*fp); if (consume) hv_delete(fields, "map_installed", 13, G_DISCARD); }
+
+    fp= hv_fetch(fields, "map_state", 9, 0);
+    if (fp && *fp) { s->map_state= SvIV(*fp); if (consume) hv_delete(fields, "map_state", 9, G_DISCARD); }
+
+    fp= hv_fetch(fields, "override_redirect", 17, 0);
+    if (fp && *fp) { s->override_redirect= SvIV(*fp); if (consume) hv_delete(fields, "override_redirect", 17, G_DISCARD); }
+
+    fp= hv_fetch(fields, "root", 4, 0);
+    if (fp && *fp) { s->root= PerlXlib_sv_to_xid(*fp); if (consume) hv_delete(fields, "root", 4, G_DISCARD); }
+
+    fp= hv_fetch(fields, "save_under", 10, 0);
+    if (fp && *fp) { s->save_under= SvIV(*fp); if (consume) hv_delete(fields, "save_under", 10, G_DISCARD); }
+
+    fp= hv_fetch(fields, "screen", 6, 0);
+    if (fp && *fp) { { if (SvOK(*fp) && !sv_isa(*fp, "X11::Xlib::Screen"))  croak("Expected X11::Xlib::Screen"); s->screen= SvOK(*fp)? (Screen *) SvIV((SV*)SvRV(*fp)) : NULL;} if (consume) hv_delete(fields, "screen", 6, G_DISCARD); }
+
+    fp= hv_fetch(fields, "visual", 6, 0);
+    if (fp && *fp) { { if (SvOK(*fp) && !sv_isa(*fp, "X11::Xlib::Visual"))  croak("Expected X11::Xlib::Visual"); s->visual= SvOK(*fp)? (Visual *) SvIV((SV*)SvRV(*fp)) : NULL;} if (consume) hv_delete(fields, "visual", 6, G_DISCARD); }
+
+    fp= hv_fetch(fields, "width", 5, 0);
+    if (fp && *fp) { s->width= SvIV(*fp); if (consume) hv_delete(fields, "width", 5, G_DISCARD); }
+
+    fp= hv_fetch(fields, "win_gravity", 11, 0);
+    if (fp && *fp) { s->win_gravity= SvIV(*fp); if (consume) hv_delete(fields, "win_gravity", 11, G_DISCARD); }
+
+    fp= hv_fetch(fields, "x", 1, 0);
+    if (fp && *fp) { s->x= SvIV(*fp); if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
+
+    fp= hv_fetch(fields, "y", 1, 0);
+    if (fp && *fp) { s->y= SvIV(*fp); if (consume) hv_delete(fields, "y", 1, G_DISCARD); }
+
+    fp= hv_fetch(fields, "your_event_mask", 15, 0);
+    if (fp && *fp) { s->your_event_mask= SvIV(*fp); if (consume) hv_delete(fields, "your_event_mask", 15, G_DISCARD); }
+}
+
+void PerlXlib_XWindowAttributes_unpack(XWindowAttributes *s, HV *fields) {
+    /* hv_store may return NULL if there is an error, or if the hash is tied.
+     * If it does, we need to clean up the value.
+     */
+    SV *sv= NULL;
+    if (!hv_store(fields, "all_event_masks", 15, (sv=newSViv(s->all_event_masks)), 0)) goto store_fail;
+    if (!hv_store(fields, "backing_pixel", 13, (sv=newSVuv(s->backing_pixel)), 0)) goto store_fail;
+    if (!hv_store(fields, "backing_planes", 14, (sv=newSVuv(s->backing_planes)), 0)) goto store_fail;
+    if (!hv_store(fields, "backing_store", 13, (sv=newSViv(s->backing_store)), 0)) goto store_fail;
+    if (!hv_store(fields, "bit_gravity", 11, (sv=newSViv(s->bit_gravity)), 0)) goto store_fail;
+    if (!hv_store(fields, "border_width", 12, (sv=newSViv(s->border_width)), 0)) goto store_fail;
+    if (!hv_store(fields, "class"     ,  5, (sv=newSViv(s->class)), 0)) goto store_fail;
+    if (!hv_store(fields, "colormap"  ,  8, (sv=newSVuv(s->colormap)), 0)) goto store_fail;
+    if (!hv_store(fields, "depth"     ,  5, (sv=newSViv(s->depth)), 0)) goto store_fail;
+    if (!hv_store(fields, "do_not_propagate_mask", 21, (sv=newSViv(s->do_not_propagate_mask)), 0)) goto store_fail;
+    if (!hv_store(fields, "height"    ,  6, (sv=newSViv(s->height)), 0)) goto store_fail;
+    if (!hv_store(fields, "map_installed", 13, (sv=newSViv(s->map_installed)), 0)) goto store_fail;
+    if (!hv_store(fields, "map_state" ,  9, (sv=newSViv(s->map_state)), 0)) goto store_fail;
+    if (!hv_store(fields, "override_redirect", 17, (sv=newSViv(s->override_redirect)), 0)) goto store_fail;
+    if (!hv_store(fields, "root"      ,  4, (sv=newSVuv(s->root)), 0)) goto store_fail;
+    if (!hv_store(fields, "save_under", 10, (sv=newSViv(s->save_under)), 0)) goto store_fail;
+    if (!hv_store(fields, "screen"    ,  6, (sv=(s->screen? sv_setref_pv(newSV(0), "X11::Xlib::Screen", (void*) s->screen) : &PL_sv_undef)), 0)) goto store_fail;
+    if (!hv_store(fields, "visual"    ,  6, (sv=(s->visual? sv_setref_pv(newSV(0), "X11::Xlib::Visual", (void*) s->visual) : &PL_sv_undef)), 0)) goto store_fail;
+    if (!hv_store(fields, "width"     ,  5, (sv=newSViv(s->width)), 0)) goto store_fail;
+    if (!hv_store(fields, "win_gravity", 11, (sv=newSViv(s->win_gravity)), 0)) goto store_fail;
+    if (!hv_store(fields, "x"         ,  1, (sv=newSViv(s->x)), 0)) goto store_fail;
+    if (!hv_store(fields, "y"         ,  1, (sv=newSViv(s->y)), 0)) goto store_fail;
+    if (!hv_store(fields, "your_event_mask", 15, (sv=newSViv(s->your_event_mask)), 0)) goto store_fail;
+    return;
+    store_fail:
+        if (sv) sv_2mortal(sv);
+        croak("Can't store field in supplied hash (tied maybe?)");
+}
+
+/* END GENERATED X11_Xlib_XWindowAttributes */
+/*--------------------------------------------------------------------------*/
 /* BEGIN GENERATED X11_Xlib_XSetWindowAttributes */
 
 void PerlXlib_XSetWindowAttributes_pack(XSetWindowAttributes *s, HV *fields, Bool consume) {

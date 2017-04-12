@@ -1,3 +1,5 @@
+const_x
+ i None
 const_event
  i ButtonPress
  i ButtonRelease
@@ -117,25 +119,51 @@ const_cmap
  i AllocAll
  i AllocNone
 const_win
+ i Above
+ i Below
+ i BottomIf
+ i CopyFromParent
  i InputOutput
  i InputOnly
- i CopyFromParent
+ i Opposite
+ i TopIf
+ i LowerHighest
+ i RaiseLowest
+ i ForgetGravity
+ i UnmapGravity
+ i EastGravity
+ i NorthWestGravity
+ i SouthWestGravity
+ i NorthGravity
+ i SouthGravity
+ i NorthEastGravity
+ i SouthEastGravity
+ i WestGravity
+ i StaticGravity
+ i CenterGravity
 const_winattr
  i CWBackPixmap
  i CWBackPixel
- i CWBorderPixmap
- i CWBorderPixel
- i CWBitGravity
- i CWWinGravity
  i CWBackingStore
  i CWBackingPlanes
  i CWBackingPixel
- i CWOverrideRedirect
- i CWSaveUnder
- i CWEventMask
- i CWDontPropagate
+ i CWBorderWidth
+ i CWBorderPixmap
+ i CWBorderPixel
+ i CWBitGravity
  i CWColormap
  i CWCursor
+ i CWDontPropagate
+ i CWEventMask
+ i CWHeight
+ i CWOverrideRedirect
+ i CWSaveUnder
+ i CWSibling
+ i CWStackMode
+ i CWWidth
+ i CWWinGravity
+ i CWX
+ i CWY
 const_sizehint
  i USPosition
  i USSize

@@ -116,6 +116,8 @@ sub bytes { ${$_[0]} }
 
 require X11::Xlib::XEvent;
 @X11::Xlib::XVisualInfo::ISA= ( __PACKAGE__ );
+@X11::Xlib::XWindowChanges::ISA= ( __PACKAGE__ );
+@X11::Xlib::XWindowAttributes::ISA= ( __PACKAGE__ );
 @X11::Xlib::XSetWindowAttributes::ISA= ( __PACKAGE__ );
 @X11::Xlib::XSizeHints::ISA= ( __PACKAGE__ );
 

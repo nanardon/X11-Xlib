@@ -47,11 +47,17 @@ my %_constants= (
   const_visual => [qw( VisualAllMask VisualBitsPerRGBMask VisualBlueMaskMask
     VisualClassMask VisualColormapSizeMask VisualDepthMask VisualGreenMaskMask
     VisualIDMask VisualRedMaskMask VisualScreenMask )],
-  const_win => [qw( CopyFromParent InputOnly InputOutput )],
+  const_win => [qw( Above Below BottomIf CenterGravity CopyFromParent
+    EastGravity ForgetGravity InputOnly InputOutput LowerHighest
+    NorthEastGravity NorthGravity NorthWestGravity Opposite RaiseLowest
+    SouthEastGravity SouthGravity SouthWestGravity StaticGravity TopIf
+    UnmapGravity WestGravity )],
   const_winattr => [qw( CWBackPixel CWBackPixmap CWBackingPixel CWBackingPlanes
-    CWBackingStore CWBitGravity CWBorderPixel CWBorderPixmap CWColormap
-    CWCursor CWDontPropagate CWEventMask CWOverrideRedirect CWSaveUnder
-    CWWinGravity )],
+    CWBackingStore CWBitGravity CWBorderPixel CWBorderPixmap CWBorderWidth
+    CWColormap CWCursor CWDontPropagate CWEventMask CWHeight
+    CWOverrideRedirect CWSaveUnder CWSibling CWStackMode CWWidth CWWinGravity
+    CWX CWY )],
+  const_x => [qw( None )],
 # END GENERATED XS CONSTANT LIST
 );
 my %_functions= (
@@ -75,11 +81,17 @@ my %_functions= (
   fn_screen => [qw( DefaultColormap DefaultDepth DefaultGC DefaultScreen
     DefaultVisual DisplayHeight DisplayHeightMM DisplayWidth DisplayWidthMM
     RootWindow ScreenCount )],
+  fn_thread => [qw( XInitThreads XLockDisplay XUnlockDisplay )],
   fn_vis => [qw( XCreateColormap XFreeColormap XGetVisualInfo XMatchVisualInfo
     XVisualIDFromVisual )],
-  fn_win => [qw( XCreateSimpleWindow XCreateWindow XDestroyWindow XGetGeometry
-    XGetWMNormalHints XGetWMSizeHints XMapWindow XSetWMNormalHints
-    XSetWMSizeHints XUnmapWindow )],
+  fn_win => [qw( XChangeWindowAttributes XCirculateSubwindows XConfigureWindow
+    XCreateSimpleWindow XCreateWindow XDefineCursor XDestroyWindow
+    XGetGeometry XGetWMNormalHints XGetWMSizeHints XGetWindowAttributes
+    XLowerWindow XMapWindow XMoveResizeWindow XMoveWindow XQueryTree
+    XRaiseWindow XResizeWindow XRestackWindows XSetWMNormalHints
+    XSetWMSizeHints XSetWindowBackground XSetWindowBackgroundPixmap
+    XSetWindowBorder XSetWindowBorderPixmap XSetWindowBorderWidth
+    XSetWindowColormap XUndefineCursor XUnmapWindow )],
   fn_xtest => [qw( XTestFakeButtonEvent XTestFakeKeyEvent XTestFakeMotionEvent
     )],
 # END GENERATED XS FUNCTION LIST
@@ -296,6 +308,32 @@ this is usually the first argument.  Every Xlib function listed below can be
 exported, and you can grab them all with
 
   use X11::Xlib ':functions';
+
+=head2 THREADING FUNCTIONS
+
+=head3 XInitThreads
+
+Sets up Xlib in a thread-safe manner, which basically means wrapping each Xlib
+method with a mutex.  After this call, multiple threads may access the same
+Display connection without application-level synchronization.
+If used, this must be the first Xlib call in the whole program, which can be
+inconvenient if you don't know in advance which other modules you are using.
+While perl scripts are typically single-threaded, you might still require this
+if you call into other libraries that create their own threads and also access
+Xlib.
+
+Returns true if multithread initialization succeeded.  If it fails, you
+probably should abort.  (and then fix your program so that it is the first
+Xlib function called)
+
+=head3 XLockDisplay
+
+Assuming XInitThreads succeeded, this will lock the Xlib mutex so you can run
+multiple calls uninterrupted.
+
+=head3 XUnlockDisplay
+
+Release the lock taken by L</XLockDisplay>.
 
 =head2 CONNECTION FUNCTIONS
 
@@ -628,6 +666,8 @@ Since this function didn't have nearly enough parameters for the imaginations
 of the Xlib creators, they added the full L<X11::Xlib::XSetWindowAttributes> structure
 as a final argument.  But to save you the trouble of setting all I<those>
 fields, they added an C<$attr_mask> to indicate which fields you are using.
+Simply OR together the constants listed in that struct.  If C<$attr_mask> is
+zero, then C<\%attrs> may be C<undef>.
 
 The window is initially un-mapped (i.e. hidden).  See L</XMapWindow>
 
@@ -654,15 +694,123 @@ the parent window is also mapped.  The server sends back a MapNotify event if
 the Window event mask allows it, and if a variety of other conditions are met.
 It's really pretty complicated and you should read the offical docs.
 
+=head3 XUnmapWindow
+
+  XUnmapWindow($display, $window);
+
+Hide a window.
+
 =head3 XGetGeometry
 
-  my ($root, $x, $y, $width, $height, $border_width, $color_depth);
-  XGetGeometry($display, $drawable, $root, $x, $y, $width, $height, $border_width, $color_depth)
+  my ($root, $x, $y, $width, $height, $border_width, $color_depth)
+    = XGetGeometry($display, $drawable)
     or die "XGetGeometry failed";
-  # All vars declared above should now be defined
 
-This function loads the geometry of the window into the variables you supply.
-You may omit the ones you don't care about.
+=head3 XGetWindowAttributes
+
+  my $bool= XGetWindowAttributes($display, $window, $attrs_out);
+
+Populate $attrs_out, which should be an undefined variable or a buffer or an
+instance of L<X11::Xlib::XWindowAttributes>.  If it returns false,
+C<$attrs_out> remains unchanged.
+
+=head3 XChangeWindowAttributes
+
+  XChangeWindowAttributes($display, $window, $valuemask, \%XSetWindowAttributes)
+
+Apply one or more fields of the L<X11::Xlib::XSetWindowAttributes> struct to
+the specified window.  C<$valuemask> is a ORed combination of the flags listed
+for that struct.
+
+=head3 XSetWindowBackground
+
+  XSetWindowBackground($display, $window, $background_pixel)
+
+Set the background pixel color (integer) for the window.
+
+=head3 XSetWindowBackgroundPixmap
+
+  XSetWindowBackgroundPixmap($display, $window, $background_pixmap)
+
+=head3 XSetWindowBorder
+
+  XSetWindowBorder($display, $window, $border_pixel)
+
+=head3 XSetWindowBorderPixmap
+
+  XSetWindowBorderPixmap($display, $window, $border_pixmap)
+
+=head3 XSetWindowColormap
+
+  XSetWindowColormap($display, $window, $colormap)
+
+=head3 XDefineCursor
+
+  XDefineCursor($display, $window, $cursor)
+
+=head3 XUndefineCursor
+
+  XUndefineCursor($display, $window)
+
+=head3 XConfigureWindow
+
+  XConfigureWindow($display, $window, $mask, \%XWindowChanges);
+
+Set the size, position, border, and stacking order of a window.
+L<X11::Xlib::XWindowChanges> can be passed as an object or plain hashref.
+C<$mask> is an ORed combination of the constants listed in the documentation
+for that struct, indicating which fields have been initialized.
+
+=head3 XMoveWindow
+
+  XMoveWindow($display, $window, $x, $y);
+
+=head3 XResizeWindow
+
+  XMoveWindow($display, $window, $width, $height)
+
+=head3 XMoveResizeWindow
+
+  XModeResizeWindow($display, $window, $x, $y, $width, $height)
+
+=head3 XSetWindowBorderWidth
+
+  XSetWindowBorderWidth($display, $window, $border_width)
+
+=head3 XQueryTree
+
+  my ($root, $parent, @children)= XQueryTree($display, $window);
+
+Return windows related to C<$window>.  Child windows are returned in
+bottom-to-top stacking order.  Returns an empty list if it fails.
+
+=head3 XRaiseWindow
+
+  XRaiseWindow($display, $window);
+
+Move window to front of stacking order.
+
+=head3 XLowerWindow
+
+ XLowerWindow($display, $window);
+
+Move window to back of stacking order.
+
+=head3 XCirculateSubwindows
+
+  XCirculateSubwindows($display, $parent_window, $direction);
+
+For the child windows of the given window, either bring the back-most to the
+front (C<direction == RaiseLowest>), or the front-most to the back
+(C<direction == LowerHighest>).
+
+(Note: use this instead of XCirculateSubwindowsUp or XCirculateSubwindowsDown)
+
+=head3 XRestackWindows
+
+  XRestackWindows($display, \@windows);
+
+Reset the stacking order of the specified windows, from front to back.
 
 =head3 XGetWMNormalHints
 
@@ -685,12 +833,6 @@ Set window manager hints for the specified window.  C<$hints> is an instance of
 L<X11::Xlib::XSizeHints>, or a hashref of its fields.  Note that the C<< ->flags >>
 member of this struct will be initialized for you if you pass a hashref, according
 to what fields exist in the hashref.
-
-=head3 XUnmapWindow
-
-  XUnmapWindow($display, $window);
-
-Hide a window.
 
 =head3 XDestroyWindow
 

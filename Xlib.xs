@@ -13,6 +13,19 @@
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib
 
+# Threading Functions (fn_thread) --------------------------------------------
+
+int
+XInitThreads()
+
+void
+XLockDisplay(dpy)
+    Display *dpy
+
+void
+XUnlockDisplay(dpy)
+    Display *dpy
+
 # Connection Functions (fn_conn) ---------------------------------------------
 
 void
@@ -411,7 +424,7 @@ XCreatePixmapFromBitmapData(dpy, drw, data, width, height, fg, bg, depth)
 # Window Functions (fn_win) --------------------------------------------------
 
 Window
-XCreateWindow(dpy, parent, x, y, w, h, border, depth, class, visual, attr_mask, attrs)
+XCreateWindow(dpy, parent, x, y, w, h, border= 0, depth= CopyFromParent, class= CopyFromParent, visual= CopyFromParent, attr_mask= 0, attrs= NULL)
     Display * dpy
     Window parent
     int x
@@ -424,9 +437,15 @@ XCreateWindow(dpy, parent, x, y, w, h, border, depth, class, visual, attr_mask, 
     VisualOrNull visual
     int attr_mask
     XSetWindowAttributes *attrs
+    CODE:
+        if (attr_mask && !attrs)
+            croak("Attrs may only be NULL if attr_mask is 0");
+        RETVAL = XCreateWindow(dpy, parent, x, y, w, h, border, depth, class, visual, attr_mask, attrs);
+    OUTPUT:
+        RETVAL
 
 Window
-XCreateSimpleWindow(dpy, parent, x, y, w, h, border_width, border_color, background_color)
+XCreateSimpleWindow(dpy, parent, x, y, w, h, border_width= 0, border_color= 0, background_color= 0)
     Display * dpy
     Window parent
     int x
@@ -447,7 +466,7 @@ XUnmapWindow(dpy, wnd)
     Display * dpy
     Window wnd
 
-int
+void
 XGetGeometry(dpy, wnd, root_out=NULL, x_out=NULL, y_out=NULL, width_out=NULL, height_out=NULL, border_out=NULL, depth_out=NULL)
     Display * dpy
     Window wnd
@@ -460,19 +479,32 @@ XGetGeometry(dpy, wnd, root_out=NULL, x_out=NULL, y_out=NULL, width_out=NULL, he
     SV *depth_out
     INIT:
         Window root;
-        int x, y;
+        int x, y, ret;
         unsigned int w, h, bw, d;
-    CODE:
-        RETVAL = XGetGeometry(dpy, wnd, &root, &x, &y, &w, &h, &bw, &d);
-        if (root_out)   sv_setuv(root_out, root);
-        if (x_out)      sv_setiv(x_out, x);
-        if (y_out)      sv_setiv(y_out, y);
-        if (width_out)  sv_setuv(width_out, w);
-        if (height_out) sv_setuv(height_out, h);
-        if (border_out) sv_setuv(border_out, bw);
-        if (depth_out)  sv_setuv(depth_out, d);
-    OUTPUT:
-        RETVAL
+    PPCODE:
+        ret = XGetGeometry(dpy, wnd, &root, &x, &y, &w, &h, &bw, &d);
+        if (items > 2) {
+            /* C-style API */
+            warn("C-style XGetGeometry is deprecated; use 2 arguments to return a list, instead");
+            if (root_out)   sv_setuv(root_out, root);
+            if (x_out)      sv_setiv(x_out, x);
+            if (y_out)      sv_setiv(y_out, y);
+            if (width_out)  sv_setuv(width_out, w);
+            if (height_out) sv_setuv(height_out, h);
+            if (border_out) sv_setuv(border_out, bw);
+            if (depth_out)  sv_setuv(depth_out, d);
+            PUSHs(newSViv(ret));
+        }
+        /* perl-style API */
+        else if (ret) {
+            PUSHs(newSVuv(root));
+            PUSHs(newSViv(x));
+            PUSHs(newSViv(y));
+            PUSHs(newSVuv(w));
+            PUSHs(newSVuv(h));
+            PUSHs(newSVuv(bw));
+            PUSHs(newSVuv(d));
+        }
 
 int
 XGetWMSizeHints(dpy, wnd, hints_out, supplied_out, property)
@@ -521,9 +553,164 @@ XGetWMNormalHints(dpy, wnd, hints_out, supplied_out)
 
 void
 XSetWMNormalHints(dpy, wnd, szhints)
-    Display * dpy
+    Display *dpy
     Window wnd
     XSizeHints *szhints
+
+int
+XGetWindowAttributes(dpy, wnd, attrs_out)
+    Display *dpy
+    Window wnd
+    SV *attrs_out
+    INIT:
+        XWindowAttributes attr, *dest;
+    CODE:
+        RETVAL = XGetWindowAttributes(dpy, wnd, &attr);
+        if (RETVAL) {
+            dest= (XWindowAttributes*) PerlXlib_get_struct_ptr(
+                attrs_out, 1,
+                "X11::Xlib::XWindowAttributes", sizeof(XWindowAttributes),
+                (PerlXlib_struct_pack_fn*) PerlXlib_XWindowAttributes_pack
+            );
+            memcpy(dest, &attr, sizeof(attr));
+        }
+    OUTPUT:
+        RETVAL
+
+void
+XChangeWindowAttributes(dpy, wnd, valuemask, attributes)
+    Display *dpy
+    Window wnd
+    unsigned valuemask
+    XSetWindowAttributes *attributes
+
+void
+XSetWindowBackground(dpy, wnd, background_pixel)
+    Display *dpy
+    Window wnd
+    unsigned background_pixel
+
+void
+XSetWindowBackgroundPixmap(dpy, wnd, background_pixmap)
+    Display *dpy
+    Window wnd
+    Pixmap background_pixmap
+
+void
+XSetWindowBorder(dpy, wnd, border_pixel)
+    Display *dpy
+    Window wnd
+    unsigned border_pixel
+
+void
+XSetWindowBorderPixmap(dpy, wnd, border_pixmap)
+    Display *dpy
+    Window wnd
+    Pixmap border_pixmap
+
+void
+XSetWindowColormap(dpy, wnd, colormap)
+    Display *dpy
+    Window wnd
+    Colormap colormap
+
+void
+XDefineCursor(dpy, wnd, cursor = None)
+    Display *dpy
+    Window wnd
+    Cursor cursor
+
+void
+XUndefineCursor(dpy, wnd)
+    Display *dpy
+    Window wnd
+
+void
+XConfigureWindow(dpy, wnd, value_mask, values)
+    Display *dpy
+    Window wnd
+    unsigned int value_mask
+    XWindowChanges *values
+
+void
+XMoveWindow(dpy, wnd, x, y)
+    Display *dpy
+    Window wnd
+    int x
+    int y
+
+void
+XResizeWindow(dpy, wnd, width, height)
+    Display *dpy
+    Window wnd
+    unsigned width
+    unsigned height
+
+void
+XMoveResizeWindow(dpy, wnd, x, y, width, height)
+    Display *dpy
+    Window wnd
+    int x
+    int y
+    unsigned width
+    unsigned height
+
+void
+XSetWindowBorderWidth(dpy, wnd, width)
+    Display *dpy
+    Window wnd
+    unsigned width
+
+void
+XQueryTree(dpy, wnd)
+    Display *dpy
+    Window wnd
+    INIT:
+        Window root, parent, *children;
+        int nchildren, i;
+    PPCODE:
+        if (XQueryTree(dpy, wnd, &root, &parent, &children, &nchildren)) {
+            PUSHs(newSViv(root));
+            PUSHs(newSViv(parent));
+            for (i= 0; i < nchildren; i++)
+                PUSHs(newSViv(children[i]));
+            if (children) XFree(children);
+        }
+
+void
+XRaiseWindow(dpy, wnd)
+    Display *dpy
+    Window wnd
+
+void
+XLowerWindow(dpy, wnd)
+    Display *dpy
+    Window wnd
+
+void
+XCirculateSubwindows(dpy, wnd, direction)
+    Display *dpy
+    Window wnd
+    int direction
+
+void
+XRestackWindows(dpy, windows_av)
+    Display *dpy
+    AV* windows_av
+    INIT:
+        int n, i;
+        Window *wndarray;
+        SV **elem;
+    PPCODE:
+        n= av_len(windows_av)+1;
+        Newx(wndarray, n, Window);
+        SAVEFREEPV(wndarray);
+        for (i= 0; i < n; i++) {
+            elem= av_fetch(windows_av, i, 0);
+            if (!elem) croak("can't load elem %d", i);
+            wndarray[i]= PerlXlib_sv_to_xid(*elem);
+        }
+        XRestackWindows(dpy, wndarray, n);
 
 void
 XDestroyWindow(dpy, wnd)
@@ -2268,6 +2455,446 @@ visualid(s, value=NULL)
 
 # END GENERATED X11_Xlib_XVisualInfo
 # ----------------------------------------------------------------------------
+# BEGIN GENERATED X11_Xlib_XWindowChanges
+
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::XWindowChanges
+
+int
+_sizeof(ignored=NULL)
+    SV* ignored;
+    CODE:
+        RETVAL = sizeof(XWindowChanges);
+    OUTPUT:
+        RETVAL
+
+void
+_initialize(s)
+    SV *s
+    INIT:
+        void *sptr;
+    PPCODE:
+        sptr= PerlXlib_get_struct_ptr(s, 1, "X11::Xlib::XWindowChanges", sizeof(XWindowChanges),
+            (PerlXlib_struct_pack_fn*) &PerlXlib_XWindowChanges_pack
+        );
+        memset((void*) sptr, 0, sizeof(XWindowChanges));
+
+void
+_pack(s, fields, consume=0)
+    XWindowChanges *s
+    HV *fields
+    Bool consume
+    PPCODE:
+        PerlXlib_XWindowChanges_pack(s, fields, consume);
+
+void
+_unpack(s, fields)
+    XWindowChanges *s
+    HV *fields
+    PPCODE:
+        PerlXlib_XWindowChanges_unpack(s, fields);
+
+void
+border_width(s, value=NULL)
+    XWindowChanges *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->border_width= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->border_width)));
+    }
+
+void
+height(s, value=NULL)
+    XWindowChanges *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->height= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->height)));
+    }
+
+void
+sibling(s, value=NULL)
+    XWindowChanges *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->sibling= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->sibling)));
+    }
+
+void
+stack_mode(s, value=NULL)
+    XWindowChanges *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->stack_mode= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->stack_mode)));
+    }
+
+void
+width(s, value=NULL)
+    XWindowChanges *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->width= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->width)));
+    }
+
+void
+x(s, value=NULL)
+    XWindowChanges *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->x= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->x)));
+    }
+
+void
+y(s, value=NULL)
+    XWindowChanges *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->y= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->y)));
+    }
+
+# END GENERATED X11_Xlib_XWindowChanges
+# ----------------------------------------------------------------------------
+# BEGIN GENERATED X11_Xlib_XWindowAttributes
+
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::XWindowAttributes
+
+int
+_sizeof(ignored=NULL)
+    SV* ignored;
+    CODE:
+        RETVAL = sizeof(XWindowAttributes);
+    OUTPUT:
+        RETVAL
+
+void
+_initialize(s)
+    SV *s
+    INIT:
+        void *sptr;
+    PPCODE:
+        sptr= PerlXlib_get_struct_ptr(s, 1, "X11::Xlib::XWindowAttributes", sizeof(XWindowAttributes),
+            (PerlXlib_struct_pack_fn*) &PerlXlib_XWindowAttributes_pack
+        );
+        memset((void*) sptr, 0, sizeof(XWindowAttributes));
+
+void
+_pack(s, fields, consume=0)
+    XWindowAttributes *s
+    HV *fields
+    Bool consume
+    PPCODE:
+        PerlXlib_XWindowAttributes_pack(s, fields, consume);
+
+void
+_unpack(s, fields)
+    XWindowAttributes *s
+    HV *fields
+    PPCODE:
+        PerlXlib_XWindowAttributes_unpack(s, fields);
+
+void
+all_event_masks(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->all_event_masks= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->all_event_masks)));
+    }
+
+void
+backing_pixel(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->backing_pixel= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->backing_pixel)));
+    }
+
+void
+backing_planes(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->backing_planes= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->backing_planes)));
+    }
+
+void
+backing_store(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->backing_store= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->backing_store)));
+    }
+
+void
+bit_gravity(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->bit_gravity= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->bit_gravity)));
+    }
+
+void
+border_width(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->border_width= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->border_width)));
+    }
+
+void
+class(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->class= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->class)));
+    }
+
+void
+colormap(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->colormap= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->colormap)));
+    }
+
+void
+depth(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->depth= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->depth)));
+    }
+
+void
+do_not_propagate_mask(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->do_not_propagate_mask= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->do_not_propagate_mask)));
+    }
+
+void
+height(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->height= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->height)));
+    }
+
+void
+map_installed(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->map_installed= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->map_installed)));
+    }
+
+void
+map_state(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->map_state= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->map_state)));
+    }
+
+void
+override_redirect(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->override_redirect= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->override_redirect)));
+    }
+
+void
+root(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->root= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->root)));
+    }
+
+void
+save_under(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->save_under= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->save_under)));
+    }
+
+void
+screen(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      { if (SvOK(value) && !sv_isa(value, "X11::Xlib::Screen"))  croak("Expected X11::Xlib::Screen"); s->screen= SvOK(value)? (Screen *) SvIV((SV*)SvRV(value)) : NULL;}
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal((s->screen? sv_setref_pv(newSV(0), "X11::Xlib::Screen", (void*) s->screen) : &PL_sv_undef)));
+    }
+
+void
+visual(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      { if (SvOK(value) && !sv_isa(value, "X11::Xlib::Visual"))  croak("Expected X11::Xlib::Visual"); s->visual= SvOK(value)? (Visual *) SvIV((SV*)SvRV(value)) : NULL;}
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal((s->visual? sv_setref_pv(newSV(0), "X11::Xlib::Visual", (void*) s->visual) : &PL_sv_undef)));
+    }
+
+void
+width(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->width= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->width)));
+    }
+
+void
+win_gravity(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->win_gravity= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->win_gravity)));
+    }
+
+void
+x(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->x= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->x)));
+    }
+
+void
+y(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->y= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->y)));
+    }
+
+void
+your_event_mask(s, value=NULL)
+    XWindowAttributes *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->your_event_mask= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->your_event_mask)));
+    }
+
+# END GENERATED X11_Xlib_XWindowAttributes
+# ----------------------------------------------------------------------------
 # BEGIN GENERATED X11_Xlib_XSetWindowAttributes
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::XSetWindowAttributes
@@ -2748,6 +3375,7 @@ y(s, value=NULL)
 BOOT:
 # BEGIN GENERATED BOOT CONSTANTS
   HV* stash= gv_stashpvn("X11::Xlib", 9, 1);
+  newCONSTSUB(stash, "None", newSViv(None));
   newCONSTSUB(stash, "ButtonPress", newSViv(ButtonPress));
   newCONSTSUB(stash, "ButtonRelease", newSViv(ButtonRelease));
   newCONSTSUB(stash, "CirculateNotify", newSViv(CirculateNotify));
@@ -2860,24 +3488,50 @@ BOOT:
   newCONSTSUB(stash, "VisualAllMask", newSViv(VisualAllMask));
   newCONSTSUB(stash, "AllocAll", newSViv(AllocAll));
   newCONSTSUB(stash, "AllocNone", newSViv(AllocNone));
+  newCONSTSUB(stash, "Above", newSViv(Above));
+  newCONSTSUB(stash, "Below", newSViv(Below));
+  newCONSTSUB(stash, "BottomIf", newSViv(BottomIf));
+  newCONSTSUB(stash, "CopyFromParent", newSViv(CopyFromParent));
   newCONSTSUB(stash, "InputOutput", newSViv(InputOutput));
   newCONSTSUB(stash, "InputOnly", newSViv(InputOnly));
-  newCONSTSUB(stash, "CopyFromParent", newSViv(CopyFromParent));
+  newCONSTSUB(stash, "Opposite", newSViv(Opposite));
+  newCONSTSUB(stash, "TopIf", newSViv(TopIf));
+  newCONSTSUB(stash, "LowerHighest", newSViv(LowerHighest));
+  newCONSTSUB(stash, "RaiseLowest", newSViv(RaiseLowest));
+  newCONSTSUB(stash, "ForgetGravity", newSViv(ForgetGravity));
+  newCONSTSUB(stash, "UnmapGravity", newSViv(UnmapGravity));
+  newCONSTSUB(stash, "EastGravity", newSViv(EastGravity));
+  newCONSTSUB(stash, "NorthWestGravity", newSViv(NorthWestGravity));
+  newCONSTSUB(stash, "SouthWestGravity", newSViv(SouthWestGravity));
+  newCONSTSUB(stash, "NorthGravity", newSViv(NorthGravity));
+  newCONSTSUB(stash, "SouthGravity", newSViv(SouthGravity));
+  newCONSTSUB(stash, "NorthEastGravity", newSViv(NorthEastGravity));
+  newCONSTSUB(stash, "SouthEastGravity", newSViv(SouthEastGravity));
+  newCONSTSUB(stash, "WestGravity", newSViv(WestGravity));
+  newCONSTSUB(stash, "StaticGravity", newSViv(StaticGravity));
+  newCONSTSUB(stash, "CenterGravity", newSViv(CenterGravity));
   newCONSTSUB(stash, "CWBackPixmap", newSViv(CWBackPixmap));
   newCONSTSUB(stash, "CWBackPixel", newSViv(CWBackPixel));
-  newCONSTSUB(stash, "CWBorderPixmap", newSViv(CWBorderPixmap));
-  newCONSTSUB(stash, "CWBorderPixel", newSViv(CWBorderPixel));
-  newCONSTSUB(stash, "CWBitGravity", newSViv(CWBitGravity));
-  newCONSTSUB(stash, "CWWinGravity", newSViv(CWWinGravity));
   newCONSTSUB(stash, "CWBackingStore", newSViv(CWBackingStore));
   newCONSTSUB(stash, "CWBackingPlanes", newSViv(CWBackingPlanes));
   newCONSTSUB(stash, "CWBackingPixel", newSViv(CWBackingPixel));
-  newCONSTSUB(stash, "CWOverrideRedirect", newSViv(CWOverrideRedirect));
-  newCONSTSUB(stash, "CWSaveUnder", newSViv(CWSaveUnder));
-  newCONSTSUB(stash, "CWEventMask", newSViv(CWEventMask));
-  newCONSTSUB(stash, "CWDontPropagate", newSViv(CWDontPropagate));
+  newCONSTSUB(stash, "CWBorderWidth", newSViv(CWBorderWidth));
+  newCONSTSUB(stash, "CWBorderPixmap", newSViv(CWBorderPixmap));
+  newCONSTSUB(stash, "CWBorderPixel", newSViv(CWBorderPixel));
+  newCONSTSUB(stash, "CWBitGravity", newSViv(CWBitGravity));
   newCONSTSUB(stash, "CWColormap", newSViv(CWColormap));
   newCONSTSUB(stash, "CWCursor", newSViv(CWCursor));
+  newCONSTSUB(stash, "CWDontPropagate", newSViv(CWDontPropagate));
+  newCONSTSUB(stash, "CWEventMask", newSViv(CWEventMask));
+  newCONSTSUB(stash, "CWHeight", newSViv(CWHeight));
+  newCONSTSUB(stash, "CWOverrideRedirect", newSViv(CWOverrideRedirect));
+  newCONSTSUB(stash, "CWSaveUnder", newSViv(CWSaveUnder));
+  newCONSTSUB(stash, "CWSibling", newSViv(CWSibling));
+  newCONSTSUB(stash, "CWStackMode", newSViv(CWStackMode));
+  newCONSTSUB(stash, "CWWidth", newSViv(CWWidth));
+  newCONSTSUB(stash, "CWWinGravity", newSViv(CWWinGravity));
+  newCONSTSUB(stash, "CWX", newSViv(CWX));
+  newCONSTSUB(stash, "CWY", newSViv(CWY));
   newCONSTSUB(stash, "USPosition", newSViv(USPosition));
   newCONSTSUB(stash, "USSize", newSViv(USSize));
   newCONSTSUB(stash, "PPosition", newSViv(PPosition));
