@@ -1,6 +1,12 @@
 Revision history for Perl extension X11::Xlib.
 
-0.13 - 2017-04-07
+0.13 - 2017-04-13
+    - Many new window attribute and window placement functions/constants
+    - Several new Input and Event functions
+    - New structs XRectangle, XWindowAttributes, XWindowChanges
+    - Xcomposite API, conditionally detected by makefile
+    - A little bit of undocumented Xfixes API
+    - Changed API for XGetGeometry, but still backward compatible
     - Fix prereq lists in Makefile.PL and META files.
 
 0.12 - 2017-04-07
