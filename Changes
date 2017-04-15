@@ -1,5 +1,14 @@
 Revision history for Perl extension X11::Xlib.
 
+0.14 - 2017-04-15
+    - Fix bug in XEvent->window that was using the incorrect field for
+       any struct that renames 'xany.window' to i.e. 'parent' or 'event'
+    - New Xcomposite test attempts to use Xephyr if it is installed
+    - Fix API of XCompositeQueryVersion, which takes in/out arguments
+    - Only run X11-connected test cases when DISPLAY is set
+    - Add configuration for Travis-CI
+    - Doc updates
+
 0.13 - 2017-04-13
     - Many new window attribute and window placement functions/constants
     - Several new Input and Event functions
