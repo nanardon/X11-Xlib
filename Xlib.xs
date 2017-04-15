@@ -1444,7 +1444,7 @@ XFixesCreateRegion(dpy, rect_av)
         XRectangle *rects, *rect;
         int nrects, i;
         SV **elem;
-    PPCODE:
+    CODE:
         nrects= av_len(rect_av)+1;
         if (nrects) {
             Newx(rects, nrects, XRectangle);
@@ -1462,7 +1462,9 @@ XFixesCreateRegion(dpy, rect_av)
         } else {
             rects= NULL;
         }
-        XFixesCreateRegion(dpy, rects, nrects);
+        RETVAL = XFixesCreateRegion(dpy, rects, nrects);
+    OUTPUT:
+        RETVAL
 
 void
 XFixesDestroyRegion(dpy, region)
