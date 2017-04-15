@@ -2,9 +2,13 @@
 
 use strict;
 use warnings;
-use Test::More tests => 8;
+use Test::More;
 use X11::Xlib ':all';
 sub err(&) { my $code= shift; my $ret; { local $@= ''; eval { $code->() }; $ret= $@; } $ret }
+
+plan skip_all => "No X11 Server available"
+    unless $ENV{DISPLAY};
+plan tests => 8;
 
 my $TEST_DESTRUTIVE= !!$ENV{TEST_DESTRUTIVE};
 sub skip_destructive($) {

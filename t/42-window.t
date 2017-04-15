@@ -5,6 +5,9 @@ use warnings;
 use Test::More;
 use X11::Xlib qw( :fn_win :const_win :const_winattr :const_sizehint RootWindow XSync None );
 
+plan skip_all => "No X11 Server available"
+    unless $ENV{DISPLAY};
+
 my $dpy= new_ok( 'X11::Xlib', [], 'connect to X11' );
 
 sub err(&) { my $code= shift; my $ret; { local $@= ''; eval { $code->() }; XSync($dpy); $ret= $@; } $ret }

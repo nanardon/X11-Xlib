@@ -9,6 +9,9 @@ use FindBin;
 use lib "$FindBin::Bin/lib";
 use X11::SandboxServer;
 
+plan skip_all => "No X11 Server available"
+    unless $ENV{DISPLAY};
+
 plan skip_all => 'Xcomposite client lib is not available'
     unless X11::Xlib->can('XCompositeVersion');
 

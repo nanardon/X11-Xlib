@@ -2,9 +2,13 @@
 
 use strict;
 use warnings;
-use Test::More tests => 9;
+use Test::More;
 use X11::Xlib qw( KeyPress );
 sub err(&) { my $code= shift; my $ret; { local $@= ''; eval { $code->() }; $ret= $@; } $ret }
+
+plan skip_all => "No X11 Server available"
+    unless $ENV{DISPLAY};
+plan tests => 9;
 
 my $dpy= new_ok( 'X11::Xlib', [], 'connect to X11' );
 

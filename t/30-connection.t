@@ -4,7 +4,11 @@ use strict;
 use warnings;
 use Scalar::Util 'isweak';
 use IO::Handle;
-use Test::More tests => 17;
+use Test::More;
+
+plan skip_all => "No X11 Server available"
+    unless $ENV{DISPLAY};
+plan tests => 17;
 
 sub err(&) { my $code= shift; my $ret; { local $@= ''; eval { $code->() }; $ret= $@; } $ret }
 
