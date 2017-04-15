@@ -41,3 +41,4 @@ t/40-screen-attrs.t
 t/42-window.t
 t/43-pixmap.t
 t/70-xcomposite.t
+t/lib/X11/SandboxServer.pm
