@@ -23,7 +23,7 @@ plan skip_all => 'Xcomposite not supported by server'
 sub err(&) { my $code= shift; my $ret; { local $@= ''; eval { $code->() }; $display->flush_sync; $ret= $@; } $ret }
 
 my ($root, $overlay, $region);
-note "local Xc ver = ".X11::Xlib::XCompositeVersion." server Xc ver = ".join('.', $display->XCompositeQueryVersion);
+note "local Xc ver = ".X11::Xlib::XCompositeVersion()." server Xc ver = ".join('.', $display->XCompositeQueryVersion);
 is( err{ $root= $display->root_window }, '', 'get root window' );
 note "root = $root";
 is( err{ $display->XCompositeRedirectSubwindows($root, CompositeRedirectAutomatic) }, '', 'XCompositeRedirectSubwindows' );
