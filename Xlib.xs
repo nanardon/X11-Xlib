@@ -1341,14 +1341,22 @@ XCompositeQueryExtension(dpy)
         }
 
 void
-XCompositeQueryVersion(dpy)
+XCompositeQueryVersion(dpy, SV *major_sv= NULL, AV *minor_sv= NULL)
     Display *dpy
     INIT:
-        int major, minor;
+        int major= XCOMPOSITE_MAJOR, minor=XCOMPOSITE_MINOR;
     PPCODE:
+        if (major_sv && SvOK(major_sv))
+            major= SvIV(major_sv);
+        if (minor_sv && SvOK(minor_sv))
+            minor= SvIV(minor_sv);
         if (XCompositeQueryVersion(dpy, &major, &minor)) {
-            XPUSHs(sv_2mortal(newSViv(major)));
-            XPUSHs(sv_2mortal(newSViv(minor)));
+            if (major_sv) setSViv(major_sv, major);
+            else major_sv= sv_2mortal(newSViv(major));
+            if (minor_sv) setSViv(minor_sv, minor);
+            else minor_sv= sv_2mortal(newSViv(minor));
+            XPUSHs(major_sv);
+            XPUSHs(minor_sv);
         }
 
 int

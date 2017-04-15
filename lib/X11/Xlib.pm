@@ -1235,6 +1235,10 @@ None of these functions are exportable.
 
   my ($major, $minor)= $display->XCompositeQueryVersion
     if $display->can('XCompositeQueryVersion');
+  # or, to request "no higher than version X":
+  my ($major, $minor)= (1,2);
+  $display->XCompositeQueryVersion($major, $minor) # alters these vars
+    or die;
 
 =head3 XCompositeRedirectWindow
 
