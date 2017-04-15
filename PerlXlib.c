@@ -407,8 +407,6 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
     if (fp && *fp) { s->xany.serial= SvUV(*fp);; if (consume) hv_delete(fields, "serial", 6, G_DISCARD); }
     fp= hv_fetch(fields, "type", 4, 0);
     if (fp && *fp) { s->xany.type= SvIV(*fp);; if (consume) hv_delete(fields, "type", 4, G_DISCARD); }
-    fp= hv_fetch(fields, "window", 6, 0);
-    if (fp && *fp) { s->xany.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
     switch( s->type ) {
     case ButtonPress:
     case ButtonRelease:
@@ -424,6 +422,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xbutton.subwindow= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "subwindow", 9, G_DISCARD); }
       fp= hv_fetch(fields, "time", 4, 0);
       if (fp && *fp) { s->xbutton.time= SvUV(*fp);; if (consume) hv_delete(fields, "time", 4, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xbutton.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       fp= hv_fetch(fields, "x", 1, 0);
       if (fp && *fp) { s->xbutton.x= SvIV(*fp);; if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
       fp= hv_fetch(fields, "x_root", 6, 0);
@@ -438,12 +438,16 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xcirculate.event= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "event", 5, G_DISCARD); }
       fp= hv_fetch(fields, "place", 5, 0);
       if (fp && *fp) { s->xcirculate.place= SvIV(*fp);; if (consume) hv_delete(fields, "place", 5, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xcirculate.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case CirculateRequest:
       fp= hv_fetch(fields, "parent", 6, 0);
       if (fp && *fp) { s->xcirculaterequest.parent= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "parent", 6, G_DISCARD); }
       fp= hv_fetch(fields, "place", 5, 0);
       if (fp && *fp) { s->xcirculaterequest.place= SvIV(*fp);; if (consume) hv_delete(fields, "place", 5, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xcirculaterequest.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case ClientMessage:
       fp= hv_fetch(fields, "b", 1, 0);
@@ -456,6 +460,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xclient.format= SvIV(*fp);; if (consume) hv_delete(fields, "format", 6, G_DISCARD); }
       fp= hv_fetch(fields, "message_type", 12, 0);
       if (fp && *fp) { s->xclient.message_type= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "message_type", 12, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xclient.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case ColormapNotify:
       fp= hv_fetch(fields, "colormap", 8, 0);
@@ -464,6 +470,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xcolormap.new= SvIV(*fp);; if (consume) hv_delete(fields, "new", 3, G_DISCARD); }
       fp= hv_fetch(fields, "state", 5, 0);
       if (fp && *fp) { s->xcolormap.state= SvIV(*fp);; if (consume) hv_delete(fields, "state", 5, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xcolormap.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case ConfigureNotify:
       fp= hv_fetch(fields, "above", 5, 0);
@@ -478,6 +486,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xconfigure.override_redirect= SvIV(*fp);; if (consume) hv_delete(fields, "override_redirect", 17, G_DISCARD); }
       fp= hv_fetch(fields, "width", 5, 0);
       if (fp && *fp) { s->xconfigure.width= SvIV(*fp);; if (consume) hv_delete(fields, "width", 5, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xconfigure.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       fp= hv_fetch(fields, "x", 1, 0);
       if (fp && *fp) { s->xconfigure.x= SvIV(*fp);; if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
       fp= hv_fetch(fields, "y", 1, 0);
@@ -498,6 +508,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xconfigurerequest.value_mask= SvUV(*fp);; if (consume) hv_delete(fields, "value_mask", 10, G_DISCARD); }
       fp= hv_fetch(fields, "width", 5, 0);
       if (fp && *fp) { s->xconfigurerequest.width= SvIV(*fp);; if (consume) hv_delete(fields, "width", 5, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xconfigurerequest.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       fp= hv_fetch(fields, "x", 1, 0);
       if (fp && *fp) { s->xconfigurerequest.x= SvIV(*fp);; if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
       fp= hv_fetch(fields, "y", 1, 0);
@@ -514,6 +526,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xcreatewindow.parent= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "parent", 6, G_DISCARD); }
       fp= hv_fetch(fields, "width", 5, 0);
       if (fp && *fp) { s->xcreatewindow.width= SvIV(*fp);; if (consume) hv_delete(fields, "width", 5, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xcreatewindow.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       fp= hv_fetch(fields, "x", 1, 0);
       if (fp && *fp) { s->xcreatewindow.x= SvIV(*fp);; if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
       fp= hv_fetch(fields, "y", 1, 0);
@@ -537,6 +551,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xcrossing.subwindow= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "subwindow", 9, G_DISCARD); }
       fp= hv_fetch(fields, "time", 4, 0);
       if (fp && *fp) { s->xcrossing.time= SvUV(*fp);; if (consume) hv_delete(fields, "time", 4, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xcrossing.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       fp= hv_fetch(fields, "x", 1, 0);
       if (fp && *fp) { s->xcrossing.x= SvIV(*fp);; if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
       fp= hv_fetch(fields, "x_root", 6, 0);
@@ -549,6 +565,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
     case DestroyNotify:
       fp= hv_fetch(fields, "event", 5, 0);
       if (fp && *fp) { s->xdestroywindow.event= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "event", 5, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xdestroywindow.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case Expose:
       fp= hv_fetch(fields, "count", 5, 0);
@@ -557,6 +575,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xexpose.height= SvIV(*fp);; if (consume) hv_delete(fields, "height", 6, G_DISCARD); }
       fp= hv_fetch(fields, "width", 5, 0);
       if (fp && *fp) { s->xexpose.width= SvIV(*fp);; if (consume) hv_delete(fields, "width", 5, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xexpose.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       fp= hv_fetch(fields, "x", 1, 0);
       if (fp && *fp) { s->xexpose.x= SvIV(*fp);; if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
       fp= hv_fetch(fields, "y", 1, 0);
@@ -568,6 +588,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xfocus.detail= SvIV(*fp);; if (consume) hv_delete(fields, "detail", 6, G_DISCARD); }
       fp= hv_fetch(fields, "mode", 4, 0);
       if (fp && *fp) { s->xfocus.mode= SvIV(*fp);; if (consume) hv_delete(fields, "mode", 4, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xfocus.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case GenericEvent:
       fp= hv_fetch(fields, "evtype", 6, 0);
@@ -596,6 +618,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
     case GravityNotify:
       fp= hv_fetch(fields, "event", 5, 0);
       if (fp && *fp) { s->xgravity.event= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "event", 5, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xgravity.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       fp= hv_fetch(fields, "x", 1, 0);
       if (fp && *fp) { s->xgravity.x= SvIV(*fp);; if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
       fp= hv_fetch(fields, "y", 1, 0);
@@ -615,6 +639,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xkey.subwindow= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "subwindow", 9, G_DISCARD); }
       fp= hv_fetch(fields, "time", 4, 0);
       if (fp && *fp) { s->xkey.time= SvUV(*fp);; if (consume) hv_delete(fields, "time", 4, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xkey.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       fp= hv_fetch(fields, "x", 1, 0);
       if (fp && *fp) { s->xkey.x= SvIV(*fp);; if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
       fp= hv_fetch(fields, "x_root", 6, 0);
@@ -627,12 +653,16 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
     case KeymapNotify:
       fp= hv_fetch(fields, "key_vector", 10, 0);
       if (fp && *fp) { { if (!SvPOK(*fp) || SvCUR(*fp) != sizeof(char)*32)  croak("Expected scalar of length %d but got %d", sizeof(char)*32, SvCUR(*fp)); memcpy(s->xkeymap.key_vector, SvPVX(*fp), sizeof(char)*32);}; if (consume) hv_delete(fields, "key_vector", 10, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xkeymap.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case MapNotify:
       fp= hv_fetch(fields, "event", 5, 0);
       if (fp && *fp) { s->xmap.event= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "event", 5, G_DISCARD); }
       fp= hv_fetch(fields, "override_redirect", 17, 0);
       if (fp && *fp) { s->xmap.override_redirect= SvIV(*fp);; if (consume) hv_delete(fields, "override_redirect", 17, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xmap.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case MappingNotify:
       fp= hv_fetch(fields, "count", 5, 0);
@@ -641,10 +671,14 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xmapping.first_keycode= SvIV(*fp);; if (consume) hv_delete(fields, "first_keycode", 13, G_DISCARD); }
       fp= hv_fetch(fields, "request", 7, 0);
       if (fp && *fp) { s->xmapping.request= SvIV(*fp);; if (consume) hv_delete(fields, "request", 7, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xmapping.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case MapRequest:
       fp= hv_fetch(fields, "parent", 6, 0);
       if (fp && *fp) { s->xmaprequest.parent= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "parent", 6, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xmaprequest.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case MotionNotify:
       fp= hv_fetch(fields, "is_hint", 7, 0);
@@ -659,6 +693,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xmotion.subwindow= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "subwindow", 9, G_DISCARD); }
       fp= hv_fetch(fields, "time", 4, 0);
       if (fp && *fp) { s->xmotion.time= SvUV(*fp);; if (consume) hv_delete(fields, "time", 4, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xmotion.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       fp= hv_fetch(fields, "x", 1, 0);
       if (fp && *fp) { s->xmotion.x= SvIV(*fp);; if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
       fp= hv_fetch(fields, "x_root", 6, 0);
@@ -683,6 +719,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xproperty.state= SvIV(*fp);; if (consume) hv_delete(fields, "state", 5, G_DISCARD); }
       fp= hv_fetch(fields, "time", 4, 0);
       if (fp && *fp) { s->xproperty.time= SvUV(*fp);; if (consume) hv_delete(fields, "time", 4, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xproperty.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case ReparentNotify:
       fp= hv_fetch(fields, "event", 5, 0);
@@ -691,6 +729,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xreparent.override_redirect= SvIV(*fp);; if (consume) hv_delete(fields, "override_redirect", 17, G_DISCARD); }
       fp= hv_fetch(fields, "parent", 6, 0);
       if (fp && *fp) { s->xreparent.parent= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "parent", 6, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xreparent.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       fp= hv_fetch(fields, "x", 1, 0);
       if (fp && *fp) { s->xreparent.x= SvIV(*fp);; if (consume) hv_delete(fields, "x", 1, G_DISCARD); }
       fp= hv_fetch(fields, "y", 1, 0);
@@ -701,6 +741,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xresizerequest.height= SvIV(*fp);; if (consume) hv_delete(fields, "height", 6, G_DISCARD); }
       fp= hv_fetch(fields, "width", 5, 0);
       if (fp && *fp) { s->xresizerequest.width= SvIV(*fp);; if (consume) hv_delete(fields, "width", 5, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xresizerequest.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case SelectionNotify:
       fp= hv_fetch(fields, "property", 8, 0);
@@ -719,6 +761,8 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xselectionclear.selection= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "selection", 9, G_DISCARD); }
       fp= hv_fetch(fields, "time", 4, 0);
       if (fp && *fp) { s->xselectionclear.time= SvUV(*fp);; if (consume) hv_delete(fields, "time", 4, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xselectionclear.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case SelectionRequest:
       fp= hv_fetch(fields, "owner", 5, 0);
@@ -739,10 +783,14 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xunmap.event= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "event", 5, G_DISCARD); }
       fp= hv_fetch(fields, "from_configure", 14, 0);
       if (fp && *fp) { s->xunmap.from_configure= SvIV(*fp);; if (consume) hv_delete(fields, "from_configure", 14, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xunmap.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     case VisibilityNotify:
       fp= hv_fetch(fields, "state", 5, 0);
       if (fp && *fp) { s->xvisibility.state= SvIV(*fp);; if (consume) hv_delete(fields, "state", 5, G_DISCARD); }
+      fp= hv_fetch(fields, "window", 6, 0);
+      if (fp && *fp) { s->xvisibility.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
       break;
     default:
       warn("Unknown XEvent type %d", s->type);
@@ -759,7 +807,6 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
     if (!hv_store(fields, "send_event", 10, (sv=newSViv(s->xany.send_event)), 0)) goto store_fail;
     if (!hv_store(fields, "serial"    ,  6, (sv=newSVuv(s->xany.serial)), 0)) goto store_fail;
     if (!hv_store(fields, "type"      ,  4, (sv=newSViv(s->xany.type)), 0)) goto store_fail;
-    if (!hv_store(fields, "window"    ,  6, (sv=newSVuv(s->xany.window)), 0)) goto store_fail;
     switch( s->type ) {
     case ButtonPress:
     case ButtonRelease:
@@ -769,6 +816,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       if (!hv_store(fields, "state"      ,  5, (sv=newSVuv(s->xbutton.state)), 0)) goto store_fail;
       if (!hv_store(fields, "subwindow"  ,  9, (sv=newSVuv(s->xbutton.subwindow)), 0)) goto store_fail;
       if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xbutton.time)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xbutton.window)), 0)) goto store_fail;
       if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xbutton.x)), 0)) goto store_fail;
       if (!hv_store(fields, "x_root"     ,  6, (sv=newSViv(s->xbutton.x_root)), 0)) goto store_fail;
       if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xbutton.y)), 0)) goto store_fail;
@@ -777,10 +825,12 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
     case CirculateNotify:
       if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xcirculate.event)), 0)) goto store_fail;
       if (!hv_store(fields, "place"      ,  5, (sv=newSViv(s->xcirculate.place)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xcirculate.window)), 0)) goto store_fail;
       break;
     case CirculateRequest:
       if (!hv_store(fields, "parent"     ,  6, (sv=newSVuv(s->xcirculaterequest.parent)), 0)) goto store_fail;
       if (!hv_store(fields, "place"      ,  5, (sv=newSViv(s->xcirculaterequest.place)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xcirculaterequest.window)), 0)) goto store_fail;
       break;
     case ClientMessage:
       if (!hv_store(fields, "b"          ,  1, (sv=newSVpvn((void*)s->xclient.data.b, sizeof(char)*20)), 0)) goto store_fail;
@@ -788,11 +838,13 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       if (!hv_store(fields, "s"          ,  1, (sv=newSVpvn((void*)s->xclient.data.s, sizeof(short)*10)), 0)) goto store_fail;
       if (!hv_store(fields, "format"     ,  6, (sv=newSViv(s->xclient.format)), 0)) goto store_fail;
       if (!hv_store(fields, "message_type", 12, (sv=newSVuv(s->xclient.message_type)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xclient.window)), 0)) goto store_fail;
       break;
     case ColormapNotify:
       if (!hv_store(fields, "colormap"   ,  8, (sv=newSVuv(s->xcolormap.colormap)), 0)) goto store_fail;
       if (!hv_store(fields, "new"        ,  3, (sv=newSViv(s->xcolormap.new)), 0)) goto store_fail;
       if (!hv_store(fields, "state"      ,  5, (sv=newSViv(s->xcolormap.state)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xcolormap.window)), 0)) goto store_fail;
       break;
     case ConfigureNotify:
       if (!hv_store(fields, "above"      ,  5, (sv=newSVuv(s->xconfigure.above)), 0)) goto store_fail;
@@ -801,6 +853,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       if (!hv_store(fields, "height"     ,  6, (sv=newSViv(s->xconfigure.height)), 0)) goto store_fail;
       if (!hv_store(fields, "override_redirect", 17, (sv=newSViv(s->xconfigure.override_redirect)), 0)) goto store_fail;
       if (!hv_store(fields, "width"      ,  5, (sv=newSViv(s->xconfigure.width)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xconfigure.window)), 0)) goto store_fail;
       if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xconfigure.x)), 0)) goto store_fail;
       if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xconfigure.y)), 0)) goto store_fail;
       break;
@@ -812,6 +865,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       if (!hv_store(fields, "parent"     ,  6, (sv=newSVuv(s->xconfigurerequest.parent)), 0)) goto store_fail;
       if (!hv_store(fields, "value_mask" , 10, (sv=newSVuv(s->xconfigurerequest.value_mask)), 0)) goto store_fail;
       if (!hv_store(fields, "width"      ,  5, (sv=newSViv(s->xconfigurerequest.width)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xconfigurerequest.window)), 0)) goto store_fail;
       if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xconfigurerequest.x)), 0)) goto store_fail;
       if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xconfigurerequest.y)), 0)) goto store_fail;
       break;
@@ -821,6 +875,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       if (!hv_store(fields, "override_redirect", 17, (sv=newSViv(s->xcreatewindow.override_redirect)), 0)) goto store_fail;
       if (!hv_store(fields, "parent"     ,  6, (sv=newSVuv(s->xcreatewindow.parent)), 0)) goto store_fail;
       if (!hv_store(fields, "width"      ,  5, (sv=newSViv(s->xcreatewindow.width)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xcreatewindow.window)), 0)) goto store_fail;
       if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xcreatewindow.x)), 0)) goto store_fail;
       if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xcreatewindow.y)), 0)) goto store_fail;
       break;
@@ -834,6 +889,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       if (!hv_store(fields, "state"      ,  5, (sv=newSVuv(s->xcrossing.state)), 0)) goto store_fail;
       if (!hv_store(fields, "subwindow"  ,  9, (sv=newSVuv(s->xcrossing.subwindow)), 0)) goto store_fail;
       if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xcrossing.time)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xcrossing.window)), 0)) goto store_fail;
       if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xcrossing.x)), 0)) goto store_fail;
       if (!hv_store(fields, "x_root"     ,  6, (sv=newSViv(s->xcrossing.x_root)), 0)) goto store_fail;
       if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xcrossing.y)), 0)) goto store_fail;
@@ -841,11 +897,13 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       break;
     case DestroyNotify:
       if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xdestroywindow.event)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xdestroywindow.window)), 0)) goto store_fail;
       break;
     case Expose:
       if (!hv_store(fields, "count"      ,  5, (sv=newSViv(s->xexpose.count)), 0)) goto store_fail;
       if (!hv_store(fields, "height"     ,  6, (sv=newSViv(s->xexpose.height)), 0)) goto store_fail;
       if (!hv_store(fields, "width"      ,  5, (sv=newSViv(s->xexpose.width)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xexpose.window)), 0)) goto store_fail;
       if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xexpose.x)), 0)) goto store_fail;
       if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xexpose.y)), 0)) goto store_fail;
       break;
@@ -853,6 +911,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
     case FocusOut:
       if (!hv_store(fields, "detail"     ,  6, (sv=newSViv(s->xfocus.detail)), 0)) goto store_fail;
       if (!hv_store(fields, "mode"       ,  4, (sv=newSViv(s->xfocus.mode)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xfocus.window)), 0)) goto store_fail;
       break;
     case GenericEvent:
       if (!hv_store(fields, "evtype"     ,  6, (sv=newSViv(s->xgeneric.evtype)), 0)) goto store_fail;
@@ -870,6 +929,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       break;
     case GravityNotify:
       if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xgravity.event)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xgravity.window)), 0)) goto store_fail;
       if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xgravity.x)), 0)) goto store_fail;
       if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xgravity.y)), 0)) goto store_fail;
       break;
@@ -881,6 +941,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       if (!hv_store(fields, "state"      ,  5, (sv=newSVuv(s->xkey.state)), 0)) goto store_fail;
       if (!hv_store(fields, "subwindow"  ,  9, (sv=newSVuv(s->xkey.subwindow)), 0)) goto store_fail;
       if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xkey.time)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xkey.window)), 0)) goto store_fail;
       if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xkey.x)), 0)) goto store_fail;
       if (!hv_store(fields, "x_root"     ,  6, (sv=newSViv(s->xkey.x_root)), 0)) goto store_fail;
       if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xkey.y)), 0)) goto store_fail;
@@ -888,18 +949,22 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       break;
     case KeymapNotify:
       if (!hv_store(fields, "key_vector" , 10, (sv=newSVpvn((void*)s->xkeymap.key_vector, sizeof(char)*32)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xkeymap.window)), 0)) goto store_fail;
       break;
     case MapNotify:
       if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xmap.event)), 0)) goto store_fail;
       if (!hv_store(fields, "override_redirect", 17, (sv=newSViv(s->xmap.override_redirect)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xmap.window)), 0)) goto store_fail;
       break;
     case MappingNotify:
       if (!hv_store(fields, "count"      ,  5, (sv=newSViv(s->xmapping.count)), 0)) goto store_fail;
       if (!hv_store(fields, "first_keycode", 13, (sv=newSViv(s->xmapping.first_keycode)), 0)) goto store_fail;
       if (!hv_store(fields, "request"    ,  7, (sv=newSViv(s->xmapping.request)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xmapping.window)), 0)) goto store_fail;
       break;
     case MapRequest:
       if (!hv_store(fields, "parent"     ,  6, (sv=newSVuv(s->xmaprequest.parent)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xmaprequest.window)), 0)) goto store_fail;
       break;
     case MotionNotify:
       if (!hv_store(fields, "is_hint"    ,  7, (sv=newSViv(s->xmotion.is_hint)), 0)) goto store_fail;
@@ -908,6 +973,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       if (!hv_store(fields, "state"      ,  5, (sv=newSVuv(s->xmotion.state)), 0)) goto store_fail;
       if (!hv_store(fields, "subwindow"  ,  9, (sv=newSVuv(s->xmotion.subwindow)), 0)) goto store_fail;
       if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xmotion.time)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xmotion.window)), 0)) goto store_fail;
       if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xmotion.x)), 0)) goto store_fail;
       if (!hv_store(fields, "x_root"     ,  6, (sv=newSViv(s->xmotion.x_root)), 0)) goto store_fail;
       if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xmotion.y)), 0)) goto store_fail;
@@ -922,17 +988,20 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
       if (!hv_store(fields, "atom"       ,  4, (sv=newSVuv(s->xproperty.atom)), 0)) goto store_fail;
       if (!hv_store(fields, "state"      ,  5, (sv=newSViv(s->xproperty.state)), 0)) goto store_fail;
       if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xproperty.time)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xproperty.window)), 0)) goto store_fail;
       break;
     case ReparentNotify:
       if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xreparent.event)), 0)) goto store_fail;
       if (!hv_store(fields, "override_redirect", 17, (sv=newSViv(s->xreparent.override_redirect)), 0)) goto store_fail;
       if (!hv_store(fields, "parent"     ,  6, (sv=newSVuv(s->xreparent.parent)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xreparent.window)), 0)) goto store_fail;
       if (!hv_store(fields, "x"          ,  1, (sv=newSViv(s->xreparent.x)), 0)) goto store_fail;
       if (!hv_store(fields, "y"          ,  1, (sv=newSViv(s->xreparent.y)), 0)) goto store_fail;
       break;
     case ResizeRequest:
       if (!hv_store(fields, "height"     ,  6, (sv=newSViv(s->xresizerequest.height)), 0)) goto store_fail;
       if (!hv_store(fields, "width"      ,  5, (sv=newSViv(s->xresizerequest.width)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xresizerequest.window)), 0)) goto store_fail;
       break;
     case SelectionNotify:
       if (!hv_store(fields, "property"   ,  8, (sv=newSVuv(s->xselection.property)), 0)) goto store_fail;
@@ -944,6 +1013,7 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
     case SelectionClear:
       if (!hv_store(fields, "selection"  ,  9, (sv=newSVuv(s->xselectionclear.selection)), 0)) goto store_fail;
       if (!hv_store(fields, "time"       ,  4, (sv=newSVuv(s->xselectionclear.time)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xselectionclear.window)), 0)) goto store_fail;
       break;
     case SelectionRequest:
       if (!hv_store(fields, "owner"      ,  5, (sv=newSVuv(s->xselectionrequest.owner)), 0)) goto store_fail;
@@ -956,9 +1026,11 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
     case UnmapNotify:
       if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xunmap.event)), 0)) goto store_fail;
       if (!hv_store(fields, "from_configure", 14, (sv=newSViv(s->xunmap.from_configure)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xunmap.window)), 0)) goto store_fail;
       break;
     case VisibilityNotify:
       if (!hv_store(fields, "state"      ,  5, (sv=newSViv(s->xvisibility.state)), 0)) goto store_fail;
+      if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xvisibility.window)), 0)) goto store_fail;
       break;
     default:
       warn("Unknown XEvent type %d", s->type);

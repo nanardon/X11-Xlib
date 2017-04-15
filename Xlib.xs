@@ -2402,16 +2402,71 @@ _width(event, value=NULL)
     PUSHs(value? value : sv_2mortal(newSViv(c_value)));
 
 void
-window(event, value=NULL)
+_window(event, value=NULL)
   XEvent *event
   SV *value
+  INIT:
+    Window c_value= 0;
   PPCODE:
-    if (value) {
-      event->xany.window= PerlXlib_sv_to_xid(value);
-      PUSHs(value);
-    } else {
-      PUSHs(sv_2mortal(newSVuv(event->xany.window)));
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case ButtonPress:
+    case ButtonRelease:
+      if (value) { event->xbutton.window = c_value; } else { c_value= event->xbutton.window; } break;
+    case CirculateNotify:
+      if (value) { event->xcirculate.window = c_value; } else { c_value= event->xcirculate.window; } break;
+    case CirculateRequest:
+      if (value) { event->xcirculaterequest.window = c_value; } else { c_value= event->xcirculaterequest.window; } break;
+    case ClientMessage:
+      if (value) { event->xclient.window = c_value; } else { c_value= event->xclient.window; } break;
+    case ColormapNotify:
+      if (value) { event->xcolormap.window = c_value; } else { c_value= event->xcolormap.window; } break;
+    case ConfigureNotify:
+      if (value) { event->xconfigure.window = c_value; } else { c_value= event->xconfigure.window; } break;
+    case ConfigureRequest:
+      if (value) { event->xconfigurerequest.window = c_value; } else { c_value= event->xconfigurerequest.window; } break;
+    case CreateNotify:
+      if (value) { event->xcreatewindow.window = c_value; } else { c_value= event->xcreatewindow.window; } break;
+    case EnterNotify:
+    case LeaveNotify:
+      if (value) { event->xcrossing.window = c_value; } else { c_value= event->xcrossing.window; } break;
+    case DestroyNotify:
+      if (value) { event->xdestroywindow.window = c_value; } else { c_value= event->xdestroywindow.window; } break;
+    case Expose:
+      if (value) { event->xexpose.window = c_value; } else { c_value= event->xexpose.window; } break;
+    case FocusIn:
+    case FocusOut:
+      if (value) { event->xfocus.window = c_value; } else { c_value= event->xfocus.window; } break;
+    case GravityNotify:
+      if (value) { event->xgravity.window = c_value; } else { c_value= event->xgravity.window; } break;
+    case KeyPress:
+    case KeyRelease:
+      if (value) { event->xkey.window = c_value; } else { c_value= event->xkey.window; } break;
+    case KeymapNotify:
+      if (value) { event->xkeymap.window = c_value; } else { c_value= event->xkeymap.window; } break;
+    case MapNotify:
+      if (value) { event->xmap.window = c_value; } else { c_value= event->xmap.window; } break;
+    case MappingNotify:
+      if (value) { event->xmapping.window = c_value; } else { c_value= event->xmapping.window; } break;
+    case MapRequest:
+      if (value) { event->xmaprequest.window = c_value; } else { c_value= event->xmaprequest.window; } break;
+    case MotionNotify:
+      if (value) { event->xmotion.window = c_value; } else { c_value= event->xmotion.window; } break;
+    case PropertyNotify:
+      if (value) { event->xproperty.window = c_value; } else { c_value= event->xproperty.window; } break;
+    case ReparentNotify:
+      if (value) { event->xreparent.window = c_value; } else { c_value= event->xreparent.window; } break;
+    case ResizeRequest:
+      if (value) { event->xresizerequest.window = c_value; } else { c_value= event->xresizerequest.window; } break;
+    case SelectionClear:
+      if (value) { event->xselectionclear.window = c_value; } else { c_value= event->xselectionclear.window; } break;
+    case UnmapNotify:
+      if (value) { event->xunmap.window = c_value; } else { c_value= event->xunmap.window; } break;
+    case VisibilityNotify:
+      if (value) { event->xvisibility.window = c_value; } else { c_value= event->xvisibility.window; } break;
+    default: croak("Can't access XEvent.window for type=%d", event->type);
     }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
 
 void
 _x(event, value=NULL)

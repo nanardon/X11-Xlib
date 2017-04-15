@@ -264,8 +264,9 @@ type(event, value=NULL)
 
 @
     }
-    # If it is part of "xany", skip the switch statement
-    elsif ($via_xany) {
+    # If it is part of "xany", skip the switch statement, unless field is 'window'
+    # in which case that name gets reused for other fields of sub-structs.
+    elsif ($via_xany && $fieldname ne 'window') {
         my $access= 'event->'.$via_xany;
         my $type= $members{$via_xany};
         my $sv_read= sv_read($type, $access, 'value');
@@ -387,7 +388,7 @@ void PerlXlib_${goal}_pack($goal *s, HV *fields, Bool consume) {
 @
     # Next, pack the fields common to all
     my %have;
-    for my $path (sort grep { $_ =~ /^xany/ } keys %members) {
+    for my $path ('xany.display', 'xany.send_event', 'xany.serial', 'xany.type') {
         my $type= $members{$path};
         my ($name)= ($path =~ /([^.]+)$/);
         my $name_len= length($name);
@@ -437,7 +438,7 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
 @
     # First pack the XAnyEvent fields
     my %have;
-    for my $path (sort grep { $_ =~ /^xany/ } keys %members) {
+    for my $path ('xany.display', 'xany.send_event', 'xany.serial', 'xany.type') {
         my $type= $members{$path};
         my ($name)= ($path =~ /([^.]+)$/);
         ++$have{$name};
