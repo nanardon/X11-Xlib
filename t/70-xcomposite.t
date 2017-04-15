@@ -7,12 +7,12 @@ use Try::Tiny;
 use X11::Xlib ':all';
 use FindBin;
 use lib "$FindBin::Bin/lib";
-use SandboxXServer;
+use X11::SandboxServer;
 
 plan skip_all => 'Xcomposite client lib is not available'
     unless X11::Xlib->can('XCompositeVersion');
 
-my $x= try { SandboxXServer->new(title => $FindBin::Script) };
+my $x= try { X11::SandboxServer->new(title => $FindBin::Script) };
 plan skip_all => 'Need Xephyr to run Xcomposite tests'
     unless defined $x;
 

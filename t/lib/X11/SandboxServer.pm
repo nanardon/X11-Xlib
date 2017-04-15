@@ -1,4 +1,4 @@
-package SandboxXServer;
+package X11::SandboxServer;
 use strict;
 use warnings;
 use Carp;
@@ -21,7 +21,7 @@ sub host_programs {
         my %progs;
         if (`Xephyr -help 2>&1`) { # Can't figure out how to check version...
             $progs{Xephyr}= {
-                class => 'SandboxXServer::Xephyr'
+                class => 'X11::SandboxServer::Xephyr'
             },
         }
         \%progs;
@@ -42,13 +42,13 @@ sub DESTROY {
 sub client  { croak "Uninplemented" }
 sub close   { croak "Uninplemented" }
 
-package SandboxXServer::Xephyr;
-@SandboxXServer::Xephyr::ISA= 'SandboxXServer';
+package X11::SandboxServer::Xephyr;
+@X11::SandboxServer::Xephyr::ISA= 'X11::SandboxServer';
 use strict;
 use warnings;
 use Carp;
 use Try::Tiny;
-
+use POSIX ":sys_wait_h";
 
 sub new {
     my ($class, %attrs)= @_;
@@ -72,6 +72,7 @@ sub new {
             exit(2); # This could run perl cleanup code that breaks things, but oh well...
         }
         sleep 1;
+        next if (waitpid($pid, WNOHANG) == $pid);
 
         $dpy= try { X11::Xlib->new(connect => ":$disp_num") }
             and last;
