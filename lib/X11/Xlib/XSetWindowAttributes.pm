@@ -32,6 +32,16 @@ or L<XChangeWindowAttributes|X11::Xlib/XChangeWindowAttributes>.
   Colormap colormap;              /* color map to be associated with window */
   Cursor cursor;                  /* cursor to be displayed (or None) */
 
+Several Xlib functions allow you to specify which fields are defined rather
+than forcing you to apply all attributes at once.  The constants to indicate
+which fields are use can be exported with
+
+  use X11::Xlib ':const_winattr';
+  
+  # CWBackPixel CWBackPixmap CWBackingPixel CWBackingPlanes CWBackingStore
+  # CWBitGravity CWBorderPixel CWBorderPixmap CWColormap CWCursor
+  # CWDontPropagate CWEventMask CWOverrideRedirect CWSaveUnder CWWinGravity
+
 =head1 METHODS
 
 See parent class L<X11::Xlib::Struct>

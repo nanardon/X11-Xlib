@@ -13,18 +13,20 @@ with L<XConfigureWindow|X11::Xlib/XConfigureWindow>.
 
 =head1 ATTRIBUTES
 
-Listed below is the C struct definition, and the constants that indicate
-whether the field is initialized.
+Listed below is the C struct definition, and the constants that you pass to
+XConfigureWindow to indicate whether the field is initialized.
 
-  typedef struct {
-    int x;                 /* CWX */
-    int y;                 /* CWY */
-    int width;             /* CWWidth */
-    int height;            /* CWHeight */
-    int border_width;      /* CWBorderWidth */
-    Window sibling;        /* CWSibling */
-    int stack_mode;        /* CWStackMode */
-  } XWindowChanges;
+  int x;                 /* CWX */
+  int y;                 /* CWY */
+  int width;             /* CWWidth */
+  int height;            /* CWHeight */
+  int border_width;      /* CWBorderWidth */
+  Window sibling;        /* CWSibling */
+  int stack_mode;        /* CWStackMode */
+
+The constants can be exported with
+
+  use X11::Xlib ':const_winattr';
 
 =head1 METHODS
 

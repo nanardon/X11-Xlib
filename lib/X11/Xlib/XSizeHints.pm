@@ -10,18 +10,18 @@ X11::Xlib::XSizeHints - Struct providing window size hints to the Window Manager
 
 The fields of the struct are as follows (from X11 docs)
 
-    long flags;         /* marks which fields in this structure are defined */
-    int x, y;           /* obsolete for new window mgrs, but clients */
-    int width, height;  /* should set so old wm's don't mess up */
-    int min_width, min_height;
-    int max_width, max_height;
-    int width_inc, height_inc;
-    struct {
-        int x;  /* numerator */
-        int y;  /* denominator */
-	} min_aspect, max_aspect;
-    int base_width, base_height;  /* added by ICCCM version 1 */
-    int win_gravity;              /* added by ICCCM version 1 */
+  long flags;         /* marks which fields in this structure are defined */
+  int x, y;           /* obsolete for new window mgrs, but clients */
+  int width, height;  /* should set so old wm's don't mess up */
+  int min_width, min_height;
+  int max_width, max_height;
+  int width_inc, height_inc;
+  struct {
+      int x;  /* numerator */
+      int y;  /* denominator */
+  } min_aspect, max_aspect;
+  int base_width, base_height;  /* added by ICCCM version 1 */
+  int win_gravity;              /* added by ICCCM version 1 */
 
 The accessor methods for C<min_aspect> and C<max_aspect> are a special case:
 
@@ -34,7 +34,7 @@ The values for C<flags> are exported with
 
   use X11::Xlib ':const_sizehint';
 
-and can be one of:
+and can be an ORed combination of:
 
   USPosition   /* user specified x, y */
   USSize       /* user specified width, height */

@@ -62,7 +62,7 @@ sub new {
         # would fail even if we are able to connect, and if the system was lagged
         # there's no telling how long it would take for the failing Xephyr process
         # to exit.  Would like to use -verbosity to get stdout that says it is ready
-        # for connections but I get no output at all.        my $child= fork();
+        # for connections but I get no output at all.
         $pid= fork();
         defined $pid or die "fork: $!";
         unless ($pid) {
