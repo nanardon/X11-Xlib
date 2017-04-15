@@ -477,11 +477,7 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
 sub generate_subclasses {
     my $subclasses= '';
     my $pod= '';
-    my %have;
-    for my $path (sort grep { $_ =~ /^xany/ } keys %members) {
-        my ($name)= ($path =~ /([^.]+)$/);
-        ++$have{$name};
-    }
+    my %have= ( display => 1, send_event => 1, serial => 1, type => 1 );
 
     for my $member_struct (sort keys %struct_to_field) {
         my $field= $struct_to_field{$member_struct};

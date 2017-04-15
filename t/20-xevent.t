@@ -13,7 +13,6 @@ subtest blank_event => sub {
     ok( length($blank_event->buffer) > 0, 'and has non-zero length' );
     is( $blank_event->type,    0,     'type=0' );
     is( $blank_event->display, undef, 'display=undef' );
-    is( $blank_event->window,  0,     'window=0' );
     is( $blank_event->serial,  0,     'serial=0' );
     is( $blank_event->send_event, 0,  'send_event=0' );
 

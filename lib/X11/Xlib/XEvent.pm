@@ -83,10 +83,6 @@ The handle to the X11 connection that this message came from.
 
 The X11 serial number
 
-=head2 window
-
-The Window XID the message is associated with, or 0.
-
 =head2 send_event
 
 Boolean indicating whether the event was sent with C<XSendEvent>
@@ -126,6 +122,7 @@ sub pack {
 *X11::Xlib::XButtonEvent::state= *_state;
 *X11::Xlib::XButtonEvent::subwindow= *_subwindow;
 *X11::Xlib::XButtonEvent::time= *_time;
+*X11::Xlib::XButtonEvent::window= *_window;
 *X11::Xlib::XButtonEvent::x= *_x;
 *X11::Xlib::XButtonEvent::x_root= *_x_root;
 *X11::Xlib::XButtonEvent::y= *_y;
@@ -135,11 +132,13 @@ sub pack {
 @X11::Xlib::XCirculateEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XCirculateEvent::event= *_event;
 *X11::Xlib::XCirculateEvent::place= *_place;
+*X11::Xlib::XCirculateEvent::window= *_window;
 
 
 @X11::Xlib::XCirculateRequestEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XCirculateRequestEvent::parent= *_parent;
 *X11::Xlib::XCirculateRequestEvent::place= *_place;
+*X11::Xlib::XCirculateRequestEvent::window= *_window;
 
 
 @X11::Xlib::XClientMessageEvent::ISA= ( __PACKAGE__ );
@@ -148,12 +147,14 @@ sub pack {
 *X11::Xlib::XClientMessageEvent::s= *_s;
 *X11::Xlib::XClientMessageEvent::format= *_format;
 *X11::Xlib::XClientMessageEvent::message_type= *_message_type;
+*X11::Xlib::XClientMessageEvent::window= *_window;
 
 
 @X11::Xlib::XColormapEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XColormapEvent::colormap= *_colormap;
 *X11::Xlib::XColormapEvent::new= *_new;
 *X11::Xlib::XColormapEvent::state= *_state;
+*X11::Xlib::XColormapEvent::window= *_window;
 
 
 @X11::Xlib::XConfigureEvent::ISA= ( __PACKAGE__ );
@@ -163,6 +164,7 @@ sub pack {
 *X11::Xlib::XConfigureEvent::height= *_height;
 *X11::Xlib::XConfigureEvent::override_redirect= *_override_redirect;
 *X11::Xlib::XConfigureEvent::width= *_width;
+*X11::Xlib::XConfigureEvent::window= *_window;
 *X11::Xlib::XConfigureEvent::x= *_x;
 *X11::Xlib::XConfigureEvent::y= *_y;
 
@@ -175,6 +177,7 @@ sub pack {
 *X11::Xlib::XConfigureRequestEvent::parent= *_parent;
 *X11::Xlib::XConfigureRequestEvent::value_mask= *_value_mask;
 *X11::Xlib::XConfigureRequestEvent::width= *_width;
+*X11::Xlib::XConfigureRequestEvent::window= *_window;
 *X11::Xlib::XConfigureRequestEvent::x= *_x;
 *X11::Xlib::XConfigureRequestEvent::y= *_y;
 
@@ -185,6 +188,7 @@ sub pack {
 *X11::Xlib::XCreateWindowEvent::override_redirect= *_override_redirect;
 *X11::Xlib::XCreateWindowEvent::parent= *_parent;
 *X11::Xlib::XCreateWindowEvent::width= *_width;
+*X11::Xlib::XCreateWindowEvent::window= *_window;
 *X11::Xlib::XCreateWindowEvent::x= *_x;
 *X11::Xlib::XCreateWindowEvent::y= *_y;
 
@@ -198,6 +202,7 @@ sub pack {
 *X11::Xlib::XCrossingEvent::state= *_state;
 *X11::Xlib::XCrossingEvent::subwindow= *_subwindow;
 *X11::Xlib::XCrossingEvent::time= *_time;
+*X11::Xlib::XCrossingEvent::window= *_window;
 *X11::Xlib::XCrossingEvent::x= *_x;
 *X11::Xlib::XCrossingEvent::x_root= *_x_root;
 *X11::Xlib::XCrossingEvent::y= *_y;
@@ -206,12 +211,14 @@ sub pack {
 
 @X11::Xlib::XDestroyWindowEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XDestroyWindowEvent::event= *_event;
+*X11::Xlib::XDestroyWindowEvent::window= *_window;
 
 
 @X11::Xlib::XExposeEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XExposeEvent::count= *_count;
 *X11::Xlib::XExposeEvent::height= *_height;
 *X11::Xlib::XExposeEvent::width= *_width;
+*X11::Xlib::XExposeEvent::window= *_window;
 *X11::Xlib::XExposeEvent::x= *_x;
 *X11::Xlib::XExposeEvent::y= *_y;
 
@@ -219,6 +226,7 @@ sub pack {
 @X11::Xlib::XFocusChangeEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XFocusChangeEvent::detail= *_detail;
 *X11::Xlib::XFocusChangeEvent::mode= *_mode;
+*X11::Xlib::XFocusChangeEvent::window= *_window;
 
 
 @X11::Xlib::XGenericEvent::ISA= ( __PACKAGE__ );
@@ -239,6 +247,7 @@ sub pack {
 
 @X11::Xlib::XGravityEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XGravityEvent::event= *_event;
+*X11::Xlib::XGravityEvent::window= *_window;
 *X11::Xlib::XGravityEvent::x= *_x;
 *X11::Xlib::XGravityEvent::y= *_y;
 
@@ -250,6 +259,7 @@ sub pack {
 *X11::Xlib::XKeyEvent::state= *_state;
 *X11::Xlib::XKeyEvent::subwindow= *_subwindow;
 *X11::Xlib::XKeyEvent::time= *_time;
+*X11::Xlib::XKeyEvent::window= *_window;
 *X11::Xlib::XKeyEvent::x= *_x;
 *X11::Xlib::XKeyEvent::x_root= *_x_root;
 *X11::Xlib::XKeyEvent::y= *_y;
@@ -258,21 +268,25 @@ sub pack {
 
 @X11::Xlib::XKeymapEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XKeymapEvent::key_vector= *_key_vector;
+*X11::Xlib::XKeymapEvent::window= *_window;
 
 
 @X11::Xlib::XMapEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XMapEvent::event= *_event;
 *X11::Xlib::XMapEvent::override_redirect= *_override_redirect;
+*X11::Xlib::XMapEvent::window= *_window;
 
 
 @X11::Xlib::XMapRequestEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XMapRequestEvent::parent= *_parent;
+*X11::Xlib::XMapRequestEvent::window= *_window;
 
 
 @X11::Xlib::XMappingEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XMappingEvent::count= *_count;
 *X11::Xlib::XMappingEvent::first_keycode= *_first_keycode;
 *X11::Xlib::XMappingEvent::request= *_request;
+*X11::Xlib::XMappingEvent::window= *_window;
 
 
 @X11::Xlib::XMotionEvent::ISA= ( __PACKAGE__ );
@@ -282,6 +296,7 @@ sub pack {
 *X11::Xlib::XMotionEvent::state= *_state;
 *X11::Xlib::XMotionEvent::subwindow= *_subwindow;
 *X11::Xlib::XMotionEvent::time= *_time;
+*X11::Xlib::XMotionEvent::window= *_window;
 *X11::Xlib::XMotionEvent::x= *_x;
 *X11::Xlib::XMotionEvent::x_root= *_x_root;
 *X11::Xlib::XMotionEvent::y= *_y;
@@ -298,12 +313,14 @@ sub pack {
 *X11::Xlib::XPropertyEvent::atom= *_atom;
 *X11::Xlib::XPropertyEvent::state= *_state;
 *X11::Xlib::XPropertyEvent::time= *_time;
+*X11::Xlib::XPropertyEvent::window= *_window;
 
 
 @X11::Xlib::XReparentEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XReparentEvent::event= *_event;
 *X11::Xlib::XReparentEvent::override_redirect= *_override_redirect;
 *X11::Xlib::XReparentEvent::parent= *_parent;
+*X11::Xlib::XReparentEvent::window= *_window;
 *X11::Xlib::XReparentEvent::x= *_x;
 *X11::Xlib::XReparentEvent::y= *_y;
 
@@ -311,11 +328,13 @@ sub pack {
 @X11::Xlib::XResizeRequestEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XResizeRequestEvent::height= *_height;
 *X11::Xlib::XResizeRequestEvent::width= *_width;
+*X11::Xlib::XResizeRequestEvent::window= *_window;
 
 
 @X11::Xlib::XSelectionClearEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XSelectionClearEvent::selection= *_selection;
 *X11::Xlib::XSelectionClearEvent::time= *_time;
+*X11::Xlib::XSelectionClearEvent::window= *_window;
 
 
 @X11::Xlib::XSelectionEvent::ISA= ( __PACKAGE__ );
@@ -338,10 +357,12 @@ sub pack {
 @X11::Xlib::XUnmapEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XUnmapEvent::event= *_event;
 *X11::Xlib::XUnmapEvent::from_configure= *_from_configure;
+*X11::Xlib::XUnmapEvent::window= *_window;
 
 
 @X11::Xlib::XVisibilityEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XVisibilityEvent::state= *_state;
+*X11::Xlib::XVisibilityEvent::window= *_window;
 
 =head2 XButtonEvent
 
@@ -353,6 +374,7 @@ Used for event type: ButtonPress, ButtonRelease
   state             - unsigned int
   subwindow         - Window
   time              - Time
+  window            - Window
   x                 - int
   x_root            - int
   y                 - int
@@ -364,6 +386,7 @@ Used for event type: CirculateNotify
 
   event             - Window
   place             - int
+  window            - Window
 
 =head2 XCirculateRequestEvent
 
@@ -371,6 +394,7 @@ Used for event type: CirculateRequest
 
   parent            - Window
   place             - int
+  window            - Window
 
 =head2 XClientMessageEvent
 
@@ -381,6 +405,7 @@ Used for event type: ClientMessage
   s                 - short [ 10 ]
   format            - int
   message_type      - Atom
+  window            - Window
 
 =head2 XColormapEvent
 
@@ -389,6 +414,7 @@ Used for event type: ColormapNotify
   colormap          - Colormap
   new               - Bool
   state             - int
+  window            - Window
 
 =head2 XConfigureEvent
 
@@ -400,6 +426,7 @@ Used for event type: ConfigureNotify
   height            - int
   override_redirect - Bool
   width             - int
+  window            - Window
   x                 - int
   y                 - int
 
@@ -414,6 +441,7 @@ Used for event type: ConfigureRequest
   parent            - Window
   value_mask        - unsigned long
   width             - int
+  window            - Window
   x                 - int
   y                 - int
 
@@ -426,6 +454,7 @@ Used for event type: CreateNotify
   override_redirect - Bool
   parent            - Window
   width             - int
+  window            - Window
   x                 - int
   y                 - int
 
@@ -441,6 +470,7 @@ Used for event type: EnterNotify, LeaveNotify
   state             - unsigned int
   subwindow         - Window
   time              - Time
+  window            - Window
   x                 - int
   x_root            - int
   y                 - int
@@ -451,6 +481,7 @@ Used for event type: EnterNotify, LeaveNotify
 Used for event type: DestroyNotify
 
   event             - Window
+  window            - Window
 
 =head2 XExposeEvent
 
@@ -459,6 +490,7 @@ Used for event type: Expose
   count             - int
   height            - int
   width             - int
+  window            - Window
   x                 - int
   y                 - int
 
@@ -468,6 +500,7 @@ Used for event type: FocusIn, FocusOut
 
   detail            - int
   mode              - int
+  window            - Window
 
 =head2 XGenericEvent
 
@@ -494,6 +527,7 @@ Used for event type: GraphicsExpose
 Used for event type: GravityNotify
 
   event             - Window
+  window            - Window
   x                 - int
   y                 - int
 
@@ -507,6 +541,7 @@ Used for event type: KeyPress, KeyRelease
   state             - unsigned int
   subwindow         - Window
   time              - Time
+  window            - Window
   x                 - int
   x_root            - int
   y                 - int
@@ -517,6 +552,7 @@ Used for event type: KeyPress, KeyRelease
 Used for event type: KeymapNotify
 
   key_vector        - char [ 32 ]
+  window            - Window
 
 =head2 XMapEvent
 
@@ -524,12 +560,14 @@ Used for event type: MapNotify
 
   event             - Window
   override_redirect - Bool
+  window            - Window
 
 =head2 XMapRequestEvent
 
 Used for event type: MapRequest
 
   parent            - Window
+  window            - Window
 
 =head2 XMappingEvent
 
@@ -538,6 +576,7 @@ Used for event type: MappingNotify
   count             - int
   first_keycode     - int
   request           - int
+  window            - Window
 
 =head2 XMotionEvent
 
@@ -549,6 +588,7 @@ Used for event type: MotionNotify
   state             - unsigned int
   subwindow         - Window
   time              - Time
+  window            - Window
   x                 - int
   x_root            - int
   y                 - int
@@ -569,6 +609,7 @@ Used for event type: PropertyNotify
   atom              - Atom
   state             - int
   time              - Time
+  window            - Window
 
 =head2 XReparentEvent
 
@@ -577,6 +618,7 @@ Used for event type: ReparentNotify
   event             - Window
   override_redirect - Bool
   parent            - Window
+  window            - Window
   x                 - int
   y                 - int
 
@@ -586,6 +628,7 @@ Used for event type: ResizeRequest
 
   height            - int
   width             - int
+  window            - Window
 
 =head2 XSelectionClearEvent
 
@@ -593,6 +636,7 @@ Used for event type: SelectionClear
 
   selection         - Atom
   time              - Time
+  window            - Window
 
 =head2 XSelectionEvent
 
@@ -621,12 +665,14 @@ Used for event type: UnmapNotify
 
   event             - Window
   from_configure    - Bool
+  window            - Window
 
 =head2 XVisibilityEvent
 
 Used for event type: VisibilityNotify
 
   state             - int
+  window            - Window
 
 =cut
 
