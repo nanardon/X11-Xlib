@@ -4,8 +4,7 @@ before_script:
   - sleep 3
 language: perl
 perl:
-  - "5.8.1"
-  - "5.8.9"
+  - "5.8"
   - "5.12"
   - "5.24"
 
