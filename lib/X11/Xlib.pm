@@ -1224,7 +1224,7 @@ None of these functions are exportable.
 =head3 XCompositeVersion
 
   my $version_integer= X11::Xlib::XCompositeVersion()
-    if X11::Xlib->can('X11::Xlib::XCompositeVersion');
+    if X11::Xlib->can('XCompositeVersion');
 
 =head3 XCompositeQueryExtension
 
@@ -1233,8 +1233,8 @@ None of these functions are exportable.
 
 =head3 XCompositeQueryVersion
 
-  my ($major, $minor)= $display->XCompositeQueryExtension
-    if $display->can('XCompositeQueryExtension');
+  my ($major, $minor)= $display->XCompositeQueryVersion
+    if $display->can('XCompositeQueryVersion');
 
 =head3 XCompositeRedirectWindow
 

@@ -16,21 +16,21 @@ or L<XChangeWindowAttributes|X11::Xlib/XChangeWindowAttributes>.
 
 (copied from X11 docs)
 
-    Pixmap background_pixmap;       /* background, None, or ParentRelative */
-	unsigned long background_pixel; /* background pixel */
-	Pixmap border_pixmap;           /* border of the window or CopyFromParent */
-	unsigned long border_pixel;     /* border pixel value */
-	int bit_gravity;                /* one of bit gravity values */
-	int win_gravity;                /* one of the window gravity values */
-	int backing_store;              /* NotUseful, WhenMapped, Always */
-	unsigned long backing_planes;   /* planes to be preserved if possible */
-	unsigned long backing_pixel;    /* value to use in restoring planes */
-	Bool save_under;                /* should bits under be saved? (popups) */
-	long event_mask;                /* set of events that should be saved */
-	long do_not_propagate_mask;     /* set of events that should not propagate */
-	Bool override_redirect;         /* boolean value for override_redirect */
-	Colormap colormap;              /* color map to be associated with window */
-	Cursor cursor;                  /* cursor to be displayed (or None) */
+  Pixmap background_pixmap;       /* background, None, or ParentRelative */
+  unsigned long background_pixel; /* background pixel */
+  Pixmap border_pixmap;           /* border of the window or CopyFromParent */
+  unsigned long border_pixel;     /* border pixel value */
+  int bit_gravity;                /* one of bit gravity values */
+  int win_gravity;                /* one of the window gravity values */
+  int backing_store;              /* NotUseful, WhenMapped, Always */
+  unsigned long backing_planes;   /* planes to be preserved if possible */
+  unsigned long backing_pixel;    /* value to use in restoring planes */
+  Bool save_under;                /* should bits under be saved? (popups) */
+  long event_mask;                /* set of events that should be saved */
+  long do_not_propagate_mask;     /* set of events that should not propagate */
+  Bool override_redirect;         /* boolean value for override_redirect */
+  Colormap colormap;              /* color map to be associated with window */
+  Cursor cursor;                  /* cursor to be displayed (or None) */
 
 =head1 METHODS
 

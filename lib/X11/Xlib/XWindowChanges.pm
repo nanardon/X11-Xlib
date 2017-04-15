@@ -9,7 +9,7 @@ X11::Xlib::XWindowChanges - Struct defining window placement
 =head1 DESCRIPTION
 
 This struct contains various attributes of a window, to be applied
-with L<XConfigureWindow>.
+with L<XConfigureWindow|X11::Xlib/XConfigureWindow>.
 
 =head1 ATTRIBUTES
 

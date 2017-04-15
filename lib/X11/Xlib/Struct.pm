@@ -24,7 +24,7 @@ All attribute accessors are defined in XS.
 
 The constructor sets all fields to their initial value (i.e. zero)
 and then applies the list of key/value pairs.  Warns on un-known
-fields names.
+field names.
 
 =cut
 
