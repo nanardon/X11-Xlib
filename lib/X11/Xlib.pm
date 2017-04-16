@@ -26,9 +26,9 @@ my %_constants= (
   const_event => [qw( ButtonPress ButtonRelease CirculateNotify ClientMessage
     ColormapNotify ConfigureNotify CreateNotify DestroyNotify EnterNotify
     Expose FocusIn FocusOut GraphicsExpose GravityNotify KeyPress KeyRelease
-    KeymapNotify LeaveNotify MapNotify MappingNotify MotionNotify NoExpose
-    PropertyNotify ReparentNotify ResizeRequest SelectionClear SelectionNotify
-    SelectionRequest UnmapNotify VisibilityNotify )],
+    KeymapNotify LeaveNotify MapNotify MapRequest MappingNotify MotionNotify
+    NoExpose PropertyNotify ReparentNotify ResizeRequest SelectionClear
+    SelectionNotify SelectionRequest UnmapNotify VisibilityNotify )],
   const_event_mask => [qw( Button1MotionMask Button2MotionMask
     Button3MotionMask Button4MotionMask Button5MotionMask ButtonMotionMask
     ButtonPressMask ButtonReleaseMask ColormapChangeMask EnterWindowMask

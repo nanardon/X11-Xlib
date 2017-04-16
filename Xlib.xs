@@ -3910,6 +3910,7 @@ BOOT:
   newCONSTSUB(stash, "LeaveNotify", newSViv(LeaveNotify));
   newCONSTSUB(stash, "MapNotify", newSViv(MapNotify));
   newCONSTSUB(stash, "MappingNotify", newSViv(MappingNotify));
+  newCONSTSUB(stash, "MapRequest", newSViv(MapRequest));
   newCONSTSUB(stash, "MotionNotify", newSViv(MotionNotify));
   newCONSTSUB(stash, "NoExpose", newSViv(NoExpose));
   newCONSTSUB(stash, "PropertyNotify", newSViv(PropertyNotify));

@@ -21,6 +21,7 @@ const_event
  i LeaveNotify
  i MapNotify
  i MappingNotify
+ i MapRequest
  i MotionNotify
  i NoExpose
  i PropertyNotify
