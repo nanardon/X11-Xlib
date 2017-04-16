@@ -9,6 +9,7 @@ require X11::Xlib::Screen;
 require X11::Xlib::Colormap;
 require X11::Xlib::Window;
 require X11::Xlib::Pixmap;
+require X11::Xlib::XserverRegion;
 
 =head1 NAME
 
@@ -448,6 +449,11 @@ sub XCreatePixmapFromBitmapData {
     );
 }
 
+*X11::Xlib::Display::XCompositeNameWindowPixmap= sub {
+    my $xid= &X11::Xlib::XCompositeNameWindowPixmap;
+    $_[0]->get_cached_pixmap($xid, autofree => 1);
+} if X11::Xlib->can('XCompositeNameWindowPixmap');
+
 =head3 new_window
 
   my $win= $display->new_window(
@@ -574,6 +580,17 @@ sub XCreateSimpleWindow {
     $_[0]->get_cached_window( &X11::Xlib::XCreateSimpleWindow, autofree => 1);
 }
 
+*X11::Xlib::Display::XCompositeGetOverlayWindow= sub {
+    my $xid= &X11::Xlib::XCompositeGetOverlayWindow;
+    $_[0]->get_cached_window( $xid, autofree => 0 ); # can be only one, and needs freed specially
+} if X11::Xlib->can('XCompositeGetOverlayWindow');
+
+*X11::Xlib::Display::XCompositeCreateRegionFromBorderClip= sub {
+    my $self= $_[0];
+    my $xid= &X11::Xlib::XCompositeCreateRegionFromBorderClip;
+    $self->get_cached_region( $xid, autofree => 1 );
+} if X11::Xlib->can('XCompositeCreateRegionFromBorderClip');
+
 =head2 INPUT
 
 =head3 keymap
@@ -681,6 +698,9 @@ sub get_cached_pixmap {
 }
 sub get_cached_window {
     shift->get_cached_xobj(shift, 'X11::Xlib::Window', @_);
+}
+sub get_cached_region {
+    shift->get_cached_xobj(shift, 'X11::Xlib::XserverRegion', @_);
 }
 
 1;
