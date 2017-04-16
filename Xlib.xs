@@ -449,6 +449,7 @@ XGetVisualInfo(dpy, vinfo_mask, vinfo_template)
     PPCODE:
         list= XGetVisualInfo(dpy, vinfo_mask, vinfo_template, &n);
         if (list) {
+            EXTEND(SP, n);
             for (i= 0; i<n; i++) {
                 PUSHs(sv_2mortal(
                     sv_setref_pvn(newSV(0), "X11::Xlib::XVisualInfo", (void*)(list+i), sizeof(XVisualInfo))
@@ -1419,22 +1420,14 @@ XCompositeQueryExtension(dpy)
         }
 
 void
-XCompositeQueryVersion(dpy, SV *major_sv= NULL, SV *minor_sv= NULL)
+XCompositeQueryVersion(dpy)
     Display *dpy
     INIT:
-        int major= XCOMPOSITE_MAJOR, minor=XCOMPOSITE_MINOR;
+        int major, minor;
     PPCODE:
-        if (major_sv && SvOK(major_sv))
-            major= SvIV(major_sv);
-        if (minor_sv && SvOK(minor_sv))
-            minor= SvIV(minor_sv);
         if (XCompositeQueryVersion(dpy, &major, &minor)) {
-            if (major_sv) sv_setiv(major_sv, major);
-            else major_sv= sv_2mortal(newSViv(major));
-            if (minor_sv) sv_setiv(minor_sv, minor);
-            else minor_sv= sv_2mortal(newSViv(minor));
-            XPUSHs(major_sv);
-            XPUSHs(minor_sv);
+            XPUSHs(sv_2mortal(newSViv(major)));
+            XPUSHs(sv_2mortal(newSViv(minor)));
         }
 
 int

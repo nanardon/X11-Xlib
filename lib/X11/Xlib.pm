@@ -1251,6 +1251,8 @@ This is an optional extension.  If you have Xcomposite available when this
 module was installed, then the following functions will be available.
 None of these functions are exportable.
 
+  sudo apt-get install libxcomposite-dev   # Debian/Mint/Ubuntu
+
 =head3 XCompositeVersion
 
   my $version_integer= X11::Xlib::XCompositeVersion()
@@ -1265,10 +1267,6 @@ None of these functions are exportable.
 
   my ($major, $minor)= $display->XCompositeQueryVersion
     if $display->can('XCompositeQueryVersion');
-  # or, to request "no higher than version X":
-  my ($major, $minor)= (1,2);
-  $display->XCompositeQueryVersion($major, $minor) # alters these vars
-    or die;
 
 =head3 XCompositeRedirectWindow
 
