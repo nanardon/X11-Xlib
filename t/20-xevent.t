@@ -14,7 +14,6 @@ subtest blank_event => sub {
     is( $blank_event->type,    0,     'type=0' );
     is( $blank_event->display, undef, 'display=undef' );
     is( $blank_event->serial,  0,     'serial=0' );
-    is( $blank_event->send_event, 0,  'send_event=0' );
 
     # Any method from other subtypes should not exist
     like( err{ $blank_event->x }, qr/locate object method "x"/, 'subtype methods don\'t exist on root event class' );

@@ -214,6 +214,13 @@ sub pack {
 *X11::Xlib::XDestroyWindowEvent::window= *_window;
 
 
+@X11::Xlib::XErrorEvent::ISA= ( __PACKAGE__ );
+*X11::Xlib::XErrorEvent::error_code= *_error_code;
+*X11::Xlib::XErrorEvent::minor_code= *_minor_code;
+*X11::Xlib::XErrorEvent::request_code= *_request_code;
+*X11::Xlib::XErrorEvent::resourceid= *_resourceid;
+
+
 @X11::Xlib::XExposeEvent::ISA= ( __PACKAGE__ );
 *X11::Xlib::XExposeEvent::count= *_count;
 *X11::Xlib::XExposeEvent::height= *_height;
@@ -482,6 +489,15 @@ Used for event type: DestroyNotify
 
   event             - Window
   window            - Window
+
+=head2 XErrorEvent
+
+Used for event type: 0
+
+  error_code        - unsigned char
+  minor_code        - unsigned char
+  request_code      - unsigned char
+  resourceid        - XID
 
 =head2 XExposeEvent
 

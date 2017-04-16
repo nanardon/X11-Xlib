@@ -1709,10 +1709,10 @@ display(event, value=NULL)
   SV *value
   PPCODE:
     if (value) {
-      event->xany.display= PerlXlib_get_magic_dpy(value, 0);
+      if (event->type) event->xany.display= PerlXlib_get_magic_dpy(value, 0); else event->xerror.display= PerlXlib_get_magic_dpy(value, 0);
       PUSHs(value);
     } else {
-      PUSHs(PerlXlib_obj_for_display(event->xany.display, 0));
+      PUSHs(PerlXlib_obj_for_display((event->type? event->xany.display : event->xerror.display), 0));
     }
 
 void
@@ -1729,6 +1729,21 @@ _drawable(event, value=NULL)
     case NoExpose:
       if (value) { event->xnoexpose.drawable = c_value; } else { c_value= event->xnoexpose.drawable; } break;
     default: croak("Can't access XEvent.drawable for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_error_code(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    unsigned char c_value= 0;
+  PPCODE:
+    if (value) { c_value= SvUV(value); }
+    switch (event->type) {
+    case 0:
+      if (value) { event->xerror.error_code = c_value; } else { c_value= event->xerror.error_code; } break;
+    default: croak("Can't access XEvent.error_code for type=%d", event->type);
     }
     PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
 
@@ -1964,18 +1979,16 @@ void
 _minor_code(event, value=NULL)
   XEvent *event
   SV *value
-  INIT:
-    int c_value= 0;
   PPCODE:
-    if (value) { c_value= SvIV(value); }
     switch (event->type) {
+    case 0:
+      if (value) { event->xerror.minor_code= SvUV(value); } else { PUSHs(sv_2mortal(newSVuv(event->xerror.minor_code))); } break;
     case GraphicsExpose:
-      if (value) { event->xgraphicsexpose.minor_code = c_value; } else { c_value= event->xgraphicsexpose.minor_code; } break;
+      if (value) { event->xgraphicsexpose.minor_code= SvIV(value); } else { PUSHs(sv_2mortal(newSViv(event->xgraphicsexpose.minor_code))); } break;
     case NoExpose:
-      if (value) { event->xnoexpose.minor_code = c_value; } else { c_value= event->xnoexpose.minor_code; } break;
+      if (value) { event->xnoexpose.minor_code= SvIV(value); } else { PUSHs(sv_2mortal(newSViv(event->xnoexpose.minor_code))); } break;
     default: croak("Can't access XEvent.minor_code for type=%d", event->type);
     }
-    PUSHs(value? value : sv_2mortal(newSViv(c_value)));
 
 void
 _mode(event, value=NULL)
@@ -2129,6 +2142,21 @@ _request(event, value=NULL)
     PUSHs(value? value : sv_2mortal(newSViv(c_value)));
 
 void
+_request_code(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    unsigned char c_value= 0;
+  PPCODE:
+    if (value) { c_value= SvUV(value); }
+    switch (event->type) {
+    case 0:
+      if (value) { event->xerror.request_code = c_value; } else { c_value= event->xerror.request_code; } break;
+    default: croak("Can't access XEvent.request_code for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
 _requestor(event, value=NULL)
   XEvent *event
   SV *value
@@ -2142,6 +2170,21 @@ _requestor(event, value=NULL)
     case SelectionRequest:
       if (value) { event->xselectionrequest.requestor = c_value; } else { c_value= event->xselectionrequest.requestor; } break;
     default: croak("Can't access XEvent.requestor for type=%d", event->type);
+    }
+    PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
+
+void
+_resourceid(event, value=NULL)
+  XEvent *event
+  SV *value
+  INIT:
+    XID c_value= 0;
+  PPCODE:
+    if (value) { c_value= PerlXlib_sv_to_xid(value); }
+    switch (event->type) {
+    case 0:
+      if (value) { event->xerror.resourceid = c_value; } else { c_value= event->xerror.resourceid; } break;
+    default: croak("Can't access XEvent.resourceid for type=%d", event->type);
     }
     PUSHs(value? value : sv_2mortal(newSVuv(c_value)));
 
@@ -2228,6 +2271,7 @@ send_event(event, value=NULL)
   XEvent *event
   SV *value
   PPCODE:
+    if (!event->type) croak("Can't access XEvent.send_event for type=%d", event->type);
     if (value) {
       event->xany.send_event= SvIV(value);
       PUSHs(value);
@@ -2241,10 +2285,10 @@ serial(event, value=NULL)
   SV *value
   PPCODE:
     if (value) {
-      event->xany.serial= SvUV(value);
+      if (event->type) event->xany.serial= SvUV(value); else event->xerror.serial= SvUV(value);
       PUSHs(value);
     } else {
-      PUSHs(sv_2mortal(newSVuv(event->xany.serial)));
+      PUSHs(sv_2mortal(newSVuv((event->type? event->xany.serial : event->xerror.serial))));
     }
 
 void

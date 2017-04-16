@@ -339,6 +339,7 @@ void PerlXlib_install_error_handlers(Bool nonfatal, Bool fatal) {
 
 const char* PerlXlib_xevent_pkg_for_type(int type) {
   switch (type) {
+  case 0: return "X11::Xlib::XErrorEvent";
   case ButtonPress: return "X11::Xlib::XButtonEvent";
   case ButtonRelease: return "X11::Xlib::XButtonEvent";
   case CirculateNotify: return "X11::Xlib::XCirculateEvent";
@@ -398,15 +399,22 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       }
       if (consume) hv_delete(fields, "type", 4, G_DISCARD);
     }
-    
-    fp= hv_fetch(fields, "display", 7, 0);
-    if (fp && *fp) { s->xany.display= PerlXlib_get_magic_dpy(*fp, 0);; if (consume) hv_delete(fields, "display", 7, G_DISCARD); }
-    fp= hv_fetch(fields, "send_event", 10, 0);
-    if (fp && *fp) { s->xany.send_event= SvIV(*fp);; if (consume) hv_delete(fields, "send_event", 10, G_DISCARD); }
-    fp= hv_fetch(fields, "serial", 6, 0);
-    if (fp && *fp) { s->xany.serial= SvUV(*fp);; if (consume) hv_delete(fields, "serial", 6, G_DISCARD); }
-    fp= hv_fetch(fields, "type", 4, 0);
-    if (fp && *fp) { s->xany.type= SvIV(*fp);; if (consume) hv_delete(fields, "type", 4, G_DISCARD); }
+    if (s->type) {
+      fp= hv_fetch(fields, "display", 7, 0);
+      if (fp && *fp) { s->xany.display= PerlXlib_get_magic_dpy(*fp, 0);; if (consume) hv_delete(fields, "display", 7, G_DISCARD); }
+      fp= hv_fetch(fields, "send_event", 10, 0);
+      if (fp && *fp) { s->xany.send_event= SvIV(*fp);; if (consume) hv_delete(fields, "send_event", 10, G_DISCARD); }
+      fp= hv_fetch(fields, "serial", 6, 0);
+      if (fp && *fp) { s->xany.serial= SvUV(*fp);; if (consume) hv_delete(fields, "serial", 6, G_DISCARD); }
+      fp= hv_fetch(fields, "type", 4, 0);
+      if (fp && *fp) { s->xany.type= SvIV(*fp);; if (consume) hv_delete(fields, "type", 4, G_DISCARD); }
+    }
+    else {
+      fp= hv_fetch(fields, "serial", 6, 0);
+      if (fp && *fp) { s->xerror.serial= SvUV(*fp);; if (consume) hv_delete(fields, "serial", 6, G_DISCARD); }
+      fp= hv_fetch(fields, "display", 7, 0);
+      if (fp && *fp) { s->xerror.display= PerlXlib_get_magic_dpy(*fp, 0);; if (consume) hv_delete(fields, "display", 7, G_DISCARD); }
+    }
     switch( s->type ) {
     case ButtonPress:
     case ButtonRelease:
@@ -567,6 +575,16 @@ void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume) {
       if (fp && *fp) { s->xdestroywindow.event= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "event", 5, G_DISCARD); }
       fp= hv_fetch(fields, "window", 6, 0);
       if (fp && *fp) { s->xdestroywindow.window= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "window", 6, G_DISCARD); }
+      break;
+    case 0:
+      fp= hv_fetch(fields, "error_code", 10, 0);
+      if (fp && *fp) { s->xerror.error_code= SvUV(*fp);; if (consume) hv_delete(fields, "error_code", 10, G_DISCARD); }
+      fp= hv_fetch(fields, "minor_code", 10, 0);
+      if (fp && *fp) { s->xerror.minor_code= SvUV(*fp);; if (consume) hv_delete(fields, "minor_code", 10, G_DISCARD); }
+      fp= hv_fetch(fields, "request_code", 12, 0);
+      if (fp && *fp) { s->xerror.request_code= SvUV(*fp);; if (consume) hv_delete(fields, "request_code", 12, G_DISCARD); }
+      fp= hv_fetch(fields, "resourceid", 10, 0);
+      if (fp && *fp) { s->xerror.resourceid= PerlXlib_sv_to_xid(*fp);; if (consume) hv_delete(fields, "resourceid", 10, G_DISCARD); }
       break;
     case Expose:
       fp= hv_fetch(fields, "count", 5, 0);
@@ -803,10 +821,16 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
      */
     SV *sv= NULL;
     if (!hv_store(fields, "type", 4, (sv= newSViv(s->type)), 0)) goto store_fail;
-    if (!hv_store(fields, "display"   ,  7, (sv=SvREFCNT_inc(PerlXlib_obj_for_display(s->xany.display, 0))), 0)) goto store_fail;
-    if (!hv_store(fields, "send_event", 10, (sv=newSViv(s->xany.send_event)), 0)) goto store_fail;
-    if (!hv_store(fields, "serial"    ,  6, (sv=newSVuv(s->xany.serial)), 0)) goto store_fail;
-    if (!hv_store(fields, "type"      ,  4, (sv=newSViv(s->xany.type)), 0)) goto store_fail;
+    if (s->type) {
+      if (!hv_store(fields, "display"   ,  7, (sv=SvREFCNT_inc(PerlXlib_obj_for_display(s->xany.display, 0))), 0)) goto store_fail;
+      if (!hv_store(fields, "send_event", 10, (sv=newSViv(s->xany.send_event)), 0)) goto store_fail;
+      if (!hv_store(fields, "serial"    ,  6, (sv=newSVuv(s->xany.serial)), 0)) goto store_fail;
+      if (!hv_store(fields, "type"      ,  4, (sv=newSViv(s->xany.type)), 0)) goto store_fail;
+    }
+    else {
+      if (!hv_store(fields, "display"   ,  7, (sv=SvREFCNT_inc(PerlXlib_obj_for_display(s->xerror.display, 0))), 0)) goto store_fail;
+      if (!hv_store(fields, "serial"    ,  6, (sv=newSVuv(s->xerror.serial)), 0)) goto store_fail;
+    }
     switch( s->type ) {
     case ButtonPress:
     case ButtonRelease:
@@ -898,6 +922,12 @@ void PerlXlib_XEvent_unpack(XEvent *s, HV *fields) {
     case DestroyNotify:
       if (!hv_store(fields, "event"      ,  5, (sv=newSVuv(s->xdestroywindow.event)), 0)) goto store_fail;
       if (!hv_store(fields, "window"     ,  6, (sv=newSVuv(s->xdestroywindow.window)), 0)) goto store_fail;
+      break;
+    case 0:
+      if (!hv_store(fields, "error_code" , 10, (sv=newSVuv(s->xerror.error_code)), 0)) goto store_fail;
+      if (!hv_store(fields, "minor_code" , 10, (sv=newSVuv(s->xerror.minor_code)), 0)) goto store_fail;
+      if (!hv_store(fields, "request_code", 12, (sv=newSVuv(s->xerror.request_code)), 0)) goto store_fail;
+      if (!hv_store(fields, "resourceid" , 10, (sv=newSVuv(s->xerror.resourceid)), 0)) goto store_fail;
       break;
     case Expose:
       if (!hv_store(fields, "count"      ,  5, (sv=newSViv(s->xexpose.count)), 0)) goto store_fail;
