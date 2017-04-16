@@ -122,18 +122,26 @@ sub summarize {
     my $fields= $self->unpack;
     my $str= (split '::', ref($self))[-1];
     my $dpy= delete $fields->{display};
-    $str .= ' display=(conn '.$dpy->ConnectionNumber.')' if $dpy;
+    $str .= ' display:conn'.$dpy->ConnectionNumber if $dpy;
     join(' ', $str, map { "$_:$fields->{$_}" } sort keys %$fields);
 }
 
 sub X11::Xlib::XErrorEvent::summarize {
     my $self= shift;
     if (my $dpy= $self->display) {
-        return sprintf("XErrorEvent display=(conn %d) error=%s request=%s minor=%d resource=0x%X (%d) serial=%d",
-            $dpy->ConnectionNumber,
-            $dpy->XGetErrorDatabaseText("XProtoError", $self->error_code, $self->error_code),
-            $dpy->XGetErrorDatabaseText("XRequest", $self->request_code, $self->request_code),
-            $self->minor_code, $self->resourceid, $self->resourceid, $self->serial);
+        my $err= $self->error_code;
+        my $major= $self->request_code;
+        my $minor= $self->minor_code;
+        my $res= $self->resourceid;
+        return sprintf("XErrorEvent display:conn%d error:%d (%s) request:%d.%d (%s) resource:0x%X (%d) serial:%d",
+            $dpy->ConnectionNumber, $err,
+            $dpy->XGetErrorDatabaseText("XProtoError", $err, $err),
+            $major, $minor,
+            ($major < 128? $dpy->XGetErrorDatabaseText("XRequest", $major)
+                : $dpy->XGetErrorDatabaseText("XRequest", $dpy->_extension_for_opcode($major).'.'.$minor)
+                || $dpy->_extension_for_opcode($major).' method '.$minor
+            ),
+            $res, $res, $self->serial);
     }
     $self->SUPER::summarize();
 }

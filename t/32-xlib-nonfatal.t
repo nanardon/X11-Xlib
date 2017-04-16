@@ -8,7 +8,7 @@ use Test::More;
 
 plan skip_all => "No X11 Server available"
     unless $ENV{DISPLAY};
-plan tests => 13;
+plan tests => 12;
 
 use X11::Xlib qw( XOpenDisplay ConnectionNumber RootWindow );
 
@@ -29,8 +29,6 @@ X11::Xlib->on_error(sub {
         note("begin global error handler");
         
         is( $dpy, $conn, 'received same connection object' );
-        
-        is( err{ $conn2->XSync }, '', 'can still use other connections, right now' );
 
         note("end fatal error handler");
     }
@@ -53,4 +51,5 @@ ok( $X11::Xlib::_error_nonfatal_installed,  'nonfatal handler installed' );
 
 # Cause a nonfatal error by un-mapping the root
 $conn->XQueryTree(0x1234567);
+$conn->XSync;
 

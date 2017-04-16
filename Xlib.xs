@@ -8,6 +8,7 @@
 
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
+#include <X11/Xlibint.h>
 #include <X11/extensions/XTest.h>
 #ifdef HAVE_XCOMPOSITE
 #include <X11/extensions/Xcomposite.h>
@@ -353,6 +354,17 @@ XGetErrorDatabaseText(dpy, name, message, default_string= NULL)
         }
         SvCUR_set(ret, len);
         PUSHs(ret);
+
+void
+_extension_for_opcode(dpy, opcode)
+    Display *dpy
+    int opcode
+    INIT:
+        _XExtension *ext;
+    PPCODE:
+        for (ext= dpy->ext_procs; ext && (ext->codes.major_opcode != opcode); ext= ext->next);
+        if (ext)
+            PUSHs(sv_2mortal(newSVpv(ext->name, 0)));
 
 # Screen Functions (fn_screen) -----------------------------------------------
 
