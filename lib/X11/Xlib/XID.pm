@@ -3,7 +3,11 @@ use strict;
 use warnings;
 use Carp;
 use X11::Xlib;
-use overload '""' => sub { shift->summarize }, '0+' => sub { shift->xid };
+use overload
+    '""' => sub { shift->summarize },
+    '0+' => sub { shift->xid },
+    '<=>' => sub { ($_[2]? -1 : 1) * ($_[0]->xid <=> $_[1]) },
+    fallback => 1;
 
 sub new {
     my $class= shift;
