@@ -7,4 +7,5 @@ $d/generate_struct_xs.pl XWindowChanges < /usr/include/X11/Xlib.h
 $d/generate_struct_xs.pl XWindowAttributes < /usr/include/X11/Xlib.h
 $d/generate_struct_xs.pl XSetWindowAttributes < /usr/include/X11/Xlib.h
 $d/generate_struct_xs.pl XRectangle < /usr/include/X11/Xlib.h
+$d/generate_struct_xs.pl XRenderPictFormat < /usr/include/X11/extensions/Xrender.h
 echo done

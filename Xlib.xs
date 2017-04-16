@@ -16,6 +16,9 @@
 #ifdef HAVE_XFIXES
 #include <X11/extensions/Xfixes.h>
 #endif
+#ifdef HAVE_XRENDER
+#include <X11/extensions/Xrender.h>
+#endif
 
 #include "PerlXlib.h"
 
@@ -1576,6 +1579,64 @@ XFixesSetWindowShapeRegion(dpy, wnd, shape_kind, x_off, y_off, region)
 #define ShapeClip                       1
 #define ShapeInput                      2
 #endif
+
+# Xrender Extension () -------------------------------------------------------
+
+#ifdef HAVE_XRENDER
+
+void
+XRenderQueryExtension(dpy)
+    Display *dpy
+    INIT:
+        int event_base, error_base;
+    PPCODE:
+        if (XRenderQueryExtension(dpy, &event_base, &error_base)) {
+            XPUSHs(sv_2mortal(newSViv(event_base)));
+            XPUSHs(sv_2mortal(newSViv(error_base)));
+        }
+
+void
+XRenderQueryVersion(dpy)
+    Display *dpy
+    INIT:
+        int major, minor;
+    PPCODE:
+        if (XRenderQueryVersion(dpy, &major, &minor)) {
+            XPUSHs(sv_2mortal(newSViv(major)));
+            XPUSHs(sv_2mortal(newSViv(minor)));
+        }
+
+void
+XRenderFindVisualFormat(dpy, vis)
+    Display *dpy
+    Visual *vis
+    INIT:
+        XRenderPictFormat *fmt;
+    PPCODE:
+        fmt= XRenderFindVisualFormat(dpy, vis);
+        if (fmt) {
+            PUSHs(sv_2mortal(
+                sv_setref_pvn(newSV(0), "X11::Xlib::XRenderPictFormat", (char*)fmt, sizeof(XRenderPictFormat))
+            ));
+        }
+        // doesn't need freed?
+
+#else /* (not) HAVE_XRENDER */
+
+#define PictFormatID        (1 << 0)
+#define PictFormatType      (1 << 1)
+#define PictFormatDepth     (1 << 2)
+#define PictFormatRed       (1 << 3)
+#define PictFormatRedMask   (1 << 4)
+#define PictFormatGreen     (1 << 5)
+#define PictFormatGreenMask (1 << 6)
+#define PictFormatBlue      (1 << 7)
+#define PictFormatBlueMask  (1 << 8)
+#define PictFormatAlpha     (1 << 9)
+#define PictFormatAlphaMask (1 << 10)
+#define PictFormatColormap  (1 << 11)
+
+#endif /* HAVE_XRENDER */
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::Visual
 
@@ -3884,6 +3945,190 @@ y(s, value=NULL)
     }
 
 # END GENERATED X11_Xlib_XRectangle
+# ----------------------------------------------------------------------------
+# BEGIN GENERATED X11_Xlib_XRenderPictFormat
+
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::XRenderPictFormat
+
+int
+_sizeof(ignored=NULL)
+    SV* ignored;
+    CODE:
+        RETVAL = sizeof(XRenderPictFormat);
+    OUTPUT:
+        RETVAL
+
+void
+_initialize(s)
+    SV *s
+    INIT:
+        void *sptr;
+    PPCODE:
+        sptr= PerlXlib_get_struct_ptr(s, 1, "X11::Xlib::XRenderPictFormat", sizeof(XRenderPictFormat),
+            (PerlXlib_struct_pack_fn*) &PerlXlib_XRenderPictFormat_pack
+        );
+        memset((void*) sptr, 0, sizeof(XRenderPictFormat));
+
+void
+_pack(s, fields, consume=0)
+    XRenderPictFormat *s
+    HV *fields
+    Bool consume
+    PPCODE:
+        PerlXlib_XRenderPictFormat_pack(s, fields, consume);
+
+void
+_unpack(s, fields)
+    XRenderPictFormat *s
+    HV *fields
+    PPCODE:
+        PerlXlib_XRenderPictFormat_unpack(s, fields);
+
+void
+colormap(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->colormap= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->colormap)));
+    }
+
+void
+depth(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->depth= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->depth)));
+    }
+
+void
+direct_alpha(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->direct.alpha= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->direct.alpha)));
+    }
+
+void
+direct_alphaMask(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->direct.alphaMask= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->direct.alphaMask)));
+    }
+
+void
+direct_blue(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->direct.blue= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->direct.blue)));
+    }
+
+void
+direct_blueMask(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->direct.blueMask= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->direct.blueMask)));
+    }
+
+void
+direct_green(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->direct.green= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->direct.green)));
+    }
+
+void
+direct_greenMask(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->direct.greenMask= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->direct.greenMask)));
+    }
+
+void
+direct_red(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->direct.red= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->direct.red)));
+    }
+
+void
+direct_redMask(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->direct.redMask= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->direct.redMask)));
+    }
+
+void
+id(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->id= PerlXlib_sv_to_xid(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->id)));
+    }
+
+void
+type(s, value=NULL)
+    XRenderPictFormat *s
+    SV *value
+  PPCODE:
+    if (value) {
+      s->type= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->type)));
+    }
+
+# END GENERATED X11_Xlib_XRenderPictFormat
 # ----------------------------------------------------------------------------
 
 BOOT:

@@ -121,6 +121,7 @@ require X11::Xlib::XEvent;
 @X11::Xlib::XSetWindowAttributes::ISA= ( __PACKAGE__ );
 @X11::Xlib::XSizeHints::ISA= ( __PACKAGE__ );
 @X11::Xlib::XRectangle::ISA= ( __PACKAGE__ );
+@X11::Xlib::XRenderPictFormat::ISA= ( __PACKAGE__ );
 
 1;
 

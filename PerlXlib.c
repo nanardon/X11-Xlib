@@ -6,6 +6,9 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/extensions/XTest.h>
+#ifdef HAVE_XRENDER
+#include <X11/extensions/Xrender.h>
+#endif
 
 #include "PerlXlib.h"
 
@@ -1494,4 +1497,73 @@ void PerlXlib_XRectangle_unpack(XRectangle *s, HV *fields) {
 }
 
 /* END GENERATED X11_Xlib_XRectangle */
+/*--------------------------------------------------------------------------*/
+#ifdef HAVE_XRENDER
+/* BEGIN GENERATED X11_Xlib_XRenderPictFormat */
+
+void PerlXlib_XRenderPictFormat_pack(XRenderPictFormat *s, HV *fields, Bool consume) {
+    SV **fp;
+
+    fp= hv_fetch(fields, "colormap", 8, 0);
+    if (fp && *fp) { s->colormap= PerlXlib_sv_to_xid(*fp); if (consume) hv_delete(fields, "colormap", 8, G_DISCARD); }
+
+    fp= hv_fetch(fields, "depth", 5, 0);
+    if (fp && *fp) { s->depth= SvIV(*fp); if (consume) hv_delete(fields, "depth", 5, G_DISCARD); }
+
+    fp= hv_fetch(fields, "direct_alpha", 12, 0);
+    if (fp && *fp) { s->direct.alpha= SvIV(*fp); if (consume) hv_delete(fields, "direct_alpha", 12, G_DISCARD); }
+
+    fp= hv_fetch(fields, "direct_alphaMask", 16, 0);
+    if (fp && *fp) { s->direct.alphaMask= SvIV(*fp); if (consume) hv_delete(fields, "direct_alphaMask", 16, G_DISCARD); }
+
+    fp= hv_fetch(fields, "direct_blue", 11, 0);
+    if (fp && *fp) { s->direct.blue= SvIV(*fp); if (consume) hv_delete(fields, "direct_blue", 11, G_DISCARD); }
+
+    fp= hv_fetch(fields, "direct_blueMask", 15, 0);
+    if (fp && *fp) { s->direct.blueMask= SvIV(*fp); if (consume) hv_delete(fields, "direct_blueMask", 15, G_DISCARD); }
+
+    fp= hv_fetch(fields, "direct_green", 12, 0);
+    if (fp && *fp) { s->direct.green= SvIV(*fp); if (consume) hv_delete(fields, "direct_green", 12, G_DISCARD); }
+
+    fp= hv_fetch(fields, "direct_greenMask", 16, 0);
+    if (fp && *fp) { s->direct.greenMask= SvIV(*fp); if (consume) hv_delete(fields, "direct_greenMask", 16, G_DISCARD); }
+
+    fp= hv_fetch(fields, "direct_red", 10, 0);
+    if (fp && *fp) { s->direct.red= SvIV(*fp); if (consume) hv_delete(fields, "direct_red", 10, G_DISCARD); }
+
+    fp= hv_fetch(fields, "direct_redMask", 14, 0);
+    if (fp && *fp) { s->direct.redMask= SvIV(*fp); if (consume) hv_delete(fields, "direct_redMask", 14, G_DISCARD); }
+
+    fp= hv_fetch(fields, "id", 2, 0);
+    if (fp && *fp) { s->id= PerlXlib_sv_to_xid(*fp); if (consume) hv_delete(fields, "id", 2, G_DISCARD); }
+
+    fp= hv_fetch(fields, "type", 4, 0);
+    if (fp && *fp) { s->type= SvIV(*fp); if (consume) hv_delete(fields, "type", 4, G_DISCARD); }
+}
+
+void PerlXlib_XRenderPictFormat_unpack(XRenderPictFormat *s, HV *fields) {
+    /* hv_store may return NULL if there is an error, or if the hash is tied.
+     * If it does, we need to clean up the value.
+     */
+    SV *sv= NULL;
+    if (!hv_store(fields, "colormap"  ,  8, (sv=newSVuv(s->colormap)), 0)) goto store_fail;
+    if (!hv_store(fields, "depth"     ,  5, (sv=newSViv(s->depth)), 0)) goto store_fail;
+    if (!hv_store(fields, "direct_alpha", 12, (sv=newSViv(s->direct.alpha)), 0)) goto store_fail;
+    if (!hv_store(fields, "direct_alphaMask", 16, (sv=newSViv(s->direct.alphaMask)), 0)) goto store_fail;
+    if (!hv_store(fields, "direct_blue", 11, (sv=newSViv(s->direct.blue)), 0)) goto store_fail;
+    if (!hv_store(fields, "direct_blueMask", 15, (sv=newSViv(s->direct.blueMask)), 0)) goto store_fail;
+    if (!hv_store(fields, "direct_green", 12, (sv=newSViv(s->direct.green)), 0)) goto store_fail;
+    if (!hv_store(fields, "direct_greenMask", 16, (sv=newSViv(s->direct.greenMask)), 0)) goto store_fail;
+    if (!hv_store(fields, "direct_red", 10, (sv=newSViv(s->direct.red)), 0)) goto store_fail;
+    if (!hv_store(fields, "direct_redMask", 14, (sv=newSViv(s->direct.redMask)), 0)) goto store_fail;
+    if (!hv_store(fields, "id"        ,  2, (sv=newSVuv(s->id)), 0)) goto store_fail;
+    if (!hv_store(fields, "type"      ,  4, (sv=newSViv(s->type)), 0)) goto store_fail;
+    return;
+    store_fail:
+        if (sv) sv_2mortal(sv);
+        croak("Can't store field in supplied hash (tied maybe?)");
+}
+
+/* END GENERATED X11_Xlib_XRenderPictFormat */
+#endif
 /*--------------------------------------------------------------------------*/

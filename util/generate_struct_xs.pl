@@ -154,7 +154,7 @@ if ($def_bits{$goal}) {
 my %int_types= map { $_ => 1 } qw( int short long Bool char );
 my %unsigned_types= map { $_ => 1 } 'unsigned', 'unsigned int', 'unsigned long', 'unsigned short',
 	qw( Time VisualID );
-my %xid_types= map { $_ => 1 } qw( Window Drawable Colormap Cursor Atom Pixmap );
+my %xid_types= map { $_ => 1 } qw( Window Drawable Colormap Cursor Atom Pixmap XserverRegion PictFormat Picture Glyph GlyphSet );
 
 sub sv_read {
     my ($type, $access, $svname)= @_;

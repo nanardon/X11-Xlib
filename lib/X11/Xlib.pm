@@ -1302,6 +1302,30 @@ None of these functions are exportable.
 
   $display->XCompositeReleaseOverlayWindow($window);
 
+=head2 EXTENSION XRENDER
+
+This is an optional extension.  If you have Xrender available when this
+module was installed, then the following functions will be available.
+None of these functions are exportable.
+
+  sudo apt-get install libxrender-dev   # Debian/Mint/Ubuntu
+
+=head3 XRenderQueryExtension
+
+  my ($event_base, $error_base)= $display->XRenderQueryExtension()
+    if $display->can('XRenderQueryExtension');
+
+=head3 XRenderQueryVersion
+
+  my ($major, $minor)= $display->XRenderQueryVersion()
+    if $display->can('XRenderQueryVersion');
+
+=head3 XRenderFindVisualFormat
+
+  my $pfmt= $display->XRenderFindVisualFormat( $visual );
+
+Takes a L<X11::Xlib::Visual>, and returns a L<X11::Xlib::XRenderPictFormat>.
+
 =head1 STRUCTURES
 
 Xlib has a lot of C B<struct>s.  Most of them do not have much "depth"

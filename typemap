@@ -12,6 +12,7 @@ XWindowAttributes *   O_X11_Xlib_Struct
 XSetWindowAttributes* O_X11_Xlib_Struct
 XSizeHints *          O_X11_Xlib_Struct
 XRectangle *          O_X11_Xlib_Struct
+XRenderPictFormat *   O_X11_Xlib_Struct
 Window                O_X11_Xlib_XID
 Pixmap                O_X11_Xlib_XID
 Cursor                O_X11_Xlib_XID
@@ -19,6 +20,10 @@ Colormap              O_X11_Xlib_XID
 Drawable              O_X11_Xlib_XID
 VisualID              O_X11_Xlib_XID
 XserverRegion         O_X11_Xlib_XID
+Glyph                 O_X11_Xlib_XID
+GlyphSet              O_X11_Xlib_XID
+Picture               O_X11_Xlib_XID
+PictFormat            O_X11_Xlib_XID
 Atom                  T_UV
 Time                  T_UV
 Bool                  T_BOOL
