@@ -8,7 +8,7 @@ use base qw(Exporter DynaLoader);
 use Carp;
 use Try::Tiny;
 
-our $VERSION = '0.14';
+our $VERSION = '0.14_1';
 
 sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
 
@@ -67,11 +67,12 @@ my %_constants= (
 );
 my %_functions= (
 # BEGIN GENERATED XS FUNCTION LIST
-  fn_conn => [qw( ConnectionNumber XCloseDisplay XOpenDisplay XServerVendor
-    XSetCloseDownMode XVendorRelease )],
+  fn_conn => [qw( ConnectionNumber XCloseDisplay XDisplayName XOpenDisplay
+    XServerVendor XSetCloseDownMode XVendorRelease )],
   fn_event => [qw( XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent
-    XCheckWindowEvent XEventsQueued XFlush XNextEvent XPending XPutBackEvent
-    XQLength XSelectInput XSendEvent XSync )],
+    XCheckWindowEvent XEventsQueued XFlush XGetErrorDatabaseText XGetErrorText
+    XNextEvent XPending XPutBackEvent XQLength XSelectInput XSendEvent XSync
+    )],
   fn_input => [qw( XAllowEvents XBell XGrabButton XGrabKey XGrabKeyboard
     XGrabPointer XQueryKeymap XQueryPointer XSetInputFocus XUngrabButton
     XUngrabKey XUngrabKeyboard XUngrabPointer keyboard_leds )],
@@ -343,6 +344,14 @@ Release the lock taken by L</XLockDisplay>.
 
 =head2 CONNECTION FUNCTIONS
 
+=head3 XDisplayName
+
+  my $conn_string= X11::Xlib::XDisplayName();
+  my $conn_string= X11::Xlib::XDisplayName( $str );
+
+Returns the official connection string Xlib will use if you were to call
+C<XOpenDisplay($str)>.
+
 =head3 XOpenDisplay
 
   my $display= X11::Xlib::XOpenDisplay($connection_string);
@@ -483,6 +492,27 @@ incoming event queue.
 Change the event mask for a window.  Note that event masks are B<per-client>,
 so one client can listen to a window with a different mask than a second
 client listening to the same window.
+
+=head3 XGetErrorText
+
+  my $error_description= XGetErrorText($display, $error_code);
+
+=head3 XGetErrorDatabaseText
+
+  my $msg= XGetErrorDatabaseText($display, $name, $message, $default_string);
+
+$name indicates what sort of thing to look up. $message is a stringified code
+of some sort.  Yes this is really weird for a C API.
+
+  my $msg= XGetErrorDatabaseText($display, 'XProtoError', $error_code, $default);
+  my $msg= sprintf(
+    XGetErrorDatabaseText($display, 'XlibMessage', 'MajorCode', "Request Major Code %d"),
+    $event->request_code
+  );
+  my $message= XGetErrorDatabaseText($display, 'XRequest', $request_code);
+
+Just use L<X11::Xlib::XEvent/summarize> on an XErrorEvent and save yourself
+the trouble.
 
 =head2 SCREEN ATTRIBUTES
 

@@ -36,6 +36,16 @@ XUnlockDisplay(dpy)
 # Connection Functions (fn_conn) ---------------------------------------------
 
 void
+XDisplayName(str_sv = NULL)
+    SV * str_sv
+    INIT:
+        char *name;
+        size_t unused;
+    PPCODE:
+        name= XDisplayName(str_sv && SvOK(str_sv)? SvPV(str_sv, unused) : NULL);
+        XPUSHs(sv_2mortal(newSVpv( name, 0 )));
+
+void
 XOpenDisplay(connection_string = NULL)
     char * connection_string
     INIT:
@@ -290,6 +300,59 @@ _wait_event(dpy, wnd, event_type, event_mask, event_return, max_wait_msec)
         }
     OUTPUT:
         RETVAL
+
+void
+XGetErrorText(dpy, code)
+    Display *dpy
+    int code
+    INIT:
+        SV *ret;
+        int len;
+    PPCODE:
+        ret= sv_2mortal(newSV(64));
+        SvPOK_on(ret);
+        XGetErrorText(dpy, code, SvPVX(ret), 64);
+        len= strlen(SvPVX(ret));
+        if (len >= 63) {
+            /* Try again with larger buffer */
+            SvGROW(ret, 1024);
+            XGetErrorText(dpy, code, SvPVX(ret), 1024);
+            len= strlen(SvPVX(ret));
+        }
+        SvCUR_set(ret, len);
+        PUSHs(ret);
+
+void
+XGetErrorDatabaseText(dpy, name, message, default_string= NULL)
+    Display *dpy
+    char *name
+    char *message
+    SV *default_string
+    INIT:
+        SV *ret;
+        char *def;
+        size_t lim, len;
+    PPCODE:
+        if (default_string) {
+            def= SvPV(default_string, lim);
+            ++lim;
+        } else {
+            def= "";
+            lim= 64;
+        }
+        if (lim < 64) lim= 64;
+        ret= sv_2mortal(newSV(lim));
+        SvPOK_on(ret);
+        XGetErrorDatabaseText(dpy, name, message, def, SvPVX(ret), lim);
+        len= strlen(SvPVX(ret));
+        if (len >= lim-1) {
+            /* Try again with larger buffer */
+            SvGROW(ret, 1024);
+            XGetErrorDatabaseText(dpy, name, message, def, SvPVX(ret), 1024);
+            len= strlen(SvPVX(ret));
+        }
+        SvCUR_set(ret, len);
+        PUSHs(ret);
 
 # Screen Functions (fn_screen) -----------------------------------------------
 
