@@ -5,8 +5,8 @@ use parent 'X11::Xlib::XID';
 
 sub get_w_h {
     my $self= shift;
-    my ($ignore, $w, $h);
-    $self->display->XGetGeometry($self->xid, $ignore, $ignore, $ignore, $w, $h);
+    my ($w, $h);
+    (undef, undef, undef, $w, $h)= $self->display->XGetGeometry($self->xid);
     return $w, $h;
 }
 

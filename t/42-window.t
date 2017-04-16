@@ -62,6 +62,7 @@ is_deeply( \@children, \@cwnd, 'XQueryTree - children' );
 
 # Call a bunch of functions to see if any throw an error.
 # TODO: actually verify the behavior of these calls
+is( err{ XGetGeometry($dpy, $cwnd[0]) }, '', 'XGetGeometry' );
 is( err{ XChangeWindowAttributes($dpy, $cwnd[0], CWSaveUnder, { save_under => 1 }) }, '', 'XChangeWindowAttributes' );
 is( err{ XSetWindowBackground($dpy, $cwnd[0], 1) }, '', 'XSetWindowBackground' );
 is( err{ XSetWindowBackgroundPixmap($dpy, $cwnd[0], None) }, '', 'XSetWindowBackgroundPixmap' );
@@ -83,6 +84,10 @@ is( err{ XRestackWindows($dpy, \@cwnd) }, '', 'XRestackWindows' );
 
 XUnmapWindow($dpy, $_) for @cwnd;
 XDestroyWindow($dpy, $_) for @cwnd;
+
+my ($w, $h)= $dpy->root_window->get_w_h;
+ok( $w > 0, 'get_w_h, w > 0' );
+ok( $h > 0, 'get_w_h, h > 0' );
 
 is( err{ XUnmapWindow($dpy, $win_id); }, '', 'XUnmapWindow' );
 
