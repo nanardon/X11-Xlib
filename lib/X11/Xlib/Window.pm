@@ -9,8 +9,10 @@ sub clear_all {
 
 sub attributes {
     my $self= shift;
-    $self->display->XGetWindowAttributes($self, $self->{attributes})
-        unless defined $self->{attributes};
+    unless (defined $self->{attributes}) {
+        $self->display->XGetWindowAttributes($self, my $struct);
+        $self->{attributes}= $struct;
+    }
     $self->{attributes}
 }
 

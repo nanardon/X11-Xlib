@@ -86,8 +86,11 @@ XUnmapWindow($dpy, $_) for @cwnd;
 XDestroyWindow($dpy, $_) for @cwnd;
 
 ($w, $h)= $dpy->root_window->get_w_h;
-ok( $w > 0, 'get_w_h, w > 0' );
-ok( $h > 0, 'get_w_h, h > 0' );
+ok( $w > 0, '$wnd->get_w_h; w > 0' );
+ok( $h > 0, '$wnd->get_w_h; h > 0' );
+
+ok( ($attrs= $dpy->root_window->attributes), '$wnd->attributes' );
+is( $dpy->root_window->event_mask, $attrs->your_event_mask, '$wnd->event_mask' );
 
 is( err{ XUnmapWindow($dpy, $win_id); }, '', 'XUnmapWindow' );
 
