@@ -49,17 +49,19 @@ O_X11_XlibOrNull
 
 INPUT
 O_X11_Xlib_ScreenNumber
-	if (!SvOK($arg))
-		$var = DefaultScreen(dpy);
-	else if (SvROK($arg)) {
-		SV **fp;
-		if (SvTYPE(SvRV($arg)) == SVt_PVHV && (fp= hv_fetch((HV*)SvRV($arg), \"screen_number\", 13, 0)) && *fp) {
-			$var= SvIV(*fp);
-		}
-		else croak(\"Invalid object passed as Screen number\");
-	}
-	else
-		$var= SvIV($arg);
+    if (!SvOK($arg))
+        $var = DefaultScreen(dpy);
+    else if (SvROK($arg)) {
+        SV **fp;
+        if (SvTYPE(SvRV($arg)) == SVt_PVHV && (fp= hv_fetch((HV*)SvRV($arg), \"screen_number\", 13, 0)) && *fp) {
+            $var= SvIV(*fp);
+        }
+        else croak(\"Invalid object passed as Screen number\");
+    }
+    else {
+        $var= SvIV($arg);
+        if ($var == -1) $var= DefaultScreen(dpy);
+    }
 
 INPUT
 O_X11_Xlib_Screen
