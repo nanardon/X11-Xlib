@@ -161,12 +161,9 @@ sub sv_read {
     return "$access= SvIV($svname);" if $int_types{$type};
     return "$access= SvUV($svname);" if $unsigned_types{$type};
     return "$access= PerlXlib_sv_to_xid($svname);" if $xid_types{$type};
-    return "$access= PerlXlib_sv_to_display($svname);" if $type eq 'Display *';
-    return "{"
-        ." if (SvOK($svname) && !sv_isa($svname, \"X11::Xlib::$1\"))"
-        ."  croak(\"Expected X11::Xlib::$1\");"
-        ." $access= SvOK($svname)? ($type) SvIV((SV*)SvRV($svname)) : NULL;"
-        ."}" if $type =~ /^(\w+) \*$/;
+    return "$access= PerlXlib_sv_to_display($svname, 0);" if $type eq 'Display *';
+    return "$access= PerlXlib_sv_to_screen($svname, 0);" if $type eq 'Screen *';
+    return "$access= ($type) PerlXlib_sv_to_display_innerptr($svname, 0);" if $type eq 'Visual *';
     return "{"
         ." if (!SvPOK($svname) || SvCUR($svname) != sizeof($1)*$2)"
         .'  croak("Expected scalar of length %d but got %d",'." sizeof($1)*$2, SvCUR($svname));"
@@ -178,9 +175,12 @@ sub sv_create {
     my ($type, $value)= @_;
     return "newSViv($value)" if $int_types{$type};
     return "newSVuv($value)" if $unsigned_types{$type} or $xid_types{$type};
-    return "($value? sv_setref_pv(newSV(0), \"X11::Xlib\", (void*)$value) : &PL_sv_undef)" if $type eq 'Display *';
-    return "($value? sv_setref_pv(newSV(0), \"X11::Xlib::$1\", (void*) $value) : &PL_sv_undef)"
-        if $type =~ /^(\w+) \*$/;
+    return "newSVsv($value? PerlXlib_obj_for_display($value, 0) : &PL_sv_undef)" if $type eq 'Display *';
+    return "newSVsv($value? PerlXlib_obj_for_screen($value) : &PL_sv_undef)" if $type eq 'Screen *';
+    return "newSVsv($value? PerlXlib_obj_for_display_innerptr(dpy, $value, \"X11::Xlib::Visual\", SVt_PVMG, 1)"
+        ." : &PL_sv_undef)" if $type eq 'Visual *';
+    #return "($value? sv_setref_pv(newSV(0), \"X11::Xlib::$1\", (void*) $value) : &PL_sv_undef)"
+    #    if $type =~ /^(\w+) \*$/;
     return "newSVpvn((void*)$value, sizeof($1)*$2)"
         if $type =~ /^(\w+) \[ (\d+) \]$/;
     die "Don't know how to create SV from $type";
@@ -188,13 +188,26 @@ sub sv_create {
 
 sub generate_xs_accessor {
     my $member= shift;
-    my $sv_read= sv_read($member->{c_type}, "s->$member->{c_name}", "value");
-    my $sv_create= sv_create($member->{c_type}, "s->$member->{c_name}");
+    my $type= $member->{c_type};
+    my $sv_read= sv_read($type, "s->$member->{c_name}", "value");
+    my $sv_create= sv_create($type, "s->$member->{c_name}");
+    my $need_dpy= ($sv_read =~ /\b dpy \b/x or $sv_create =~ /\b dpy \b/x);
+    my $self_type= $need_dpy? 'SV' : $goal;
+    my $init= $need_dpy?
+        "$goal *s= ( $goal * ) PerlXlib_get_struct_ptr(
+           self, 0, \"X11::Xlib::$goal\", sizeof($goal),
+           (PerlXlib_struct_pack_fn*) &PerlXlib_${goal}_pack
+         );
+         SV *dpy_sv= PerlXlib_get_displayobj_of_opaque(SvRV(self));
+         Display *dpy= PerlXlib_get_magic_dpy(dpy_sv,0);"
+        : "$goal *s= self;";
     return <<"@";
 void
-$member->{pl_name}(s, value=NULL)
-    ${goal} *s
+$member->{pl_name}(self, value=NULL)
+    $self_type *self
     SV *value
+  INIT:
+    $init
   PPCODE:
     if (value) {
       $sv_read
@@ -210,6 +223,7 @@ sub generate_pack_c {
     my $c= <<"@";
 void PerlXlib_${goal}_pack($goal *s, HV *fields, Bool consume) {
     SV **fp;
+    Display *dpy= NULL; /* not available.  Magic display attribute is handled by caller. */
 @
     for my $c_name (sort keys %members) {
         my $member= $members{$c_name};
@@ -235,6 +249,7 @@ void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
      * If it does, we need to clean up the value.
      */
     SV *sv= NULL;
+    Display *dpy= NULL; /* not available.  Magic display attribute is handled by caller. */
 @
     for my $c_name (sort keys %members) {
         my $member= $members{$c_name};

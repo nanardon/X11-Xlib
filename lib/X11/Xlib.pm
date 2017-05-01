@@ -15,7 +15,7 @@ sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS module
 bootstrap X11::Xlib;
 
 require X11::Xlib::Struct;
-require X11::Xlib::Visual;
+require X11::Xlib::Opaque;
 
 my %_constants= (
 # BEGIN GENERATED XS CONSTANT LIST
@@ -117,6 +117,7 @@ our @EXPORT= @{ $EXPORT_TAGS{fn_keysym} }; # backward compatibility
 #  as needed, the XS code exposes its globals to Perl.
 our (
     %_connections,              # weak-ref set of all connection objects, keyed by *raw pointer*
+    %_display_attr,             # inside-out ->display attribute for any Xlib objects derived from Display*
     $_error_nonfatal_installed, # boolean, whether handler is installed
     $_error_fatal_installed,    # boolean, whether handler is installed
     $_error_fatal_trapped,      # boolean, whether Xlib is dead from fatal error

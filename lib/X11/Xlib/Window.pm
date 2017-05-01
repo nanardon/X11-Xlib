@@ -3,11 +3,23 @@ use strict;
 use warnings;
 use parent 'X11::Xlib::XID';
 
+sub clear_all {
+    delete @{$_[0]}{qw( attributes )};
+}
+
+sub attributes {
+    my $self= shift;
+    $self->display->XGetWindowAttributes($self, $self->{attributes})
+        unless defined $self->{attributes};
+    $self->{attributes}
+}
+
 sub get_w_h {
     my $self= shift;
-    my ($w, $h);
-    (undef, undef, undef, $w, $h)= $self->display->XGetGeometry($self->xid);
-    return $w, $h;
+    my ($x, $y);
+    (undef, undef, undef, $x, $y)
+        = $self->display->XGetGeometry($self->xid);
+    return ($x, $y);
 }
 
 sub show {
@@ -20,6 +32,19 @@ sub show {
 }
 
 sub hide { shift->show(0) }
+
+sub event_mask {
+    my $self= shift;
+    if (@_) {
+        my $mask= 0;
+        $mask |= $_ for @_;
+        $self->display->XSelectInput($self->xid, $mask);
+        $self->{attributes}->your_event_mask($mask)
+            if defined $self->{attributes};
+    } else {
+        $self->attributes->your_event_mask;
+    }
+}
 
 sub DESTROY {
     my $self= shift;
@@ -44,15 +69,37 @@ X11::Xlib::Window - XID wrapper for Window
 
 =head1 METHODS
 
-(inherits from L<X11::Xlib::XID>)
+(see L<X11::Xlib::XID> for inherited methods/attributes)
+
+=head2 attributes
+
+Calls L<X11::Xlib/XGetWindowAttributes>, caches the result, and returns
+the instance of L<X11::Xlib::XWindowAttributes>.
+
+=head2 clear_all
+
+Clear any cached value of the window so that the next access loads it fresh
+from the server.
+
+=head2 event_mask
+
+  my $current_mask= $window->event_mask;
+  $window->event_mask( $current_mask | SubstructureRedirectMask );
+
+Get or set the event mask.  Reading this value may return cached data, or else
+cause a call to L<XGetWindowAttibutes|X11::Xlib/XGetWindowAttibutes>.
+Setting the event mask uses L<XSelectInput|X11::Xlib/XSelectInput>, and
+updates the cache.
 
 =head2 get_w_h
 
   my ($w, $h)= $window->get_w_h
 
 Return width and height of the window by calling L<XGetGeometry|X11::Xlib/XGetGeometry>.
-This means it always returns the current size of the window, which could have
-been altered since the time the window was created.
+This never uses a cache and always returns the current size of the window,
+since often it has been altered by window managers etc.
+
+For a cached value, just use C<< $window->attributes->width >> etc.
 
 =head2 show
 

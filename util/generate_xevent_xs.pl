@@ -202,7 +202,10 @@ sub sv_create {
 	my ($type, $value)= @_;
 	return "newSViv($value)" if $int_types{$type};
 	return "newSVuv($value)" if $unsigned_types{$type} or $xid_types{$type};
-	return "SvREFCNT_inc(PerlXlib_obj_for_display($value, 0))" if $type eq 'Display *';
+    return "newSVsv($value? PerlXlib_obj_for_display($value, 0) : &PL_sv_undef)" if $type eq 'Display *';
+    return "newSVsv($value? PerlXlib_obj_for_screen($value) : &PL_sv_undef)" if $type eq 'Screen *';
+    return "newSVsv($value? PerlXlib_obj_for_display_innerptr(dpy, $value, \"X11::Xlib::Visual\", SVt_PVMG, 1)"
+        ." : &PL_sv_undef)" if $type eq 'Visual *';
 	return "newSVpvn((void*)$value, sizeof($1)*$2)"
 		if $type =~ /^(\w+) \[ (\d+) \]$/;
 	croak "Don't know how to create SV from $type";

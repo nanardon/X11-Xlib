@@ -85,7 +85,7 @@ is( err{ XRestackWindows($dpy, \@cwnd) }, '', 'XRestackWindows' );
 XUnmapWindow($dpy, $_) for @cwnd;
 XDestroyWindow($dpy, $_) for @cwnd;
 
-my ($w, $h)= $dpy->root_window->get_w_h;
+($w, $h)= $dpy->root_window->get_w_h;
 ok( $w > 0, 'get_w_h, w > 0' );
 ok( $h > 0, 'get_w_h, h > 0' );
 

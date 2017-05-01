@@ -335,6 +335,14 @@ You can specify as many or as few fields as you like.
 
 =cut
 
+# Attach a pointer to self to each of the returned structs
+sub XGetVisualInfo {
+    my $self= $_[0];
+    my @list= &X11::Xlib::XGetVisualInfo;
+    $_->display($self) for @list;
+    @list;
+}
+
 sub visual_info {
     my ($self, $visual_or_id)= @_;
     my $id= !defined $visual_or_id? $self->default_screen->visual->id
@@ -647,6 +655,9 @@ The Display object keeps weak references to the wrapper objects it creates so
 that if you fetch the same resource again, you get the same object instance as
 last time.  These methods are made public so that you can get the same behavior
 when working with XIDs that weren't already wrapped by this module.
+
+There is also a cache of wrapper objects of the opaque pointers allocated for
+a display.  This cache is private.
 
 =head3 get_cached_xobj
 

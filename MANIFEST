@@ -14,6 +14,7 @@ lib/X11/Xlib.pm
 lib/X11/Xlib/Colormap.pm
 lib/X11/Xlib/Display.pm
 lib/X11/Xlib/Keymap.pm
+lib/X11/Xlib/Opaque.pm
 lib/X11/Xlib/Pixmap.pm
 lib/X11/Xlib/Screen.pm
 lib/X11/Xlib/Struct.pm
