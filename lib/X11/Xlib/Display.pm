@@ -135,6 +135,7 @@ sub new {
     event_type => $type,
     event_mask => $mask,
     timeout    => $seconds,
+    loop       => $bool_keep_trying,
   );
 
 Each argument is optional.  If you specify C<window>, it will only return events
@@ -147,7 +148,9 @@ event.  If C<timeout> is zero, the function acts like C<XCheckEvent> and returns
 immediately.  If C<timeout> is not specified the function will wait indefinitely.
 However, the wait is always interrupted by pending data from the X11 server, or
 signals, so in practice the wait won't be very long and you should call it in
-an appropriate loop.
+an appropriate loop.  Or, if you want this module to take care of that detail,
+add "loop => 1" to the arguments and then wait_event will wait up to the full
+timeout before returning false.
 
 Returns an L<X11::Xlib::XEvent> on success, or undef on timeout or interruption.
 
@@ -155,15 +158,20 @@ Returns an L<X11::Xlib::XEvent> on success, or undef on timeout or interruption.
 
 sub wait_event {
     my ($self, %args)= @_;
+    my $timeout= defined $args{timeout}? int($args{timeout} * 1000) : 0x7FFFFFFF;
+    require Time::HiRes;
+    my $start= Time::HiRes::time();
     my $event;
-    $self->_wait_event(
-        $args{window}||0,
-        $args{event_type}||0,
-        $args{event_mask}||0x7FFFFFFF,
-        $event,
-        ($args{timeout}||0)*1000 || 0x7FFFFFFF
-    )
-    ? $event : undef;
+    do {
+        $self->_wait_event(
+            $args{window}||0,
+            $args{event_type}||0,
+            $args{event_mask}||0x7FFFFFFF,
+            $event,
+            $timeout
+        ) and return $event;
+    } while ($args{loop} and (Time::HiRes::time() - $start)*1000 < $timeout);
+    return undef;
 }
 
 =head3 send_event
