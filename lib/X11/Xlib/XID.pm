@@ -3,11 +3,6 @@ use strict;
 use warnings;
 use Carp;
 use X11::Xlib;
-use overload
-    '""' => sub { shift->summarize },
-    '0+' => sub { shift->xid },
-    '<=>' => sub { ($_[2]? -1 : 1) * ($_[0]->xid <=> $_[1]) },
-    fallback => 1;
 
 sub new {
     my $class= shift;
@@ -18,9 +13,10 @@ sub new {
 }
 
 sub display { croak "read-only" if @_ > 1; $_[0]{display} }
+
 sub xid     { croak "read-only" if @_ > 1; $_[0]{xid} }
 *id= *xid;
-*dpy= *display;
+
 sub autofree { my $self= shift; $self->{autofree}= shift if @_; $self->{autofree} }
 
 sub summarize {
