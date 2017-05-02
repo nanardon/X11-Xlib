@@ -16,6 +16,42 @@ sub attributes {
     $self->{attributes}
 }
 
+sub get_property_list {
+    my $self= shift;
+    $self->display->XListProperties($self);
+}
+
+sub get_property {
+    my ($self, $prop, $type, $offset, $max_length)= @_;
+    $type ||= X11::Xlib::AnyPropertyType();
+    $offset ||= 0;
+    $max_length ||= 1024;
+    if (0 == $self->display->XGetWindowProperty($self, $prop, 0, int($max_length/4), 0, $type,
+        my $actual_type, my $actual_format, my $n, my $remaining, my $data)
+    ) {
+        return {
+            type => $actual_type,
+            format => $actual_format,
+            count => $n,
+            remaining => $remaining,
+            data => $data
+        };
+    }
+    return undef;
+}
+
+sub set_property {
+    my ($self, $prop, $type, $value, $item_size, $count)= @_;
+    if (!defined $type || !defined $value) {
+        $self->display->XDeleteProperty($self, $prop);
+    } else {
+        $item_size ||= 8;
+        $count ||= int(length($value)/int($item_size/8));
+        $self->display->XChangeProperty($self, $prop, $type, $item_size,
+            X11::Xlib::PropModeReplace, $value, $count);
+    }
+}
+
 sub get_w_h {
     my $self= shift;
     my ($x, $y);

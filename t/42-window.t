@@ -33,7 +33,15 @@ is( $n, 11, '11 bytes' );
 is( $remaining, 0, 'no missing bytes' );
 is( $data, 'Hello World', 'correct string' );
 XDeleteProperty($dpy, $win_id, $netwmname);
-is_deeply( [ XListProperties($dpy, $win_id) ], [], 'no window properties yet' );
+is_deeply( [ XListProperties($dpy, $win_id) ], [], 'no window properties again' );
+
+# Now check OO interface
+my $win= $dpy->get_cached_window($win_id);
+$win->set_property($netwmname, $type_utf8, "HelloAgain");
+is_deeply( [ $win->get_property_list ], [ $netwmname ], 'new window title' );
+is_deeply( $win->get_property($netwmname)->{data}, "HelloAgain", 'correct title text' );
+$win->set_property($netwmname, undef);
+is_deeply( [ $win->get_property_list ], [ ], 'unset window title' );
 
 is( err{ XMapWindow($dpy, $win_id); }, '', 'XMapWindow' );
 $dpy->XSync;
