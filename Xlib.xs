@@ -787,6 +787,44 @@ XDeleteProperty(dpy, wnd, prop_atom)
     Window wnd
     Atom prop_atom
 
+void
+XGetWMProtocols(dpy, wnd)
+    Display *dpy
+    Window wnd
+    INIT:
+        Atom *protocols_array= NULL;
+        int n= 0, i;
+    PPCODE:
+        if (XGetWMProtocols(dpy, wnd, &protocols_array, &n)) {
+            EXTEND(SP, n);
+            for (i= 0; i < n; i++)
+                PUSHs(sv_2mortal(newSVuv(protocols_array[i])));
+            XFree(protocols_array);
+        }
+
+Bool
+XSetWMProtocols(dpy, wnd, proto_av)
+    Display *dpy
+    Window wnd
+    AV *proto_av
+    INIT:
+        Atom *protocols_array= NULL;
+        int n, i;
+        SV **elem;
+    CODE:
+        n= av_len(proto_av)+1;
+        Newx(protocols_array, n, Atom);
+        SAVEFREEPV(protocols_array);
+        for (i= 0; i < n; i++) {
+            elem= av_fetch(proto_av, i, 0);
+            if (!elem || !*elem || !(SvIOK(*elem) || SvUOK(*elem)))
+                croak("Expected arrayref of integer Atoms");
+            protocols_array[i]= SvUV(*elem);
+        }
+        RETVAL = XSetWMProtocols(dpy, wnd, protocols_array, n);
+    OUTPUT:
+        RETVAL
+
 int
 XGetWMSizeHints(dpy, wnd, hints_out, supplied_out, property)
     Display * dpy

@@ -95,10 +95,10 @@ my %_functions= (
   fn_win => [qw( XChangeProperty XChangeWindowAttributes XCirculateSubwindows
     XConfigureWindow XCreateSimpleWindow XCreateWindow XDefineCursor
     XDeleteProperty XDestroyWindow XGetGeometry XGetWMNormalHints
-    XGetWMSizeHints XGetWindowAttributes XGetWindowProperty XListProperties
-    XLowerWindow XMapWindow XMoveResizeWindow XMoveWindow XQueryTree
-    XRaiseWindow XReparentWindow XResizeWindow XRestackWindows
-    XSetWMNormalHints XSetWMSizeHints XSetWindowBackground
+    XGetWMProtocols XGetWMSizeHints XGetWindowAttributes XGetWindowProperty
+    XListProperties XLowerWindow XMapWindow XMoveResizeWindow XMoveWindow
+    XQueryTree XRaiseWindow XReparentWindow XResizeWindow XRestackWindows
+    XSetWMNormalHints XSetWMProtocols XSetWMSizeHints XSetWindowBackground
     XSetWindowBackgroundPixmap XSetWindowBorder XSetWindowBorderPixmap
     XSetWindowBorderWidth XSetWindowColormap XTranslateCoordinates
     XUndefineCursor XUnmapWindow )],
@@ -974,6 +974,25 @@ is a scalar that must be at least as long as C<$nitems> * C<$format> bits.
 
 Deletes the property from the window if it exists.  No error is raised if it
 doesn't exist.
+
+=head3 XGetWMProtocols
+
+  my @atoms= XGetWMProtocols($display, $wnd);
+
+Returns a list of protocols (identifiers, represented as L<atoms|/"ATOM FUNCTIONS">)
+which the owner of this window claims to support.  If a protocol's atom is in
+this list then you can send that sort of ClientMessage events to this window.
+
+=head3 XSetWMProtocols
+
+  XSetWMProtocols($display, $wnd, \@procol_atoms)
+    or die "Failed to set WM_PROTOCOLS";
+
+Set the list of protocols you want to respond to for this window.
+For example, to advertise support for standard "close" events:
+
+  my $close_atom= XInternAtrom($display, "WM_DELETE_WINDOW", 0);
+  XSetWMProtocols($display, $window, [ $close_atom ]);
 
 =head3 XGetWMNormalHints
 

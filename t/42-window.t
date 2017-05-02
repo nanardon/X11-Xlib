@@ -20,8 +20,9 @@ is( err{ $win_id= XCreateWindow(@args) }, '', 'CreateWindow' )
     or diag explain \@args;
 ok( $win_id > 0, 'got window id' );
 
-my $netwmname= $dpy->XInternAtom("_NET_WM_NAME", 0);
-my $type_utf8= $dpy->XInternAtom("UTF8_STRING", 0);
+my ($netwmname, $type_utf8, $wm_proto, $wm_dest_win)
+    = @{ $dpy->XInternAtoms([qw( _NET_WM_NAME UTF8_STRING WM_PROTOCOLS WM_DESTROY_WINDOW )], 0) };
+
 is_deeply( [ XListProperties($dpy, $win_id) ], [], 'no window properties yet' );
 XChangeProperty($dpy, $win_id, $netwmname, $type_utf8, 8, PropModeReplace, "Hello World", 11);
 is_deeply( [ XListProperties($dpy, $win_id) ], [ $netwmname ], 'window has title property' );
@@ -42,6 +43,9 @@ is_deeply( [ $win->get_property_list ], [ $netwmname ], 'new window title' );
 is_deeply( $win->get_property($netwmname)->{data}, "HelloAgain", 'correct title text' );
 $win->set_property($netwmname, undef);
 is_deeply( [ $win->get_property_list ], [ ], 'unset window title' );
+ok( XSetWMProtocols($dpy, $win_id, [ $wm_dest_win ]), 'XSetWMProtocols' );
+is_deeply( [ $win->get_property_list ], [ $wm_proto ], 'protocols set' );
+is_deeply( [ XGetWMProtocols($dpy, $win_id) ], [ $wm_dest_win ], 'with expected values' );
 
 is( err{ XMapWindow($dpy, $win_id); }, '', 'XMapWindow' );
 $dpy->XSync;
