@@ -687,6 +687,7 @@ XGetGeometry(dpy, wnd, root_out=NULL, x_out=NULL, y_out=NULL, width_out=NULL, he
         }
         /* perl-style API */
         else if (ret) {
+            EXTEND(SP, 7);
             PUSHs(sv_2mortal(newSVuv(root)));
             PUSHs(sv_2mortal(newSViv(x)));
             PUSHs(sv_2mortal(newSViv(y)));
@@ -695,6 +696,96 @@ XGetGeometry(dpy, wnd, root_out=NULL, x_out=NULL, y_out=NULL, width_out=NULL, he
             PUSHs(sv_2mortal(newSVuv(bw)));
             PUSHs(sv_2mortal(newSVuv(d)));
         }
+
+void
+XListProperties(dpy, wnd)
+    Display *dpy
+    Window wnd
+    INIT:
+        int num_props= 0, i;
+        AV *prop_av;
+        Atom *atom_array;
+    PPCODE:
+        atom_array= XListProperties(dpy, wnd, &num_props);
+        if (atom_array) {
+            EXTEND(SP, num_props);
+            for (i= 0; i < num_props; i++)
+                PUSHs(sv_2mortal(newSVuv(atom_array[i])));
+            XFree(atom_array);
+        }
+
+int
+XGetWindowProperty(dpy, wnd, prop_atom, long_offset, long_length, delete, req_type, actual_type_out, actual_format_out, nitems_out, bytes_after_out, data_out)
+    Display *dpy
+    Window wnd
+    Atom prop_atom
+    long long_offset
+    long long_length
+    Bool delete
+    Atom req_type
+    SV *actual_type_out
+    SV *actual_format_out
+    SV *nitems_out
+    SV *bytes_after_out
+    SV *data_out
+    INIT:
+        Atom actual_type;
+        int actual_format;
+        unsigned long nitems, bytes_after;
+        char *data= NULL;
+    CODE:
+        RETVAL = XGetWindowProperty(dpy, wnd, prop_atom, long_offset, long_length, delete, req_type,
+            &actual_type, &actual_format, &nitems, &bytes_after, (unsigned char**)&data);
+        if (RETVAL == Success) {
+            if (actual_format == 8) {
+                sv_setpvn(data_out, data, nitems);
+            } else if (actual_format == 16) {
+                sv_setpvn(data_out, data, nitems*2);
+            } else if (actual_format == 32) {
+                sv_setpvn(data_out, data, nitems*4);
+            } else {
+                XFree(data);
+                croak("Un-handled 'actual_format' value %d returned by XGetWindowProperty", actual_format);
+            }
+            XFree(data);
+            sv_setuv(actual_type_out, actual_type);
+            sv_setiv(actual_format_out, actual_format);
+            sv_setiv(nitems_out, nitems);
+            sv_setiv(bytes_after_out, bytes_after);
+        }
+    OUTPUT:
+        RETVAL
+
+void
+XChangeProperty(dpy, wnd, prop_atom, type, format, mode, data, nelements)
+    Display *dpy
+    Window wnd
+    Atom prop_atom
+    Atom type
+    int format
+    int mode
+    SV *data
+    int nelements
+    INIT:
+        int bytelen= format == 8? nelements
+            : format == 16? nelements * 2
+            : format == 32? nelements * 4
+            : -1;
+        size_t svlen;
+        char *buffer;
+    CODE:
+        if (bytelen < 0)
+            croak("Un-handled 'format' value %d passed to XChangeProperty", format);
+        buffer= SvPV(data, svlen);
+        if (bytelen > svlen)
+            croak("'nelements' (%d) exceeds length of data (%d)", nelements, svlen);
+        XChangeProperty(dpy, wnd, prop_atom, type, format, mode, buffer, nelements);
+
+void
+XDeleteProperty(dpy, wnd, prop_atom)
+    Display *dpy
+    Window wnd
+    Atom prop_atom
 
 int
 XGetWMSizeHints(dpy, wnd, hints_out, supplied_out, property)
@@ -4555,6 +4646,7 @@ BOOT:
   newCONSTSUB(stash, "RevertToParent", newSViv(RevertToParent));
   newCONSTSUB(stash, "RevertToPointerRoot", newSViv(RevertToPointerRoot));
   newCONSTSUB(stash, "RevertToNone", newSViv(RevertToNone));
+  newCONSTSUB(stash, "Success", newSViv(Success));
   newCONSTSUB(stash, "BadAccess", newSViv(BadAccess));
   newCONSTSUB(stash, "BadAlloc", newSViv(BadAlloc));
   newCONSTSUB(stash, "BadAtom", newSViv(BadAtom));
@@ -4584,6 +4676,10 @@ BOOT:
   newCONSTSUB(stash, "VisualAllMask", newSViv(VisualAllMask));
   newCONSTSUB(stash, "AllocAll", newSViv(AllocAll));
   newCONSTSUB(stash, "AllocNone", newSViv(AllocNone));
+  newCONSTSUB(stash, "AnyPropertyType", newSViv(AnyPropertyType));
+  newCONSTSUB(stash, "PropModeReplace", newSViv(PropModeReplace));
+  newCONSTSUB(stash, "PropModeAppend", newSViv(PropModeAppend));
+  newCONSTSUB(stash, "PropModePrepend", newSViv(PropModePrepend));
   newCONSTSUB(stash, "Above", newSViv(Above));
   newCONSTSUB(stash, "Below", newSViv(Below));
   newCONSTSUB(stash, "BottomIf", newSViv(BottomIf));

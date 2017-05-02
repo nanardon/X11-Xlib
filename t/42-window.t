@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
-use X11::Xlib qw( :fn_win :const_win :const_winattr :const_sizehint RootWindow XSync None );
+use X11::Xlib qw( :fn_win :const_win :const_winattr :const_sizehint RootWindow XSync None Success );
 
 plan skip_all => "No X11 Server available"
     unless $ENV{DISPLAY};
@@ -19,6 +19,21 @@ my $win_id;
 is( err{ $win_id= XCreateWindow(@args) }, '', 'CreateWindow' )
     or diag explain \@args;
 ok( $win_id > 0, 'got window id' );
+
+my $netwmname= $dpy->XInternAtom("_NET_WM_NAME", 0);
+my $type_utf8= $dpy->XInternAtom("UTF8_STRING", 0);
+is_deeply( [ XListProperties($dpy, $win_id) ], [], 'no window properties yet' );
+XChangeProperty($dpy, $win_id, $netwmname, $type_utf8, 8, PropModeReplace, "Hello World", 11);
+is_deeply( [ XListProperties($dpy, $win_id) ], [ $netwmname ], 'window has title property' );
+ok( Success == XGetWindowProperty($dpy, $win_id, $netwmname, 0, 32, 0, $type_utf8,
+    my $actual_type, my $actual_format, my $n, my $remaining, my $data), 'XGetWindowProperty' );
+is( $actual_type, $type_utf8, 'correct type' );
+is( $actual_format, 8, 'correct format' );
+is( $n, 11, '11 bytes' );
+is( $remaining, 0, 'no missing bytes' );
+is( $data, 'Hello World', 'correct string' );
+XDeleteProperty($dpy, $win_id, $netwmname);
+is_deeply( [ XListProperties($dpy, $win_id) ], [], 'no window properties yet' );
 
 is( err{ XMapWindow($dpy, $win_id); }, '', 'XMapWindow' );
 $dpy->XSync;

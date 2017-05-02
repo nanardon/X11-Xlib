@@ -22,7 +22,7 @@ my %_constants= (
   const_cmap => [qw( AllocAll AllocNone )],
   const_error => [qw( BadAccess BadAlloc BadAtom BadColor BadCursor BadDrawable
     BadFont BadGC BadIDChoice BadImplementation BadLength BadMatch BadName
-    BadPixmap BadRequest BadValue BadWindow )],
+    BadPixmap BadRequest BadValue BadWindow Success )],
   const_event => [qw( ButtonPress ButtonRelease CirculateNotify ClientMessage
     ColormapNotify ConfigureNotify CreateNotify DestroyNotify EnterNotify
     Expose FocusIn FocusOut GraphicsExpose GravityNotify KeyPress KeyRelease
@@ -52,9 +52,10 @@ my %_constants= (
   const_visual => [qw( VisualAllMask VisualBitsPerRGBMask VisualBlueMaskMask
     VisualClassMask VisualColormapSizeMask VisualDepthMask VisualGreenMaskMask
     VisualIDMask VisualRedMaskMask VisualScreenMask )],
-  const_win => [qw( Above Below BottomIf CenterGravity CopyFromParent
-    EastGravity ForgetGravity InputOnly InputOutput LowerHighest
-    NorthEastGravity NorthGravity NorthWestGravity Opposite RaiseLowest
+  const_win => [qw( Above AnyPropertyType Below BottomIf CenterGravity
+    CopyFromParent EastGravity ForgetGravity InputOnly InputOutput
+    LowerHighest NorthEastGravity NorthGravity NorthWestGravity Opposite
+    PropModeAppend PropModePrepend PropModeReplace RaiseLowest
     SouthEastGravity SouthGravity SouthWestGravity StaticGravity TopIf
     UnmapGravity WestGravity )],
   const_winattr => [qw( CWBackPixel CWBackPixmap CWBackingPixel CWBackingPlanes
@@ -91,9 +92,10 @@ my %_functions= (
   fn_thread => [qw( XInitThreads XLockDisplay XUnlockDisplay )],
   fn_vis => [qw( XCreateColormap XFreeColormap XGetVisualInfo XMatchVisualInfo
     XVisualIDFromVisual )],
-  fn_win => [qw( XChangeWindowAttributes XCirculateSubwindows XConfigureWindow
-    XCreateSimpleWindow XCreateWindow XDefineCursor XDestroyWindow
-    XGetGeometry XGetWMNormalHints XGetWMSizeHints XGetWindowAttributes
+  fn_win => [qw( XChangeProperty XChangeWindowAttributes XCirculateSubwindows
+    XConfigureWindow XCreateSimpleWindow XCreateWindow XDefineCursor
+    XDeleteProperty XDestroyWindow XGetGeometry XGetWMNormalHints
+    XGetWMSizeHints XGetWindowAttributes XGetWindowProperty XListProperties
     XLowerWindow XMapWindow XMoveResizeWindow XMoveWindow XQueryTree
     XRaiseWindow XReparentWindow XResizeWindow XRestackWindows
     XSetWMNormalHints XSetWMSizeHints XSetWindowBackground
@@ -921,6 +923,57 @@ front (C<direction == RaiseLowest>), or the front-most to the back
   XRestackWindows($display, \@windows);
 
 Reset the stacking order of the specified windows, from front to back.
+
+=head3 XListProperties
+
+  my @prop_atoms= XListProperties($display, $window);
+  print "Window has these properties: ".join(", ", @{ XGetAtomNames($display, \@prop_atoms, 1) });
+
+Returns an arrayref of all defined properties on the specified window.
+
+=head3 XGetWindowProperty
+
+  my $success= XGetWindowProperty($display, $wnd, $prop_atom, $offset, $length, $delete, $req_type,
+        my $actual_type, my $actual_format, my $nitems, my $bytes_after, my $data);
+
+Welcome to the wonderful world of X11 Window Properties!  You pick the
+property using C<$prop_atom> (see L</XInternAtom>) and then request some range
+of the bytes that compose it (using C<$offset>*4 and C<$length>*4, which are
+a count of 4-byte units, not bytes) request to delete it with C<$delete>,
+request the resource be given to you as C<$req_type> (also an Atom), and then
+receive all the actual values in the last 5 variables.
+
+C<$actual_format> is either 8, 16, or 32 indicating the multiplier for
+C<$nitems>.  But you can just check C<length($data)> to save time.
+
+The details are complicated enough you should go read the X11 docs, but a quick
+example is:
+
+  my $netwmname= XInternAtom($display, "_NET_WM_NAME");
+  my $type_utf8= XInternAtom($display, "UTF8_STRING");
+  if (XGetWindowProperty($display, $wnd, $netwmname, 0, 32, 0, $type_utf8,
+        my $actual_type, my $actual_format, my $n, my $remaining, my $data)
+  ) {
+    say $data; # should check $actual_type, but it's probably readable text.
+    say "window title was longer than 128 bytes" if $remaining > 0;
+  }
+
+=head3 XChangeProperty
+
+  XChangeProperty($display, $wnd, $prop_atom, $type_atom, $format, $mode, $data, $nitems);
+
+C<$prop_atom> determines what property is being written.  C<$type_atom>
+declares the logical type of the data.  C<$format> is 8, 16, or 32 to determine
+the word size of the data (used by X server for endian swapping).  C<$mode> is
+one of: C<PropModeReplace>, C<PropModePrepend>, C<PropModeAppend>.  C<$data>
+is a scalar that must be at least as long as C<$nitems> * C<$format> bits.
+
+=head3 XDeleteProperty
+
+  XDeleteProperty($display, $window, $prop_atom);
+
+Deletes the property from the window if it exists.  No error is raised if it
+doesn't exist.
 
 =head3 XGetWMNormalHints
 

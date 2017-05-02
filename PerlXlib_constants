@@ -92,6 +92,7 @@ const_input
  i RevertToPointerRoot
  i RevertToNone
 const_error
+ i Success
  i BadAccess
  i BadAlloc
  i BadAtom
@@ -124,6 +125,10 @@ const_cmap
  i AllocAll
  i AllocNone
 const_win
+ i AnyPropertyType
+ i PropModeReplace
+ i PropModeAppend
+ i PropModePrepend
  i Above
  i Below
  i BottomIf
