@@ -39,6 +39,7 @@ t/22-xrectangle.t
 t/30-connection.t
 t/31-xlib-fatal.t
 t/32-xlib-nonfatal.t
+t/33-atom.t
 t/35-event-queue.t
 t/37-input-kb.t
 t/40-screen-attrs.t

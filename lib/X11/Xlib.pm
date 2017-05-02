@@ -67,6 +67,7 @@ my %_constants= (
 );
 my %_functions= (
 # BEGIN GENERATED XS FUNCTION LIST
+  fn_atom => [qw( XGetAtomName XGetAtomNames XInternAtom XInternAtoms )],
   fn_conn => [qw( ConnectionNumber XCloseDisplay XDisplayName XOpenDisplay
     XServerVendor XSetCloseDownMode XVendorRelease )],
   fn_event => [qw( XCheckMaskEvent XCheckTypedEvent XCheckTypedWindowEvent
@@ -394,6 +395,46 @@ This is useful for select/poll designs.
   XSetCloseDownMode($display, $close_mode)
 
 Determines what resources are freed upon disconnect.  See X11 documentation.
+
+=head2 ATOM FUNCTIONS
+
+The X11 server maintains an enumeration of strings, called Atoms.  By enumerating
+the strings, it allows small integers to be exchanged instead of variable-length
+identifiers, which makes parsing the protocol more efficient for both sides.
+However clients need to look up (or create) the relevant atoms before they can be
+used.  Be careful when creating atoms; they remain until the server is restarted.
+
+=head3 XInternAtom
+
+  my $atom_value= XInternAtom($display, $atom_name, $only_existing);
+
+Get the value of a named atom.  If C<$only_existing> is true and the atom does
+not already exist on the server, this function returns 0.  (which is not a valid
+atom value)
+
+=head3 XInternAtoms
+
+  my $atoms_array= XInternAtoms($display, \@atom_names, $only_existing);
+
+Same as above, but look up multiple atoms at once, for round-trip efficiency.
+The returned array will always be the same length as C<@atom_names>, but will
+have 0 for any atom value that didn't exist if C<$only_existing> was true.
+
+=head3 XGetAtomName
+
+  my $name= XGetAtomName($display, $atom_value);
+
+Return the name of an atom.  If the atom is not defined this generates a
+protocol error (can be caught by C</on_error> handler) and returns undef.
+
+=head3 XGetAtomNames
+
+  my $names_array= XGetAtomNames($display, \@atom_values);
+
+Same as above, but look up multiple atoms at once, for round-trip efficiency.
+If any atom does not exist, this generates a protocol error, but if you catch
+the error then this function will return an array the same length as
+C<@atom_values> with C<undef> for each atom that didn't exist.
 
 =head2 COMMUNICATION FUNCTIONS
 

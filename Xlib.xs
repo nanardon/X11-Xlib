@@ -21,6 +21,7 @@
 #endif
 
 #include "PerlXlib.h"
+void PerlXlib_sanity_check_data_structures();
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib
 
@@ -128,6 +129,86 @@ XCloseDisplay(dpy_sv)
         PerlXlib_set_magic_dpy(dpy_sv, NULL); /* mark as closed */
         hv_delete((HV*)SvRV(dpy_sv), "autoclose", 9, G_DISCARD);
 
+# Atom Functions (fn_atom) ---------------------------------------------------
+
+Atom
+XInternAtom(dpy, atom_name, only_if_exists)
+    Display *dpy
+    char *atom_name
+    Bool only_if_exists
+
+void
+XInternAtoms(dpy, atom_names, only_if_exists)
+    Display *dpy
+    AV *atom_names
+    Bool only_if_exists
+    INIT:
+        char **name_array;
+        Atom *atom_array;
+        int n, i;
+        SV **elem;
+        AV *ret_av;
+    PPCODE:
+        n= av_len(atom_names)+1;
+        Newx(name_array, n, char*);
+        SAVEFREEPV(name_array);
+        Newxz(atom_array, n, Atom);
+        SAVEFREEPV(atom_array);
+        for (i= 0; i < n; i++) {
+            elem= av_fetch(atom_names, i, 0);
+            if (!elem || !*elem || !SvPOK(*elem))
+                croak("Atom name must be a string");
+            name_array[i]= SvPV_nolen(*elem);
+        }
+        XInternAtoms(dpy, name_array, n, only_if_exists, atom_array);
+        ret_av= newAV();
+        PUSHs(sv_2mortal(newRV_noinc((SV*)ret_av)));
+        for (i= 0; i < n; i++)
+            av_store(ret_av, i, newSVuv(atom_array[i]));
+
+void
+XGetAtomName(dpy, atom)
+    Display *dpy
+    Atom atom
+    INIT:
+        char *name= NULL;
+    PPCODE:
+        name= XGetAtomName(dpy, atom);
+        if (name) {
+            PUSHs(sv_2mortal(newSVpv(name, 0)));
+            XFree(name);
+        }
+
+void
+XGetAtomNames(dpy, atoms)
+    Display *dpy
+    AV *atoms
+    INIT:
+        Atom *atom_array;
+        char **name_array;
+        int n, i;
+        SV **elem;
+        AV *ret_av;
+    PPCODE:
+        n= av_len(atoms)+1;
+        Newx(atom_array, n, Atom);
+        SAVEFREEPV(atom_array);
+        Newxz(name_array, n, char*);
+        SAVEFREEPV(name_array);
+        for (i= 0; i < n; i++) {
+            elem= av_fetch(atoms, i, 0);
+            if (!elem || !*elem || !(SvIOK(*elem) || SvUOK(*elem)))
+                croak("Atom values must be integers");
+            atom_array[i]= SvIV(*elem);
+        }
+        XGetAtomNames(dpy, atom_array, n, name_array);
+        ret_av= newAV();
+        PUSHs(sv_2mortal(newRV_noinc((SV*)ret_av)));
+        for (i= 0; i < n; i++) {
+            av_store(ret_av, i, name_array[i]? newSVpv(name_array[i], 0) : newSV(0));
+            if (name_array[i]) XFree(name_array[i]);
+        }
+    
 # Event Functions (fn_event) -------------------------------------------------
 
 int
