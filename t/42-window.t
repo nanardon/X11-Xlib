@@ -3,7 +3,7 @@
 use strict;
 use warnings;
 use Test::More;
-use X11::Xlib qw( :fn_win :const_win :const_winattr :const_sizehint RootWindow XSync None Success );
+use X11::Xlib qw( :fn_win :const_win :const_winattr :const_sizehint :const_event_mask RootWindow XSync None Success );
 
 plan skip_all => "No X11 Server available"
     unless $ENV{DISPLAY};
@@ -118,6 +118,15 @@ ok( $h > 0, '$wnd->get_w_h; h > 0' );
 
 ok( ($attrs= $dpy->root_window->attributes), '$wnd->attributes' );
 is( $dpy->root_window->event_mask, $attrs->your_event_mask, '$wnd->event_mask' );
+$dpy->root_window->event_mask(ExposureMask);
+$dpy->root_window->clear_all;
+is( $dpy->root_window->event_mask, ExposureMask, 'event_mask set to ExposureMask' );
+$dpy->root_window->event_mask_include(KeyPressMask);
+$dpy->root_window->clear_all;
+is( $dpy->root_window->event_mask, (ExposureMask|KeyPressMask), 'event_mask set to ExposureMask|KeyPressMask' );
+$dpy->root_window->event_mask_exclude(ExposureMask);
+$dpy->root_window->clear_all;
+is( $dpy->root_window->event_mask, KeyPressMask, 'event_mask set to KeyPressMask' );
 
 is( err{ XUnmapWindow($dpy, $win_id); }, '', 'XUnmapWindow' );
 

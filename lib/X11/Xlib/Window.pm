@@ -84,6 +84,26 @@ sub event_mask {
     }
 }
 
+sub event_mask_include {
+    my $self= shift;
+    my $mask= 0;
+    $mask |= $_ for @_;
+    return unless $mask;
+    my $old= $self->event_mask;
+    return unless ~$old & $mask;
+    $self->event_mask($old | $mask);
+}
+
+sub event_mask_exclude {
+    my $self= shift;
+    my $mask= 0;
+    $mask |= $_ for @_;
+    return unless $mask;
+    my $old= $self->event_mask;
+    return unless $old & $mask;
+    $self->event_mask($old & ~$mask);
+}
+
 sub DESTROY {
     my $self= shift;
     $self->display->XDestroyWindow($self->xid)
@@ -128,6 +148,20 @@ Get or set the event mask.  Reading this value may return cached data, or else
 cause a call to L<XGetWindowAttibutes|X11::Xlib/XGetWindowAttibutes>.
 Setting the event mask uses L<XSelectInput|X11::Xlib/XSelectInput>, and
 updates the cache.
+
+=head2 event_mask_include
+
+  $window->event_mask_include( @event_masks );
+
+Read the current event mask (unless cached already), then bitwise OR it with
+each parameter, then set the mask on the window if anything changed.
+
+=head2 event_mask_exclude
+
+  $window->event_mask_exclude( @event_masks );
+
+Read the current event mask (unless cached already), then bitwise AND NOT with
+each parameter, then set the mask on the window if anything changed.
 
 =head2 get_w_h
 
