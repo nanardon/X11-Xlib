@@ -104,6 +104,20 @@ sub event_mask_exclude {
     $self->event_mask($old & ~$mask);
 }
 
+sub set_bounding_region {
+    my ($self, $region, $ofs_x, $ofs_y)= @_;
+    $self->display->XFixesSetWindowShapeRegion(
+        $self, &X11::Xlib::ShapeBounding, $ofs_x||0, $ofs_y||0, $region||0
+    );
+}
+
+sub set_input_region {
+    my ($self, $region, $ofs_x, $ofs_y)= @_;
+    $self->display->XFixesSetWindowShapeRegion(
+        $self, &X11::Xlib::ShapeInput, $ofs_x||0, $ofs_y||0, $region||0
+    );
+}
+
 sub DESTROY {
     my $self= shift;
     $self->display->XDestroyWindow($self->xid)
@@ -186,6 +200,22 @@ You can pass a boolean argument to conditionally call L</hide> instead.
 =head2 hide
 
 Calls L<XUnmapWindow|X11::Xlib/XUnmapWindow> to request the window be hidden.
+
+=head2 set_bounding_region
+
+  $window->set_bounding_region($region);
+  $window->set_bounding_region($region, $x_ofs, $y_ofs);
+
+Set the L<region|X11::Xlib::XserverRegion> for the boundary of the window, optionally
+offset by an (x,y) coordinate.  C<$region> may be undef or 0 to un-set the region.
+
+=head2 set_input_region
+
+  $window->set_input_region($region);
+  $window->set_input_region($region, $x_ofs, $y_ofs);
+
+Set the input "hit" L<region|X11::Xlib::XserverRegion> of the window, optionally
+offset by an (x,y) coordinate. C<$region> may be undef or 0 to un-set the region.
 
 =head1 SEE ALSO
 

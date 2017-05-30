@@ -607,6 +607,12 @@ sub XCreateSimpleWindow {
     $self->get_cached_region( $xid, autofree => 1 );
 } if X11::Xlib->can('XCompositeCreateRegionFromBorderClip');
 
+*X11::Xlib::Display::XFixesCreateRegion= sub {
+    my $self= $_[0];
+    my $xid= &X11::Xlib::XFixesCreateRegion;
+    $self->get_cached_region( $xid, autofree => 1 );
+} if X11::Xlib->can('XFixesCreateRegion');
+
 =head2 INPUT
 
 =head3 keymap
@@ -681,9 +687,15 @@ sub _xid_cache { $_[0]{_xid_cache} }
 sub get_cached_xobj {
     my ($self, $xid)= (shift, shift);
     my $obj;
+    # In case an object is accidentally passed, prevent confusion by returning
+    # the canonical version, or making the passed object the canonical one.
+    if (ref $xid and ref($xid)->isa($_[0])) {
+        $obj= $xid;
+        $xid= $obj->xid;
+    }
     return $self->{_xid_cache}{$xid} || do {
         my $class= shift || 'X11::Xlib::XID';
-        $obj= $class->new(display => $self, xid => $xid, @_);
+        $obj ||= $class->new(display => $self, xid => $xid, @_);
         Scalar::Util::weaken( $self->{_xid_cache}{$xid}= $obj );
         $obj;
     };
