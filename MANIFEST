@@ -43,7 +43,6 @@ t/33-atom.t
 t/35-event-queue.t
 t/37-input-kb.t
 t/40-screen-attrs.t
-t/41-xid-wrapper.t
 t/42-window.t
 t/43-pixmap.t
 t/70-xcomposite.t
