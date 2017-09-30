@@ -1061,6 +1061,8 @@ and C<$pressed> indicates if the key was pressed or released.
 The optional C<$EventSendDelay> parameter specifies the number of milliseconds to wait
 before sending the event. The default is 10 milliseconds.
 
+See L<X11::Xlib::Keymap/EXAMPLES>.
+
 =head2 KEYSYM FUNCTIONS
 
 These utility functions help identify and convert KeySym values, and do not
