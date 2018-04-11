@@ -54,6 +54,7 @@ extern void PerlXlib_XRectangle_unpack(XRectangle *s, HV *fields);
    (imagine, installing this module when Xrender.h was not found but then installing a
     dependent module after Xrender.h was installed)
 */
+typedef XID PictFormat;
 typedef struct {
     short   red;
     short   redMask;
