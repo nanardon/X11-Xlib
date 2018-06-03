@@ -5,6 +5,9 @@ use parent 'X11::Xlib';
 use Scalar::Util;
 use Carp;
 
+# All modules in dist share a version
+BEGIN { our $VERSION= $X11::Xlib::VERSION; }
+
 require X11::Xlib::Screen;
 require X11::Xlib::Colormap;
 require X11::Xlib::Window;
