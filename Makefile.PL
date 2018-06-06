@@ -91,6 +91,7 @@ $dep->save_config('build/IFiles.pm');
 my %WriteMakefileArgs = (
     NAME         => 'X11::Xlib',
     VERSION_FROM => 'lib/X11/Xlib.pm',    # finds $VERSION
+    LICENSE      => 'perl_5',
     ($] >= 5.005 ?                        ## Add these new keywords supported since 5.005
           (ABSTRACT_FROM => 'lib/X11/Xlib.pm',    # retrieve abstract from module
             AUTHOR => [
