@@ -879,11 +879,11 @@ for that struct, indicating which fields have been initialized.
 
 =head3 XResizeWindow
 
-  XMoveWindow($display, $window, $width, $height)
+  XResizeWindow($display, $window, $width, $height)
 
 =head3 XMoveResizeWindow
 
-  XModeResizeWindow($display, $window, $x, $y, $width, $height)
+  XMoveResizeWindow($display, $window, $x, $y, $width, $height)
 
 =head3 XSetWindowBorderWidth
 
