@@ -44,18 +44,36 @@ my $dep= ExtUtils::Depends->new('X11::Xlib');
 #   present, then use that to determine which headers to include and which XS
 #   files to merge together.
 
+my @incpath;
+my @libpath;
+if ($^O eq 'darwin' and !check_lib( lib => 'X11' )) {
+    unless (-e '/opt/X11/lib') {
+        warn "Could not find /opt/X11/lib\n";
+        warn "On macOS, you will need to install XQuartz (http://www.xquartz.org).\n";
+        exit;
+    }
+    push @incpath, '/opt/X11/include';
+    push @libpath, '/opt/X11/lib';
+}
+
 check_lib_or_exit(
     lib    => 'X11',
-    header => [ 'X11/Xlib.h', 'X11/Xutil.h' ]
+    header => [ 'X11/Xlib.h', 'X11/Xutil.h' ],
+    incpath => \@incpath,
+    libpath => \@libpath,
 );
 
 check_lib_or_exit(
     lib    => 'Xtst',
-    header => [ 'X11/extensions/XTest.h' ]
+    header => [ 'X11/extensions/XTest.h' ],
+    incpath => \@incpath,
+    libpath => \@libpath,
 );
 
 check_lib_or_exit(
-    lib    => 'Xext'
+    lib    => 'Xext',
+    incpath => \@incpath,
+    libpath => \@libpath,
 );
 
 my @libs= qw( X11 Xtst Xext );
@@ -76,7 +94,10 @@ add_optional_lib( Xcomposite => 'X11/extensions/Xcomposite.h' );
 add_optional_lib( Xfixes     => 'X11/extensions/Xfixes.h' );
 add_optional_lib( Xrender    => 'X11/extensions/Xrender.h' );
 
-$dep->set_libs(join(' ', map { "-l$_" } @libs));
+$dep->set_libs(join(' ', (map { "-L$_" } @libpath), (map { "-l$_" } @libs)));
+if (@incpath) {
+    $dep->set_inc(join(' ', map { "-I$_" } @incpath));
+}
 $dep->add_c('PerlXlib.c');
 $dep->add_xs('Xlib.xs');
 $dep->add_pm(map { my $n= $_; $n =~ s/^lib/\$(INST_LIB)/; $_ => $n } <lib/*/*.pm>, <lib/*/*/*.pm>);
