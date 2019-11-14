@@ -81,7 +81,12 @@ my @have;
 sub add_optional_lib {
     my ($lib, $header)= @_;
     warn "Checking for extension $lib\n";
-    if (check_lib( lib => $lib, header => (ref $header? $header : [ $header ]) )) {
+    if (check_lib(
+        lib => $lib,
+        header => (ref $header? $header : [ $header ]),
+        incpath => \@incpath,
+        libpath => \@libpath,
+    )) {
         warn "  found!\n";
         push @libs, $lib;
         push @have, uc($lib);
