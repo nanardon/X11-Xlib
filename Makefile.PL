@@ -46,14 +46,20 @@ my $dep= ExtUtils::Depends->new('X11::Xlib');
 
 my @incpath;
 my @libpath;
-if ($^O eq 'darwin' and !check_lib( lib => 'X11' )) {
-    unless (-e '/opt/X11/lib') {
-        warn "Could not find /opt/X11/lib\n";
-        warn "On macOS, you will need to install XQuartz (http://www.xquartz.org).\n";
-        exit;
+unless (check_lib( lib => 'X11' )) {
+    if ($^O eq 'darwin') {
+        unless (-e '/opt/X11/lib') {
+            warn "Could not find /opt/X11/lib\n";
+            warn "On MacOS, you will need to install XQuartz (http://www.xquartz.org).\n";
+            exit;
+        }
+        push @incpath, '/opt/X11/include';
+        push @libpath, '/opt/X11/lib';
     }
-    push @incpath, '/opt/X11/include';
-    push @libpath, '/opt/X11/lib';
+    elsif (-e '/usr/X11R6/lib') {
+        push @incpath, '/usr/X11R6/include';
+        push @libpath, '/usr/X11R6/lib';
+    }
 }
 
 check_lib_or_exit(
