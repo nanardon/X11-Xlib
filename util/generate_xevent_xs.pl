@@ -193,7 +193,7 @@ sub sv_read {
 	return "$access= PerlXlib_get_magic_dpy($svname, 0);" if $type eq 'Display *';
 	return "{"
 		." if (!SvPOK($svname) || SvCUR($svname) != sizeof($1)*$2)"
-		.'  croak("Expected scalar of length %d but got %d",'." sizeof($1)*$2, SvCUR($svname));"
+		.'  croak("Expected scalar of length %ld but got %ld",'." (long)(sizeof($1)*$2), (long) SvCUR($svname));"
 		." memcpy($access, SvPVX($svname), sizeof($1)*$2);"
 		."}" if $type =~ /^(\w+) \[ (\d+) \]$/;
 	croak "Don't know how to read $type from an SV";
