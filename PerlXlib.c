@@ -392,7 +392,6 @@ extern SV * PerlXlib_obj_for_screen(Screen *screen) {
             FREETMPS;
             LEAVE;
             sv_2mortal(ret);
-            sv_2mortal(dpy_sv);
             break;
         }
     }
