@@ -23,8 +23,15 @@ All attribute accessors are defined in XS.
 
 =head2 display
 
-This is a 'magic' attribute that can be attached to all structs (except for
-XEvent where it is a real attribute).  Many times a struct will have 
+A reference to an L<X11::Xlib> instance, automatically set by various functions
+that populate structs.  Many times a struct will have pointers that are related
+to a particular display, so it is desirable to pair the struct with its display
+pointer in order to be able to inflate those other pointers into objects and be
+able to call methods on them.
+
+This attribute is implemented "inside-out", so it can't be seen in a dump of the
+perl data, and requires help from DESTROY to clean up.  (handled by this class's
+destructor)
 
 =head1 METHODS
 

@@ -15,6 +15,10 @@
 static MGVTBL PerlXlib_dpy_mg_vtbl;
 static MGVTBL PerlXlib_dpy_innerptr_mg_vtbl;
 
+/* Get the Display* pointer from an instance of X11::Xlib.  If this object has not
+ * had that type of magic attached, this returns NULL, unless you asked for not_null
+ * then it throws an exception.
+ */
 extern Display * PerlXlib_get_magic_dpy(SV *sv, Bool not_null) {
     MAGIC *mg= NULL;
     if (sv_isobject(sv)) {
@@ -37,6 +41,11 @@ extern Display * PerlXlib_get_magic_dpy(SV *sv, Bool not_null) {
     return NULL;    
 }
 
+/* This sets magic on an object that marks it as a X11::Xlib instance.
+ * If the object becomes cached under the $X11::Xlib::_connections (and old
+ * cache entry removed if any).  Any future call to PerlXlib_obj_for_display
+ * for this display pinter will return this cached X11::Xlib instance.
+ */
 extern SV * PerlXlib_set_magic_dpy(SV *sv, Display *dpy) {
     MAGIC *mg= NULL;
     Display *old_dpy= NULL;
@@ -85,7 +94,14 @@ extern SV * PerlXlib_set_magic_dpy(SV *sv, Display *dpy) {
 
 /* Converting a Display* to a \X11::Xlib is difficult because we want
  * to re-use the existing object.  We cache them in %X11::Xlib::_connections.
- * This function returns a mortal strong-reference to an instance of X11::Xlib (or subclass)
+ * This function returns a pointer to an RV (or to undef) which the caller does not need to free.
+ * The RV references an instance of X11::Xlib (or subclass).
+ * If 'create' is true, it creates (and caches) a new X11::Xlib instance if the Display* value
+ * was not bound to a previous instance.
+ *
+ * Roughly equivalent to:
+ *   return undef unless $dpy;
+ *   return $X11::Xlib::_connections{ pack 'P', $dpy } // (create? X11::Xlib->new(display => $dpy) : $dpy)
  */
 extern SV * PerlXlib_obj_for_display(Display *dpy, int create) {
     SV **fp, *self;
@@ -113,6 +129,11 @@ extern SV * PerlXlib_obj_for_display(Display *dpy, int create) {
     }
 }
 
+/* Get the "magic" attribute of "some pointer relevant to Xlib" on the given Perl object.
+ * This is a sort of generic storage for any pointer valid within the lifespan of a Display*,
+ * usually referring to C data structures Xlib allocated.  (The Display* pointer itself is
+ * handled by different magic, above)
+ */
 extern void * PerlXlib_get_magic_dpy_innerptr(SV *sv, Bool not_null) {
     MAGIC *mg= NULL;
     if (sv_isobject(sv)) {
@@ -128,6 +149,11 @@ extern void * PerlXlib_get_magic_dpy_innerptr(SV *sv, Bool not_null) {
     return NULL;
 }
 
+/* Set the "magic" attribute of "some pointer relevant to Xlib" on the given Perl object.
+ * This is a sort of generic storage for any pointer valid within the lifespan of a Display*,
+ * usually referring to C data structures Xlib allocated.  (The Display* pointer itself is
+ * handled by different magic, above)
+ */
 extern SV * PerlXlib_set_magic_dpy_innerptr(SV *sv, void *innerptr) {
     MAGIC *mg= NULL;
     SV **fp;
@@ -149,12 +175,30 @@ extern SV * PerlXlib_set_magic_dpy_innerptr(SV *sv, void *innerptr) {
     return sv;
 }
 
+/* Retrieve a pointer to a RV (which caller does not need to free) that refers to
+ * the value of ->display for this object.
+ * See PerlXlib_set_displayobj_of_opaque.
+ * Equivalent to:
+ *   $X11::Xlib::_display_attr{ pack 'P', refaddr $obj }
+ */
 extern SV * PerlXlib_get_displayobj_of_opaque(void *opaque) {
     SV **elem= hv_fetch(get_hv("X11::Xlib::_display_attr", GV_ADD),
         (void*)&opaque, sizeof(void*), 0);
     return (elem && *elem && sv_isobject(*elem))? *elem : &PL_sv_undef;
 }
 
+/* This stores a "display" attribute of any object, using the inside-out pattern.
+ * (where the object's address is used as a key in a global hashref; object destructors
+ *  are responsible for removing the attribute when the object goes out of scope)
+ * This allows perl to maintain normal reference counts without XS hackery.
+ * (but implemented in XS anyway for speed)
+ *
+ * Equivalent to:
+ *    $X11::Xlib::_display_attr{ pack 'P', refaddr $obj }= $display_attr_value;
+ *
+ * If dpy_sv is NULL or undef, this is equivalent to:
+ *    delete $X11::Xlib::_display_attr{ pack 'P', refaddr $obj };
+ */
 extern void PerlXlib_set_displayobj_of_opaque(void *opaque, SV *dpy_sv) {
     SV **elem;
     if (dpy_sv && SvOK(dpy_sv)) {
@@ -175,9 +219,13 @@ extern void PerlXlib_set_displayobj_of_opaque(void *opaque, SV *dpy_sv) {
     }
 }
 
-/* Most other opaque pointers related to a Display* connection need paired with
- * the Display* they represent, and should hold a strong reference to the Display*
- * else the user might still be holding one after the display is closed.
+/* This function takes a pointer to a C-level thing which is related to a display
+ * and inflates it to an object cached within the display's X11::Xlib instance,
+ * if possible.  If 'create' is true, it will create the inflated object if one
+ * doesn't exist in cache already.
+ *
+ * This returns a pointer to an RV that the caller does not need to clean up.
+ * (either mortal, or held in the cache).
  */
 extern SV * PerlXlib_obj_for_display_innerptr(Display *dpy, void *thing, const char *thing_class, int objsvtype, bool create) {
     SV **elem= NULL, *ret= NULL, *dpy_obj= NULL;
@@ -216,22 +264,33 @@ extern SV * PerlXlib_obj_for_display_innerptr(Display *dpy, void *thing, const c
     if (!create)
         return &PL_sv_undef;
     
-    /* if no display was given, we don't have an object cache. */
+    /* If a display was given, we have an object cache and a new slot created
+     * in it which needs filled.  Needs filled with undef now before possibly
+     * throwing exceptions below. */
     if (obj_cache) {
         if (!elem) croak("Can't write to $display->{obj_cache}");
-        if (!*elem) *elem= newSV(0);
+        if (!*elem) *elem= newSV(0); /* slot was added in cache HV, need to populate it */
+        /* Now, after creating the object, need this SV to become a weak-ref to it */
     }
-    /* Now, if obj_cache is not null, then we can assign to *elem. */
     
     if (objsvtype == SVt_PVMG) {
+        /* return value is a new mortal RV pointing to a PV blessed as thing_class,
+          * and the PV points to thing.
+          */
         ret= sv_setref_pv(sv_newmortal(), thing_class, thing);
     }
     else if (objsvtype == SVt_PVHV) {
+        /* return value is a new mortal RV pointing to a HV blessed as thing_class,
+          * and with "dpy_innerptr" magic attached holding the pointer to thing.
+          */
         ret= sv_2mortal(newRV_noinc((SV*) newHV()));
         sv_bless(ret, gv_stashpv(thing_class, GV_ADD));
         PerlXlib_set_magic_dpy_innerptr(ret, thing);
     }
     else if (objsvtype == SVt_PVAV) {
+        /* return value is a new mortal RV pointing to a AV blessed as thing_class,
+          * and with "dpy_innerptr" magic attached holding the pointer to thing.
+          */
         ret= sv_2mortal(newRV_noinc((SV*) newAV()));
         sv_bless(ret, gv_stashpv(thing_class, GV_ADD));
         PerlXlib_set_magic_dpy_innerptr(ret, thing);
@@ -239,12 +298,12 @@ extern SV * PerlXlib_obj_for_display_innerptr(Display *dpy, void *thing, const c
     else
         croak("Unsupported svtype in PerlXlib_obj_for_display_innerptr");
     
-    /* store a weak reference in the object cache */
+    /* store a weak reference in the object cache, if object cache is available. */
     if (obj_cache) {
         /* ret is mortal, and sv_setsv warns that mortals might get freed... so do this silly dance */
         SvREFCNT_inc(ret);
         sv_setsv(*elem, ret);
-        sv_rvweaken(*elem);
+        sv_rvweaken(*elem); /* obj_cache elem is now a weak-ref */
         sv_2mortal(ret);
     }
     
@@ -265,6 +324,11 @@ extern void * PerlXlib_sv_to_display_innerptr(SV *sv, bool not_null) {
     return NULL;
 }
 
+/* Return the X11 Screen* pointer from a Perl X11::Xlib::Screen object.
+ * The ::Screen objects are a hashref with a normal reference to the ->{display},
+ * and a second field of ->{screen_number}.  Use thes two values to call
+ * ScreenOfDisplay to get the Screen* pointer.
+ */
 extern Screen * PerlXlib_sv_to_screen(SV *sv, bool not_null) {
     HV *hv;
     SV **elem;
@@ -291,6 +355,10 @@ extern Screen * PerlXlib_sv_to_screen(SV *sv, bool not_null) {
     return ScreenOfDisplay(dpy, screennum);
 }
 
+/* Given a Xlib Screen* pointer, find the X11::Xlib::Screen object for it.
+ * This is done by getting the X11::Xlib instance for the screen's Display pointer,
+ * and then getting the screen object from the X11::Xlib object.
+ */
 extern SV * PerlXlib_obj_for_screen(Screen *screen) {
     Display *dpy;
     SV *dpy_sv, *ret= NULL;
