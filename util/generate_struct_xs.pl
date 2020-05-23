@@ -246,11 +246,19 @@ sub generate_unpack_c {
     my $c= <<"@";
 void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
-     * If it does, we need to clean up the value.
+     * If it does, we need to release the reference to the value we almost inserted,
+     * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute is handled by caller. */
 @
+    if ($members{display}) {
+        $c .= "    Display *dpy= s->display;\n";
+    } elsif ($members{screen} && $members{screen}{c_type} =~ /Screen/) {
+        $c .= "    Display *dpy= (s->screen? DisplayOfScreen(s->screen) : NULL);\n";
+    } else {
+        $c .= "    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */\n";
+    }
+
     for my $c_name (sort keys %members) {
         my $member= $members{$c_name};
         my $name= $member->{pl_name};

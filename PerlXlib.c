@@ -1455,10 +1455,11 @@ void PerlXlib_XVisualInfo_pack(XVisualInfo *s, HV *fields, Bool consume) {
 
 void PerlXlib_XVisualInfo_unpack(XVisualInfo *s, HV *fields) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
-     * If it does, we need to clean up the value.
+     * If it does, we need to release the reference to the value we almost inserted,
+     * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute is handled by caller. */
+    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
     if (!hv_store(fields, "bits_per_rgb", 12, (sv=newSViv(s->bits_per_rgb)), 0)) goto store_fail;
     if (!hv_store(fields, "blue_mask" ,  9, (sv=newSVuv(s->blue_mask)), 0)) goto store_fail;
     if (!hv_store(fields, "class"     ,  5, (sv=newSViv(s->class)), 0)) goto store_fail;
@@ -1507,10 +1508,11 @@ void PerlXlib_XWindowChanges_pack(XWindowChanges *s, HV *fields, Bool consume) {
 
 void PerlXlib_XWindowChanges_unpack(XWindowChanges *s, HV *fields) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
-     * If it does, we need to clean up the value.
+     * If it does, we need to release the reference to the value we almost inserted,
+     * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute is handled by caller. */
+    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
     if (!hv_store(fields, "border_width", 12, (sv=newSViv(s->border_width)), 0)) goto store_fail;
     if (!hv_store(fields, "height"    ,  6, (sv=newSViv(s->height)), 0)) goto store_fail;
     if (!hv_store(fields, "sibling"   ,  7, (sv=newSVuv(s->sibling)), 0)) goto store_fail;
@@ -1604,10 +1606,11 @@ void PerlXlib_XWindowAttributes_pack(XWindowAttributes *s, HV *fields, Bool cons
 
 void PerlXlib_XWindowAttributes_unpack(XWindowAttributes *s, HV *fields) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
-     * If it does, we need to clean up the value.
+     * If it does, we need to release the reference to the value we almost inserted,
+     * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute is handled by caller. */
+    Display *dpy= (s->screen? DisplayOfScreen(s->screen) : NULL);
     if (!hv_store(fields, "all_event_masks", 15, (sv=newSViv(s->all_event_masks)), 0)) goto store_fail;
     if (!hv_store(fields, "backing_pixel", 13, (sv=newSVuv(s->backing_pixel)), 0)) goto store_fail;
     if (!hv_store(fields, "backing_planes", 14, (sv=newSVuv(s->backing_planes)), 0)) goto store_fail;
@@ -1693,10 +1696,11 @@ void PerlXlib_XSetWindowAttributes_pack(XSetWindowAttributes *s, HV *fields, Boo
 
 void PerlXlib_XSetWindowAttributes_unpack(XSetWindowAttributes *s, HV *fields) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
-     * If it does, we need to clean up the value.
+     * If it does, we need to release the reference to the value we almost inserted,
+     * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute is handled by caller. */
+    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
     if (!hv_store(fields, "background_pixel", 16, (sv=newSVuv(s->background_pixel)), 0)) goto store_fail;
     if (!hv_store(fields, "background_pixmap", 17, (sv=newSVuv(s->background_pixmap)), 0)) goto store_fail;
     if (!hv_store(fields, "backing_pixel", 13, (sv=newSVuv(s->backing_pixel)), 0)) goto store_fail;
@@ -1783,10 +1787,11 @@ void PerlXlib_XSizeHints_pack(XSizeHints *s, HV *fields, Bool consume) {
 
 void PerlXlib_XSizeHints_unpack(XSizeHints *s, HV *fields) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
-     * If it does, we need to clean up the value.
+     * If it does, we need to release the reference to the value we almost inserted,
+     * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute is handled by caller. */
+    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
 if (s->flags & PBaseSize) {     if (!hv_store(fields, "base_height", 11, (sv=newSViv(s->base_height)), 0)) goto store_fail;
  }if (s->flags & PBaseSize) {     if (!hv_store(fields, "base_width", 10, (sv=newSViv(s->base_width)), 0)) goto store_fail;
  }    if (!hv_store(fields, "flags"     ,  5, (sv=newSViv(s->flags)), 0)) goto store_fail;
@@ -1834,10 +1839,11 @@ void PerlXlib_XRectangle_pack(XRectangle *s, HV *fields, Bool consume) {
 
 void PerlXlib_XRectangle_unpack(XRectangle *s, HV *fields) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
-     * If it does, we need to clean up the value.
+     * If it does, we need to release the reference to the value we almost inserted,
+     * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute is handled by caller. */
+    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
     if (!hv_store(fields, "height"    ,  6, (sv=newSVuv(s->height)), 0)) goto store_fail;
     if (!hv_store(fields, "width"     ,  5, (sv=newSVuv(s->width)), 0)) goto store_fail;
     if (!hv_store(fields, "x"         ,  1, (sv=newSViv(s->x)), 0)) goto store_fail;
@@ -1895,10 +1901,11 @@ void PerlXlib_XRenderPictFormat_pack(XRenderPictFormat *s, HV *fields, Bool cons
 
 void PerlXlib_XRenderPictFormat_unpack(XRenderPictFormat *s, HV *fields) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
-     * If it does, we need to clean up the value.
+     * If it does, we need to release the reference to the value we almost inserted,
+     * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute is handled by caller. */
+    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
     if (!hv_store(fields, "colormap"  ,  8, (sv=newSVuv(s->colormap)), 0)) goto store_fail;
     if (!hv_store(fields, "depth"     ,  5, (sv=newSViv(s->depth)), 0)) goto store_fail;
     if (!hv_store(fields, "direct_alpha", 12, (sv=newSViv(s->direct.alpha)), 0)) goto store_fail;
