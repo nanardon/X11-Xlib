@@ -1453,13 +1453,14 @@ void PerlXlib_XVisualInfo_pack(XVisualInfo *s, HV *fields, Bool consume) {
     if (fp && *fp) { s->visualid= SvUV(*fp); if (consume) hv_delete(fields, "visualid", 8, G_DISCARD); }
 }
 
-void PerlXlib_XVisualInfo_unpack(XVisualInfo *s, HV *fields) {
+void PerlXlib_XVisualInfo_unpack_obj(XVisualInfo *s, HV *fields, SV *obj_ref) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
      * If it does, we need to release the reference to the value we almost inserted,
      * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
+    SV *dpy_sv= obj_ref && SvROK(obj_ref)? PerlXlib_get_displayobj_of_opaque((void*)SvRV(obj_ref)) : NULL;
+    Display *dpy= dpy_sv && SvROK(dpy_sv)? PerlXlib_get_magic_dpy(dpy_sv, 0) : NULL;
     if (!hv_store(fields, "bits_per_rgb", 12, (sv=newSViv(s->bits_per_rgb)), 0)) goto store_fail;
     if (!hv_store(fields, "blue_mask" ,  9, (sv=newSVuv(s->blue_mask)), 0)) goto store_fail;
     if (!hv_store(fields, "class"     ,  5, (sv=newSViv(s->class)), 0)) goto store_fail;
@@ -1506,13 +1507,12 @@ void PerlXlib_XWindowChanges_pack(XWindowChanges *s, HV *fields, Bool consume) {
     if (fp && *fp) { s->y= SvIV(*fp); if (consume) hv_delete(fields, "y", 1, G_DISCARD); }
 }
 
-void PerlXlib_XWindowChanges_unpack(XWindowChanges *s, HV *fields) {
+void PerlXlib_XWindowChanges_unpack_obj(XWindowChanges *s, HV *fields, SV *obj_ref) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
      * If it does, we need to release the reference to the value we almost inserted,
      * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
     if (!hv_store(fields, "border_width", 12, (sv=newSViv(s->border_width)), 0)) goto store_fail;
     if (!hv_store(fields, "height"    ,  6, (sv=newSViv(s->height)), 0)) goto store_fail;
     if (!hv_store(fields, "sibling"   ,  7, (sv=newSVuv(s->sibling)), 0)) goto store_fail;
@@ -1604,13 +1604,13 @@ void PerlXlib_XWindowAttributes_pack(XWindowAttributes *s, HV *fields, Bool cons
     if (fp && *fp) { s->your_event_mask= SvIV(*fp); if (consume) hv_delete(fields, "your_event_mask", 15, G_DISCARD); }
 }
 
-void PerlXlib_XWindowAttributes_unpack(XWindowAttributes *s, HV *fields) {
+void PerlXlib_XWindowAttributes_unpack_obj(XWindowAttributes *s, HV *fields, SV *obj_ref) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
      * If it does, we need to release the reference to the value we almost inserted,
      * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= (s->screen? DisplayOfScreen(s->screen) : NULL);
+    Display *dpy= s->screen? DisplayOfScreen(s->screen) : NULL;
     if (!hv_store(fields, "all_event_masks", 15, (sv=newSViv(s->all_event_masks)), 0)) goto store_fail;
     if (!hv_store(fields, "backing_pixel", 13, (sv=newSVuv(s->backing_pixel)), 0)) goto store_fail;
     if (!hv_store(fields, "backing_planes", 14, (sv=newSVuv(s->backing_planes)), 0)) goto store_fail;
@@ -1694,13 +1694,12 @@ void PerlXlib_XSetWindowAttributes_pack(XSetWindowAttributes *s, HV *fields, Boo
     if (fp && *fp) { s->win_gravity= SvIV(*fp); if (consume) hv_delete(fields, "win_gravity", 11, G_DISCARD); }
 }
 
-void PerlXlib_XSetWindowAttributes_unpack(XSetWindowAttributes *s, HV *fields) {
+void PerlXlib_XSetWindowAttributes_unpack_obj(XSetWindowAttributes *s, HV *fields, SV *obj_ref) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
      * If it does, we need to release the reference to the value we almost inserted,
      * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
     if (!hv_store(fields, "background_pixel", 16, (sv=newSVuv(s->background_pixel)), 0)) goto store_fail;
     if (!hv_store(fields, "background_pixmap", 17, (sv=newSVuv(s->background_pixmap)), 0)) goto store_fail;
     if (!hv_store(fields, "backing_pixel", 13, (sv=newSVuv(s->backing_pixel)), 0)) goto store_fail;
@@ -1785,7 +1784,7 @@ void PerlXlib_XSizeHints_pack(XSizeHints *s, HV *fields, Bool consume) {
     if (fp && *fp) { s->flags |= PPosition; s->y= SvIV(*fp); if (consume) hv_delete(fields, "y", 1, G_DISCARD); }
 }
 
-void PerlXlib_XSizeHints_unpack(XSizeHints *s, HV *fields) {
+void PerlXlib_XSizeHints_unpack_obj(XSizeHints *s, HV *fields, SV *obj_ref) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
      * If it does, we need to release the reference to the value we almost inserted,
      * so track allocated SV in this var.
@@ -1837,13 +1836,12 @@ void PerlXlib_XRectangle_pack(XRectangle *s, HV *fields, Bool consume) {
     if (fp && *fp) { s->y= SvIV(*fp); if (consume) hv_delete(fields, "y", 1, G_DISCARD); }
 }
 
-void PerlXlib_XRectangle_unpack(XRectangle *s, HV *fields) {
+void PerlXlib_XRectangle_unpack_obj(XRectangle *s, HV *fields, SV *obj_ref) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
      * If it does, we need to release the reference to the value we almost inserted,
      * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
     if (!hv_store(fields, "height"    ,  6, (sv=newSVuv(s->height)), 0)) goto store_fail;
     if (!hv_store(fields, "width"     ,  5, (sv=newSVuv(s->width)), 0)) goto store_fail;
     if (!hv_store(fields, "x"         ,  1, (sv=newSViv(s->x)), 0)) goto store_fail;
@@ -1899,13 +1897,12 @@ void PerlXlib_XRenderPictFormat_pack(XRenderPictFormat *s, HV *fields, Bool cons
     if (fp && *fp) { s->type= SvIV(*fp); if (consume) hv_delete(fields, "type", 4, G_DISCARD); }
 }
 
-void PerlXlib_XRenderPictFormat_unpack(XRenderPictFormat *s, HV *fields) {
+void PerlXlib_XRenderPictFormat_unpack_obj(XRenderPictFormat *s, HV *fields, SV *obj_ref) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
      * If it does, we need to release the reference to the value we almost inserted,
      * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
     if (!hv_store(fields, "colormap"  ,  8, (sv=newSVuv(s->colormap)), 0)) goto store_fail;
     if (!hv_store(fields, "depth"     ,  5, (sv=newSViv(s->depth)), 0)) goto store_fail;
     if (!hv_store(fields, "direct_alpha", 12, (sv=newSViv(s->direct.alpha)), 0)) goto store_fail;
@@ -1926,3 +1923,26 @@ void PerlXlib_XRenderPictFormat_unpack(XRenderPictFormat *s, HV *fields) {
 
 /* END GENERATED X11_Xlib_XRenderPictFormat */
 /*--------------------------------------------------------------------------*/
+
+/* provide these exports for back-compat */
+extern void PerlXlib_XVisualInfo_unpack(XVisualInfo *s, HV *fields) {
+    PerlXlib_XVisualInfo_unpack_obj(s, fields, NULL);
+}
+extern void PerlXlib_XWindowChanges_unpack(XWindowChanges *s, HV *fields) {
+    PerlXlib_XWindowChanges_unpack_obj(s, fields, NULL);
+}
+extern void PerlXlib_XWindowAttributes_unpack(XWindowAttributes *s, HV *fields) {
+    PerlXlib_XWindowAttributes_unpack_obj(s, fields, NULL);
+}
+extern void PerlXlib_XSetWindowAttributes_unpack(XSetWindowAttributes *s, HV *fields) {
+    PerlXlib_XSetWindowAttributes_unpack_obj(s, fields, NULL);
+}
+extern void PerlXlib_XSizeHints_unpack(XSizeHints *s, HV *fields) {
+    PerlXlib_XSizeHints_unpack_obj(s, fields, NULL);
+}
+extern void PerlXlib_XRectangle_unpack(XRectangle *s, HV *fields) {
+    PerlXlib_XRectangle_unpack_obj(s, fields, NULL);
+}
+extern void PerlXlib_XRenderPictFormat_unpack(XRenderPictFormat *s, HV *fields) {
+    PerlXlib_XRenderPictFormat_unpack_obj(s, fields, NULL);
+}

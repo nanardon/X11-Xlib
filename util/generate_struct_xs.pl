@@ -242,21 +242,28 @@ void PerlXlib_${goal}_pack($goal *s, HV *fields, Bool consume) {
 }
 
 sub generate_unpack_c {
-    # First, pack type, then pack fields for XAnyEvent, then any fields known for that type
     my $c= <<"@";
-void PerlXlib_${goal}_unpack($goal *s, HV *fields) {
+void PerlXlib_${goal}_unpack_obj($goal *s, HV *fields, SV *obj_ref) {
     /* hv_store may return NULL if there is an error, or if the hash is tied.
      * If it does, we need to release the reference to the value we almost inserted,
      * so track allocated SV in this var.
      */
     SV *sv= NULL;
 @
-    if ($members{display}) {
-        $c .= "    Display *dpy= s->display;\n";
-    } elsif ($members{screen} && $members{screen}{c_type} =~ /Screen/) {
-        $c .= "    Display *dpy= (s->screen? DisplayOfScreen(s->screen) : NULL);\n";
-    } else {
-        $c .= "    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */\n";
+    # Some fields need to be inflated to objects, and need a Display* pointer in order to
+    # do that in the most efficient manner.  Display* can be gotten from a variety of
+    # methods.  But, don't do any of this unless domething needs it.
+    my $need_dpy= grep sv_create($_->{c_type}, 'x') =~ /\b dpy \b/x, values %members;
+
+    if ($need_dpy) {
+        if ($members{display} && $members{display}{c_type} =~ /Display/) {
+            $c .= "    Display *dpy= s->display;\n";
+        } elsif ($members{screen} && $members{screen}{c_type} =~ /Screen/) {
+            $c .= "    Display *dpy= s->screen? DisplayOfScreen(s->screen) : NULL;\n";
+        } else {
+            $c .= "    SV *dpy_sv= obj_ref && SvROK(obj_ref)? PerlXlib_get_displayobj_of_opaque((void*)SvRV(obj_ref)) : NULL;\n";
+            $c .= "    Display *dpy= dpy_sv && SvROK(dpy_sv)? PerlXlib_get_magic_dpy(dpy_sv, 0) : NULL;\n";
+        }
     }
 
     for my $c_name (sort keys %members) {
@@ -335,7 +342,7 @@ _unpack(s, fields)
     ${goal} *s
     HV *fields
     PPCODE:
-        PerlXlib_${goal}_unpack(s, fields);
+        PerlXlib_${goal}_unpack_obj(s, fields, ST(0));
 
 @
 $out_xs .= generate_xs_accessor($_) for map { $members{$_} } sort keys %members;

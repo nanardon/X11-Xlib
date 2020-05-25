@@ -50,7 +50,17 @@ extern SV * PerlXlib_get_displayobj_of_opaque(void *thing);
 extern void PerlXlib_set_displayobj_of_opaque(void *thing, SV *dpy_sv);
 
 /*-----------------------------------------------------------
- * Functions to pack/unpack structs into blessed scalars
+ * Functions to pack/unpack structs into blessed scalars.
+ *
+ * _pack functions read perl fields from a hashref and write to
+ *       the fields of a C struct.
+ * _unpack functions take the fields of a C struct and inflate them
+ *         to Perl SV or objects and store them into a hashref.
+ * _unpack_obj functions are the same as _unpack but also pass a
+ *             reference (RV) to the object being unpacked.  This is
+ *             needed in some cases to see the ->display attribute.
+ * _unpack_obj makes _unpack obsolete, but the _unpack still need to
+ * be exported to maintain the previous public C API.
  */
 typedef void PerlXlib_struct_pack_fn(void*, HV*, Bool consume);
 extern void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer);
@@ -59,16 +69,22 @@ extern void PerlXlib_XEvent_pack(XEvent *s, HV *fields, Bool consume);
 extern void PerlXlib_XEvent_unpack(XEvent *s, HV *fields);
 extern void PerlXlib_XVisualInfo_pack(XVisualInfo *s, HV *fields, Bool consume);
 extern void PerlXlib_XVisualInfo_unpack(XVisualInfo *s, HV *fields);
+extern void PerlXlib_XVisualInfo_unpack_obj(XVisualInfo *s, HV *fields, SV *obj_ref);
 extern void PerlXlib_XWindowAttributes_pack(XWindowAttributes *s, HV *fields, Bool consume);
 extern void PerlXlib_XWindowAttributes_unpack(XWindowAttributes *s, HV *fields);
+extern void PerlXlib_XWindowAttributes_unpack_obj(XWindowAttributes *s, HV *fields, SV *obj_ref);
 extern void PerlXlib_XSetWindowAttributes_pack(XSetWindowAttributes *s, HV *fields, Bool consume);
 extern void PerlXlib_XSetWindowAttributes_unpack(XSetWindowAttributes *s, HV *fields);
+extern void PerlXlib_XSetWindowAttributes_unpack_obj(XSetWindowAttributes *s, HV *fields, SV *obj_ref);
 extern void PerlXlib_XWindowChanges_pack(XWindowChanges *s, HV *fields, Bool consume);
 extern void PerlXlib_XWindowChanges_unpack(XWindowChanges *s, HV *fields);
+extern void PerlXlib_XWindowChanges_unpack_obj(XWindowChanges *s, HV *fields, SV *obj_ref);
 extern void PerlXlib_XSizeHints_pack(XSizeHints *s, HV *fields, Bool consume);
 extern void PerlXlib_XSizeHints_unpack(XSizeHints *s, HV *fields);
+extern void PerlXlib_XSizeHints_unpack_obj(XSizeHints *s, HV *fields, SV *obj_ref);
 extern void PerlXlib_XRectangle_pack(XRectangle *s, HV *fields, Bool consume);
 extern void PerlXlib_XRectangle_unpack(XRectangle *s, HV *fields);
+extern void PerlXlib_XRectangle_unpack_obj(XRectangle *s, HV *fields, SV *obj_ref);
 #ifndef HAVE_XRENDER
 /* Copied from X11/extensions/Xrender.h because I decided it was better to define the struct
    than to have the perl interface change depending on whether it found a header file or not.
@@ -96,6 +112,7 @@ typedef struct {
 #endif
 extern void PerlXlib_XRenderPictFormat_pack(XRenderPictFormat *s, HV *fields, Bool consume);
 extern void PerlXlib_XRenderPictFormat_unpack(XRenderPictFormat *s, HV *fields);
+extern void PerlXlib_XRenderPictFormat_unpack_obj(XRenderPictFormat *s, HV *fields, SV *obj_ref);
 
 /* Keysym/unicode utility functions */
 extern int PerlXlib_keysym_to_codepoint(KeySym keysym);
