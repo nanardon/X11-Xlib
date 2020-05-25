@@ -6,7 +6,7 @@ use X11::Xlib;
 use Scalar::Util 'weaken';
 
 # All modules in dist share a version
-BEGIN { our $VERSION= $X11::Xlib::VERSION; }
+our $VERSION = '0.19';
 
 =head1 NAME
 

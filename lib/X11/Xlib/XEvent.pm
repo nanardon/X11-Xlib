@@ -5,7 +5,7 @@ use X11::Xlib; # need constants loaded
 use parent 'X11::Xlib::Struct';
 
 # All modules in dist share a version
-BEGIN { our $VERSION= $X11::Xlib::VERSION; }
+our $VERSION = '0.19';
 
 =head1 NAME
 

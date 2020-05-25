@@ -4,7 +4,7 @@ use warnings;
 use parent 'X11::Xlib::XID';
 
 # All modules in dist share a version
-BEGIN { our $VERSION= $X11::Xlib::VERSION; }
+our $VERSION = '0.19';
 
 sub DESTROY {
     my $self= shift;
