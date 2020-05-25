@@ -5,7 +5,7 @@ use X11::Xlib::Display;
 require Scalar::Util;
 
 # All modules in dist share a version
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 =head1 NAME
 

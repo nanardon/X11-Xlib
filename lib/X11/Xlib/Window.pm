@@ -4,7 +4,7 @@ use warnings;
 use parent 'X11::Xlib::XID';
 
 # All modules in dist share a version
-our $VERSION = '0.19';
+our $VERSION = '0.20';
 
 sub clear_all {
     delete @{$_[0]}{qw( attributes )};
