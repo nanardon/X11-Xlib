@@ -1790,26 +1790,25 @@ void PerlXlib_XSizeHints_unpack_obj(XSizeHints *s, HV *fields, SV *obj_ref) {
      * so track allocated SV in this var.
      */
     SV *sv= NULL;
-    Display *dpy= NULL; /* not available.  Magic display attribute must be handled by caller. */
-if (s->flags & PBaseSize) {     if (!hv_store(fields, "base_height", 11, (sv=newSViv(s->base_height)), 0)) goto store_fail;
- }if (s->flags & PBaseSize) {     if (!hv_store(fields, "base_width", 10, (sv=newSViv(s->base_width)), 0)) goto store_fail;
- }    if (!hv_store(fields, "flags"     ,  5, (sv=newSViv(s->flags)), 0)) goto store_fail;
-if (s->flags & PSize) {     if (!hv_store(fields, "height"    ,  6, (sv=newSViv(s->height)), 0)) goto store_fail;
- }if (s->flags & PResizeInc) {     if (!hv_store(fields, "height_inc", 10, (sv=newSViv(s->height_inc)), 0)) goto store_fail;
- }if (s->flags & PAspect) {     if (!hv_store(fields, "max_aspect_x", 12, (sv=newSViv(s->max_aspect.x)), 0)) goto store_fail;
- }if (s->flags & PAspect) {     if (!hv_store(fields, "max_aspect_y", 12, (sv=newSViv(s->max_aspect.y)), 0)) goto store_fail;
- }if (s->flags & PMaxSize) {     if (!hv_store(fields, "max_height", 10, (sv=newSViv(s->max_height)), 0)) goto store_fail;
- }if (s->flags & PMaxSize) {     if (!hv_store(fields, "max_width" ,  9, (sv=newSViv(s->max_width)), 0)) goto store_fail;
- }if (s->flags & PAspect) {     if (!hv_store(fields, "min_aspect_x", 12, (sv=newSViv(s->min_aspect.x)), 0)) goto store_fail;
- }if (s->flags & PAspect) {     if (!hv_store(fields, "min_aspect_y", 12, (sv=newSViv(s->min_aspect.y)), 0)) goto store_fail;
- }if (s->flags & PMinSize) {     if (!hv_store(fields, "min_height", 10, (sv=newSViv(s->min_height)), 0)) goto store_fail;
- }if (s->flags & PMinSize) {     if (!hv_store(fields, "min_width" ,  9, (sv=newSViv(s->min_width)), 0)) goto store_fail;
- }if (s->flags & PSize) {     if (!hv_store(fields, "width"     ,  5, (sv=newSViv(s->width)), 0)) goto store_fail;
- }if (s->flags & PResizeInc) {     if (!hv_store(fields, "width_inc" ,  9, (sv=newSViv(s->width_inc)), 0)) goto store_fail;
- }if (s->flags & PWinGravity) {     if (!hv_store(fields, "win_gravity", 11, (sv=newSViv(s->win_gravity)), 0)) goto store_fail;
- }if (s->flags & PPosition) {     if (!hv_store(fields, "x"         ,  1, (sv=newSViv(s->x)), 0)) goto store_fail;
- }if (s->flags & PPosition) {     if (!hv_store(fields, "y"         ,  1, (sv=newSViv(s->y)), 0)) goto store_fail;
- }    return;
+    if (s->flags & PBaseSize) { if (!hv_store(fields, "base_height", 11, (sv=newSViv(s->base_height)), 0)) goto store_fail; }
+    if (s->flags & PBaseSize) { if (!hv_store(fields, "base_width", 10, (sv=newSViv(s->base_width)), 0)) goto store_fail; }
+    if (!hv_store(fields, "flags"     ,  5, (sv=newSViv(s->flags)), 0)) goto store_fail;
+    if (s->flags & PSize) { if (!hv_store(fields, "height"    ,  6, (sv=newSViv(s->height)), 0)) goto store_fail; }
+    if (s->flags & PResizeInc) { if (!hv_store(fields, "height_inc", 10, (sv=newSViv(s->height_inc)), 0)) goto store_fail; }
+    if (s->flags & PAspect) { if (!hv_store(fields, "max_aspect_x", 12, (sv=newSViv(s->max_aspect.x)), 0)) goto store_fail; }
+    if (s->flags & PAspect) { if (!hv_store(fields, "max_aspect_y", 12, (sv=newSViv(s->max_aspect.y)), 0)) goto store_fail; }
+    if (s->flags & PMaxSize) { if (!hv_store(fields, "max_height", 10, (sv=newSViv(s->max_height)), 0)) goto store_fail; }
+    if (s->flags & PMaxSize) { if (!hv_store(fields, "max_width" ,  9, (sv=newSViv(s->max_width)), 0)) goto store_fail; }
+    if (s->flags & PAspect) { if (!hv_store(fields, "min_aspect_x", 12, (sv=newSViv(s->min_aspect.x)), 0)) goto store_fail; }
+    if (s->flags & PAspect) { if (!hv_store(fields, "min_aspect_y", 12, (sv=newSViv(s->min_aspect.y)), 0)) goto store_fail; }
+    if (s->flags & PMinSize) { if (!hv_store(fields, "min_height", 10, (sv=newSViv(s->min_height)), 0)) goto store_fail; }
+    if (s->flags & PMinSize) { if (!hv_store(fields, "min_width" ,  9, (sv=newSViv(s->min_width)), 0)) goto store_fail; }
+    if (s->flags & PSize) { if (!hv_store(fields, "width"     ,  5, (sv=newSViv(s->width)), 0)) goto store_fail; }
+    if (s->flags & PResizeInc) { if (!hv_store(fields, "width_inc" ,  9, (sv=newSViv(s->width_inc)), 0)) goto store_fail; }
+    if (s->flags & PWinGravity) { if (!hv_store(fields, "win_gravity", 11, (sv=newSViv(s->win_gravity)), 0)) goto store_fail; }
+    if (s->flags & PPosition) { if (!hv_store(fields, "x"         ,  1, (sv=newSViv(s->x)), 0)) goto store_fail; }
+    if (s->flags & PPosition) { if (!hv_store(fields, "y"         ,  1, (sv=newSViv(s->y)), 0)) goto store_fail; }
+    return;
     store_fail:
         if (sv) sv_2mortal(sv);
         croak("Can't store field in supplied hash (tied maybe?)");

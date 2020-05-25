@@ -272,7 +272,9 @@ void PerlXlib_${goal}_unpack_obj($goal *s, HV *fields, SV *obj_ref) {
         my $code= sprintf "    if (!hv_store(fields, %-12s, %2d, (sv=%s), 0)) goto store_fail;\n",
             qq{"$name"}, length($name), sv_create($member->{c_type}, "s->$member->{c_name}");
         if ($member->{defined_field}) {
-            $code= "if (s->$member->{defined_field} & $member->{defined_flag}) { $code }";
+            $code =~ s/^ *//;
+            chomp $code;
+            $code= "    if (s->$member->{defined_field} & $member->{defined_flag}) { $code }\n";
         }
         $c .= $code;
     }
