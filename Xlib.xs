@@ -9,6 +9,7 @@
 #include <X11/Xlib.h>
 #include <X11/Xutil.h>
 #include <X11/Xlibint.h>
+#include <X11/Xresource.h>
 #include <X11/extensions/XTest.h>
 #ifdef HAVE_XCOMPOSITE
 #include <X11/extensions/Xcomposite.h>
@@ -22,6 +23,8 @@
 
 #include "PerlXlib.h"
 void PerlXlib_sanity_check_data_structures();
+
+typedef XrmDatabase XrmDatabaseMaybe;
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib
 
@@ -1618,6 +1621,113 @@ _install_error_handlers(nonfatal,fatal)
     Bool fatal
     CODE:
         PerlXlib_install_error_handlers(nonfatal, fatal);
+
+# Xresources Functions (fn_resources) -------------------------------------------------------
+
+void
+XrmInitialize()
+
+XrmDatabase
+XrmGetFileDatabase( filename )
+   char *filename
+
+void
+XrmPutFileDatabase( database, stored_db )
+    XrmDatabase database
+    char *stored_db
+
+char *
+XResourceManagerString(display)
+    Display *display
+
+char *
+XScreenResourceString(screen)
+    Screen *screen
+
+XrmDatabase
+XrmGetStringDatabase(data)
+    char *data
+
+const char *
+XrmLocaleOfDatabase(database)
+    XrmDatabase database
+
+void
+XrmDestroyDatabase(database)
+    XrmDatabase database
+
+void
+XrmSetDatabase( display, database)
+    Display *display
+    XrmDatabase database
+
+XrmDatabase
+XrmGetDatabase( display )
+   Display *display
+
+Status
+XrmCombineFileDatabase(filename, IN_OUT XrmDatabaseMaybe target_db, override )
+    char* filename
+    Bool override
+
+void
+XrmCombineDatabase( IN_OUT XrmDatabase source_db, IN_OUT XrmDatabaseMaybe target_db, override )
+    Bool override
+  CODE:
+	XrmCombineDatabase(source_db, &target_db, override);
+        source_db = NULL; /* source_db is destroyed by XrmCombineDatabase */
+
+void
+XrmMergeDatabases(IN_OUT XrmDatabase source_db, IN_OUT XrmDatabaseMaybe target_db )
+  CODE:
+	XrmMergeDatabases(source_db, &target_db );
+       source_db = NULL; /* source_db is destroyed by XrmMergeDatabases */
+
+# can't return Bool (as woule be appropriate); see https://github.com/Perl/perl5/issues/19054
+int
+XrmGetResource( database, str_name, str_class, OUTLIST char* str_type_return, OUTLIST XrmValue value_return )
+    XrmDatabase database
+    const char* str_name
+    const char* str_class
+  CODE:
+    RETVAL = XrmGetResource( database, str_name, str_class, &str_type_return, &value_return );
+    if ( RETVAL && 0 == strcmp(str_type_return, "String" ) )
+            value_return.size -= 1; /* don't count the trailiing null */
+  OUTPUT:
+    RETVAL
+
+void
+XrmPutResource( IN_OUT XrmDatabaseMaybe database, specifier, type, value )
+    const char* specifier
+    const char* type
+    XrmValue &value;
+  CODE:
+    /* they said it was a string, so take them at their word and add the
+       trailing NUL to our count */
+    if ( 0 == strcmp(type, "String" ) )
+      value.size += 1;
+    XrmPutResource( &database, specifier, type, &value );
+  OUTPUT:
+    database
+
+void
+XrmPutStringResource( IN_OUT XrmDatabaseMaybe database, specifier, value )
+    const char* specifier
+    const char* value
+
+void
+XrmPutLineResource( IN_OUT XrmDatabaseMaybe database, line )
+    const char* line
+
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::XrmDatabase
+
+void
+DESTROY( IN_OUT XrmDatabase database )
+  CODE:
+    XrmDestroyDatabase( database );
+    database = NULL;
+
+MODULE = X11::Xlib                PACKAGE = X11::Xlib
 
 # Xcomposite Extension () ----------------------------------------------------
 

@@ -28,8 +28,13 @@ PictFormat            O_X11_Xlib_XID
 Atom                  T_UV
 Time                  T_UV
 Bool                  T_BOOL
+Status                T_IV
 KeyCode               T_IV
 KeySym                T_IV
+Xpointer              T_PV
+XrmDatabase           T_PTROBJ_SPECIAL
+XrmDatabaseMaybe      T_PTROBJ_SPECIAL_Maybe
+XrmValue              O_X11_Xlib_XrmValue
 
 INPUT
 O_X11_Xlib
@@ -117,3 +122,51 @@ O_X11_Xlib_OpaqueOrNull
             dpy, $var, \"X11::Xlib::@{[ $type =~ /(\w+?)OrNull/ ]}\", SVt_PVMG, 1));
     else
         sv_setsv($arg, &PL_sv_undef);
+
+INPUT
+O_X11_Xlib_XrmValue
+     ${var}.size = SvCUR($arg);
+     ${var}.addr = SvPV_nolen($arg);
+
+OUTPUT
+O_X11_Xlib_XrmValue
+     sv_setpvn($arg, ${var}.addr, ${var}.size );
+
+INPUT
+T_PTROBJ_SPECIAL
+  if (sv_isobject($arg) && sv_derived_from($arg, \"X11::Xlib::${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\")){
+    IV tmp = SvIV((SV*)SvRV($arg));
+    $var = INT2PTR($type, tmp);
+  }
+  else
+    croak(\"$var is not of type X11::Xlib::${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\");
+
+OUTPUT
+T_PTROBJ_SPECIAL
+   if(sv_isobject($arg) ) {
+     SV* tmp = (SV*)(SvRV($arg) );
+     sv_setiv( tmp, PTR2IV($var) );
+   }
+   else
+      sv_setref_pv($arg, \"X11::Xlib::${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\", (void*)$var);
+
+
+INPUT
+T_PTROBJ_SPECIAL_Maybe
+  if (sv_isobject($arg) && sv_derived_from($arg, \"X11::Xlib::${(my $ntt=$ntype)=~s/_/::/g; $ntt =~ s/Maybe$//;\$ntt}\")){
+    IV tmp = SvIV((SV*)SvRV($arg));
+    $var = INT2PTR($type, tmp);
+  }
+  else {
+    $var = NULL;
+  }
+
+OUTPUT
+T_PTROBJ_SPECIAL_Maybe
+   if(sv_isobject($arg) ) {
+     SV* tmp = (SV*)(SvRV($arg) );
+     sv_setiv( tmp, PTR2IV($var) );
+   }
+   else
+     sv_setref_pv($arg, \"X11::Xlib::${(my $ntt=$ntype)=~s/_/::/g; $ntt =~ s/Maybe$//;\$ntt}\",
+                 (void*)$var);
