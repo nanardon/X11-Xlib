@@ -1653,8 +1653,11 @@ XrmLocaleOfDatabase(database)
     XrmDatabase database
 
 void
-XrmDestroyDatabase(database)
+XrmDestroyDatabase(IN_OUT database)
     XrmDatabase database
+  CODE:
+    XrmDestroyDatabase( database );
+    database = NULL;
 
 void
 XrmSetDatabase( display, database)
