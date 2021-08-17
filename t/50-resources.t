@@ -22,17 +22,15 @@ END
 
 my $StringDB = $HALF1 . $HALF2;
 
-
-
 XrmInitialize();
 
 sub test_db {
     my $db = shift;
 
-    my ( $bool, $type, $value ) = $db->GetResource(
+    my ( $bool, $type, $value )
+      = $db->GetResource(
         'xmh.toc.messagefunctions.incorporate.activeForeground',
-        'Xmh.Paned.Box.Command.Foreground'
-    );
+        'Xmh.Paned.Box.Command.Foreground' );
 
     is( !!$bool, 1,        'success' );
     is( $type,   'String', 'type' );
@@ -44,7 +42,7 @@ subtest 'File' => sub {
 };
 
 subtest String => sub {
-    test_db( XrmGetStringDatabase( $StringDB ) )
+    test_db( XrmGetStringDatabase( $StringDB ) );
 };
 
 sub Put {
@@ -68,7 +66,7 @@ subtest Put => sub {
 };
 
 subtest PutString => sub {
-    test_put sub { XrmPutStringResource(@_) };
+    test_put sub { XrmPutStringResource( @_ ) };
 };
 
 subtest PutLine => sub {
@@ -89,38 +87,32 @@ subtest PutFileDatabase => sub {
 subtest CombineFileDatabase => sub {
     my $filename = 'resources';
 
-    subtest methods => sub {
-        in_tempdir "PutFile" => sub {
-            my $source_db = XrmGetStringDatabase( $HALF1 );
-            $source_db->PutFileDatabase( $filename );
-            my $target_db = XrmGetStringDatabase( $HALF2 );
-            my $ok = XrmCombineFileDatabase( $filename, $target_db, 1 );
-            ok( $ok, 'XrmCombineFileDatabase' );
-            test_db( $target_db );
-        };
+    in_tempdir "PutFile" => sub {
+        my $source_db = XrmGetStringDatabase( $HALF1 );
+        $source_db->PutFileDatabase( $filename );
+        my $target_db = XrmGetStringDatabase( $HALF2 );
+        my $ok = XrmCombineFileDatabase( $filename, $target_db, 1 );
+        ok( $ok, 'XrmCombineFileDatabase' );
+        test_db( $target_db );
     };
 
 };
 
 subtest CombineDatabase => sub {
 
-    subtest methods => sub {
-        my $source_db = XrmGetStringDatabase( $HALF1 );
-        my $target_db = XrmGetStringDatabase( $HALF2 );
-        $source_db->CombineDatabase( $target_db, 1 );
-        test_db( $target_db );
-    };
+    my $source_db = XrmGetStringDatabase( $HALF1 );
+    my $target_db = XrmGetStringDatabase( $HALF2 );
+    $source_db->CombineDatabase( $target_db, 1 );
+    test_db( $target_db );
 
 };
 
 subtest MergeDatabases => sub {
 
-    subtest methods => sub {
-        my $source_db = XrmGetStringDatabase( $HALF1 );
-        my $target_db = XrmGetStringDatabase( $HALF2 );
-        $source_db->MergeDatabases( $target_db );
-        test_db( $target_db );
-    };
+    my $source_db = XrmGetStringDatabase( $HALF1 );
+    my $target_db = XrmGetStringDatabase( $HALF2 );
+    $source_db->MergeDatabases( $target_db );
+    test_db( $target_db );
 
 };
 

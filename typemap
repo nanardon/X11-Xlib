@@ -150,7 +150,6 @@ T_PTROBJ_SPECIAL
    else
       sv_setref_pv($arg, \"X11::Xlib::${(my $ntt=$ntype)=~s/_/::/g;\$ntt}\", (void*)$var);
 
-
 INPUT
 T_PTROBJ_SPECIAL_Maybe
   if (sv_isobject($arg) && sv_derived_from($arg, \"X11::Xlib::${(my $ntt=$ntype)=~s/_/::/g; $ntt =~ s/Maybe$//;\$ntt}\")){
