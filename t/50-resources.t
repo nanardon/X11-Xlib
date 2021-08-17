@@ -29,7 +29,7 @@ XrmInitialize();
 sub test_db {
     my $db = shift;
 
-    my ( $bool, $type, $value ) = $db->XrmGetResource(
+    my ( $bool, $type, $value ) = $db->GetResource(
         'xmh.toc.messagefunctions.incorporate.activeForeground',
         'Xmh.Paned.Box.Command.Foreground'
     );
@@ -79,7 +79,7 @@ subtest PutFileDatabase => sub {
     my $db = XrmGetStringDatabase( $StringDB );
 
     in_tempdir "method" => sub {
-        $db->XrmPutFileDatabase( "resources" );
+        $db->PutFileDatabase( "resources" );
         my $ndb = XrmGetFileDatabase( "resources" );
         test_db( $ndb );
     };
@@ -92,7 +92,7 @@ subtest CombineFileDatabase => sub {
     subtest methods => sub {
         in_tempdir "PutFile" => sub {
             my $source_db = XrmGetStringDatabase( $HALF1 );
-            $source_db->XrmPutFileDatabase( $filename );
+            $source_db->PutFileDatabase( $filename );
             my $target_db = XrmGetStringDatabase( $HALF2 );
             my $ok = XrmCombineFileDatabase( $filename, $target_db, 1 );
             ok( $ok, 'XrmCombineFileDatabase' );
@@ -107,7 +107,7 @@ subtest CombineDatabase => sub {
     subtest methods => sub {
         my $source_db = XrmGetStringDatabase( $HALF1 );
         my $target_db = XrmGetStringDatabase( $HALF2 );
-        $source_db->XrmCombineDatabase( $target_db, 1 );
+        $source_db->CombineDatabase( $target_db, 1 );
         test_db( $target_db );
     };
 
@@ -118,7 +118,7 @@ subtest MergeDatabases => sub {
     subtest methods => sub {
         my $source_db = XrmGetStringDatabase( $HALF1 );
         my $target_db = XrmGetStringDatabase( $HALF2 );
-        $source_db->XrmMergeDatabases( $target_db );
+        $source_db->MergeDatabases( $target_db );
         test_db( $target_db );
     };
 

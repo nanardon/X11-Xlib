@@ -1473,7 +1473,7 @@ Retrieve a resource with the given C<$name> and C<$class>.  C<$bool> is true if
 the resource was found.  If C<$type> is C<String>, C<$value> contains a string.
 Otherwise, it is up to the user to decode it,
 
-=head3 XrmPutResource( IN_OUT XrmDatabaseMaybe database, specifier, type, value )
+=head3 XrmPutResource( XrmDatabaseMaybe database, specifier, type, value )
 
   XrmPutResource( $database, $specifier, $type, $value );
 
@@ -1483,7 +1483,7 @@ the handle stored in C<$database>.  If C<$type> is C<String>, the
 C<$value> is assumed to be a Perl string and will be stored as a
 string, otherwise it is stored as is.
 
-=head3 XrmPutStringResource( IN_OUT XrmDatabaseMaybe database, specifier, value )
+=head3 XrmPutStringResource( XrmDatabaseMaybe database, specifier, value )
 
   XrmPutStringResource( $database, $specifier, $value );
 
@@ -1491,7 +1491,7 @@ Store the resource as a string the specified database.  If C<$database> is
 C<undef> or not an existing database, a new one will be created and
 the handle stored in C<$database>.
 
-=head3 XrmPutLineResource( IN_OUT XrmDatabaseMaybe database, line )
+=head3 XrmPutLineResource( XrmDatabaseMaybe database, line )
 
   XrmPutLineResource( $database, $line );
 
