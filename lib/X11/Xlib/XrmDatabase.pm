@@ -12,7 +12,7 @@ our $VERSION = '0.20';
 # easier to check for completeness.
 
 sub GetFileDatabase {
-    my ( $class, $file ) = @_;
+    my ( $class, $filename ) = @_;
     X11::Xlib::XrmGetFileDatabase( $filename );
 };
 
