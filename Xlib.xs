@@ -743,6 +743,8 @@ XGetWindowProperty(dpy, wnd, prop_atom, long_offset, long_length, delete, req_ty
                 sv_setpvn(data_out, data, nitems*sizeof(short));
             } else if (actual_format == 32) {
                 sv_setpvn(data_out, data, nitems*sizeof(long));
+            } else if (actual_format == 0) {
+                sv_setpvn(data_out, data, 0);
             } else {
                 XFree(data);
                 croak("Un-handled 'actual_format' value %d returned by XGetWindowProperty", actual_format);
