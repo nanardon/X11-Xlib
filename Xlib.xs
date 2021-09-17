@@ -738,11 +738,11 @@ XGetWindowProperty(dpy, wnd, prop_atom, long_offset, long_length, delete, req_ty
             &actual_type, &actual_format, &nitems, &bytes_after, (unsigned char**)&data);
         if (RETVAL == Success) {
             if (actual_format == 8) {
-                sv_setpvn(data_out, data, nitems);
+                sv_setpvn(data_out, data, nitems*sizeof(char));
             } else if (actual_format == 16) {
-                sv_setpvn(data_out, data, nitems*2);
+                sv_setpvn(data_out, data, nitems*sizeof(short));
             } else if (actual_format == 32) {
-                sv_setpvn(data_out, data, nitems*4);
+                sv_setpvn(data_out, data, nitems*sizeof(long));
             } else {
                 XFree(data);
                 croak("Un-handled 'actual_format' value %d returned by XGetWindowProperty", actual_format);
@@ -767,9 +767,9 @@ XChangeProperty(dpy, wnd, prop_atom, type, format, mode, data, nelements)
     SV *data
     int nelements
     INIT:
-        int bytelen= format == 8? nelements
-            : format == 16? nelements * 2
-            : format == 32? nelements * 4
+        int bytelen= format == 8? nelements * sizeof(char)
+            : format == 16? nelements * sizeof(short)
+            : format == 32? nelements * sizeof(long)
             : -1;
         size_t svlen;
         char *buffer;
