@@ -1585,14 +1585,44 @@ Pure-perl implementation of the X11 protocol.
 
 =head1 TODO
 
-This module still only covers a fraction of the Xlib API.
+This module still only covers a small fraction of the Xlib API.
 Patches are welcome :)
 
-=head1 AUTHOR
+=head1 AUTHORS
+
+=over 4
+
+=item *
 
 Olivier Thauvin, E<lt>nanardon@nanardon.zarb.orgE<gt>
 
+=item *
+
 Michael Conrad, E<lt>mike@nrdvana.netE<gt>
+
+=back
+
+=head1 CONTRIBUTORS
+
+=over 4
+
+=item *
+
+Mohammad S Anwar <mohammad.anwar@yahoo.com>
+
+=item *
+
+Mark Davies <eslafgh@users.noreply.github.com>
+
+=item *
+
+Paul Seyfert <pseyfert.mathphys@gmail.com>
+
+=item *
+
+Ethan Straffin <ethanstraffin@gmail.com>
+
+=back
 
 =head1 COPYRIGHT AND LICENSE
 
