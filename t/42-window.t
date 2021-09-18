@@ -53,6 +53,12 @@ subtest properties => sub {
     $win->set_property($netwmname, undef);
     is( scalar(grep { $_ == $netwmname } $win->get_property_list), 0, 'unset window title' );
     is( $win->get_decoded_property('_NET_WM_NAME'), undef, 'decoded name is undef' );
+    
+    my $a_ints= $dpy->mkatom('TEST_SOME_INTEGERS');
+    $win->set_property($a_ints, INTEGER => [1,2,3]);
+    is_deeply( $win->get_decoded_property($a_ints), [1,2,3], 'Round trip of integers' );
+    $win->set_property($a_ints, ATOM => [ $type_utf8, 'STRING' ]);
+    is_deeply( $win->get_decoded_property($a_ints), ['UTF8_STRING', 'STRING'], 'Round trip of atoms' );
 };
 
 subtest wm_protocols => sub {

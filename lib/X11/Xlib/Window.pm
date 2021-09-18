@@ -161,52 +161,109 @@ sub get_decoded_property {
 sub _decode_prop_STRING { # ($self, $data, $n, $format)
     return $_[1];
 }
+sub _encode_prop_STRING {
+    my $str= $_[1];
+    utf8::downgrade($str);
+    return ( $str, length $str, 8 );
+}
 
 sub _decode_prop_UTF8_STRING { # ($self, $data, $n, $format)
     utf8::decode($_[1]);
     return $_[1];
 }
+sub _encode_prop_UTF8_STRING {
+    my $str= $_[1];
+    utf8::encode($str);
+    return ( $str, length $str, 8 );
+}
+
+my $long_pack= X11::Xlib::_prop_format_width(32) == 4? 'l*' : 'q*';
+my $ulong_pack= uc($long_pack);
 
 sub _decode_prop_INTEGER { # ($self, $data, $n, $format)
     my ($self, undef, $n, $format)= @_;
-    X11::Xlib::unpack_prop_signed $format, $_[1], $n;
+    X11::Xlib::_unpack_prop_signed $format, $_[1], $n;
+}
+sub _encode_prop_INTEGER {
+    my $self= shift;
+    return ( pack($long_pack, @_), scalar @_, 32 );
 }
 
 sub _decode_prop_CARDINAL { # ($self, $data, $n, $format)
     my ($self, undef, $n, $format)= @_;
-    X11::Xlib::unpack_prop_unsigned $format, $_[1], $n;
+    X11::Xlib::_unpack_prop_unsigned $format, $_[1], $n;
+}
+sub _encode_prop_CARDINAL {
+    my $self= shift;
+    return ( pack($long_pack, @_), scalar @_, 32 );
 }
 
 sub _decode_prop_ATOM { # ($self, $data, $n, $format)
-    my ($self, undef, $n, $format)= @_;
-    $self->display->atom(X11::Xlib::unpack_prop_unsigned $format, $_[1], $n);
+    $_[0]->display->atom(_decode_prop_CARDINAL(@_));
+}
+sub _encode_prop_ATOM {
+    my $self= shift;
+    my @atoms= map +($_? (0+$_) : ()), $self->display->atom(@_);
+    return ( pack($long_pack, @atoms), scalar @atoms, 32 );
 }
 
 sub _decode_prop_WINDOW { # ($self, $data, $n, $format)
     map $_[0]->display->get_cached_window($_), _decode_prop_CARDINAL(@_);
 }
+sub _encode_prop_WINDOW {
+    my $self= shift;
+    my @xid= map +(ref $_? $_->xid : 0+$_), @_;
+    return ( pack($long_pack, @xid), scalar @xid, 32 );
+}
 
 sub _decode_prop_PIXMAP { # ($self, $data, $n, $format)
     map $_[0]->display->get_cached_pixmap($_), _decode_prop_CARDINAL(@_);
 }
+*_encode_prop_PIXMAP = *_encode_prop_WINDOW;
 
 =head2 set_property
 
-  $window->set_property($prop_atom, $type_atom, $value);
-  $window->set_property($prop_atom, $type_atom, $value, $item_size, $count);
+  $window->set_property($prop_atom, $type_atom, $data, $format, $count);
+  $window->set_property($prop_atom, $type_atom, \@value); # for known types
+  $window->set_property($prop_atom, undef);  # delete the property
+
+In the first form, the parameters basically just go to L<X11::Xlib/XChangeProperty>
+after supplying defaults for size and count.  C<$item_size> must be 8, 16, or 32
+(which means 'long' regardless of whether C<long> is 32 bits), and count can be
+given or derived from the length of C<$data>.
+
+In the second form, a known C<$type_atom> may have special support for encoding an
+array of arguments.  The arguments must be given in an array to indicate the user
+wants some support in packing them.
+
+In the third form, undefined type results in the deletion of the property.
 
 =cut
 
 sub set_property {
-    my ($self, $prop, $type, $value, $item_size, $count)= @_;
-    if (!defined $type || !defined $value) {
-        $self->display->XDeleteProperty($self, $prop);
-    } else {
-        $item_size ||= 8;
-        $count ||= int(length($value)/int($item_size/8));
-        $self->display->XChangeProperty($self, $prop, $type, $item_size,
-            X11::Xlib::PropModeReplace, $value, $count);
+    my ($self, $prop, $type, $val, $format, $count)= @_;
+    return $self->display->XDeleteProperty($self, $prop)
+        unless defined $type || defined $val;
+    $type= $self->display->atom($type) || Carp::croak("No such type $type");
+
+    if ($format || $count) { # user provided format and/or count
+        my $w= X11::Xlib::_prop_format_width($format)
+            or Carp::croak("Unknown format $format");
+        if (ref $val eq 'ARRAY') {
+            $count ||= @$val;
+            $val= pack($w == 1? 'C*' : $w == 2? 'S*' : $w == 4? 'L*' : 'Q*', @{$val}[0 .. ($count-1)]);
+        } else {
+            $count ||= int(length($val) / $w);
+            length($val) >= $w * $count
+                or Carp::croak("Buffer too short for $count items of $w bytes");
+        }
+    } elsif (ref $val ne 'HASH') {
+        my $enc= $self->can('_encode_prop_'.$type)
+            or Carp::croak("No encoder for type '$type'");
+        ($val, $count, $format)= $self->$enc(ref $val eq 'ARRAY'? @$val : $val);
     }
+    $self->display->XChangeProperty($self, $prop, $type, $format,
+        X11::Xlib::PropModeReplace, $val, $count);
 }
 
 =head2 get_w_h

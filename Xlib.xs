@@ -87,6 +87,14 @@ _is_an_integer(str=NULL)
     OUTPUT:
         RETVAL
 
+int
+_prop_format_width(fmt)
+    int fmt
+    CODE:
+        RETVAL= fmt == 8? sizeof(char) : fmt == 16? sizeof(short) : fmt == 32? sizeof(long) : 0;
+    OUTPUT:
+        RETVAL
+
 void
 _unpack_prop(fmt, buf, n)
     int fmt
