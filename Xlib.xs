@@ -23,6 +23,44 @@
 #include "PerlXlib.h"
 void PerlXlib_sanity_check_data_structures();
 
+static SV* _cache_atom(HV *cache, Atom val, const char *name) {
+    SV **ent, *sv;
+    ent= hv_fetch(cache, name, strlen(name), 1);
+    if (!ent) return NULL;
+    /* Create a read-only dualvar */
+    sv= *ent;
+    if (SvOK(sv)) {
+        /* If a user supplies the same value twice in the list, this could attempt to try
+          * adding the item to the cache twice. */
+        if (SvIV(sv) == val)
+            return sv;
+        else {
+            sv_2mortal(sv);
+            *ent= sv= newSV(0);
+        }
+    }
+    SvUPGRADE(sv, SVt_PVMG);
+    sv_setpvf(sv, "%ld=%s", (long) val, name);
+    SvIV_set(sv, val);
+    SvIOK_on(sv);
+    SvREADONLY_on(sv);
+    /* add it to the hash by both name and value */
+    if (hv_store(cache, (void*) &val, sizeof(val), sv, 0)) {
+        SvREFCNT_inc(sv);
+        return sv;
+    }
+    else
+        return NULL;
+}
+
+static Bool is_only_digits(SV *sv) {
+    size_t len, i;
+    const char *str= SvPV(sv, len);
+    for (i= 0; i < len; i++)
+        if (!isDIGIT(str[i])) return 0;
+    return len > 0;
+}
+
 MODULE = X11::Xlib                PACKAGE = X11::Xlib
 
 void
@@ -208,7 +246,102 @@ XGetAtomNames(dpy, atoms)
             av_store(ret_av, i, name_array[i]? newSVpv(name_array[i], 0) : newSV(0));
             if (name_array[i]) XFree(name_array[i]);
         }
-    
+
+void
+_resolve_atoms(dpy_obj, ...)
+    SV *dpy_obj
+    ALIAS:
+        X11::Xlib::Display::atom = 0
+        X11::Xlib::Display::mkatom = 1
+    INIT:
+        Display *dpy= PerlXlib_get_magic_dpy(dpy_obj, 1);
+        size_t len, item0, n_name_lookup= 0, n_atom_lookup= 0;
+        Atom  *atom_array,   atom_array_on_stack[20], atom;
+        char **name_array,  *name_array_on_stack[20], *name;
+        int   *atom_dest, *name_dest, link_array_on_stack[20], i;
+        SV  **ent, *sv;
+        HV *cache= NULL;
+    PPCODE:
+        item0= 1;
+        if (items-item0 <= 20) {
+            atom_array= atom_array_on_stack;
+            atom_dest=  link_array_on_stack;
+            name_array= name_array_on_stack;
+            name_dest=  atom_dest + 20 - 1;
+        } else {
+            Newx(atom_array, items-item0, Atom);
+            SAVEFREEPV(atom_array);
+            Newx(atom_dest,  items-item0, int);
+            SAVEFREEPV(atom_dest);
+            Newx(name_array, items-item0, char*);
+            SAVEFREEPV(name_array);
+            name_dest= atom_dest + items - item0;
+        }
+        if (SvTYPE(SvRV(dpy_obj)) == SVt_PVHV) {
+            if (ent= hv_fetch((HV*) SvRV(dpy_obj), "atom_cache", 10, 1)) {
+                if (SvROK(*ent) && SvTYPE(SvRV(*ent)) == SVt_PVHV)
+                    cache= (HV*) SvRV(*ent);
+                else
+                    sv_setsv(*ent, sv_2mortal(newRV_noinc((SV*) (cache= newHV()))));
+            }
+        }
+        if (!cache)
+            croak("atom_cache is not a hashref");
+        /* Inspect each parameter and decide whether it is an atom (number) or name.
+          * Replace stack items with the value from cache, and put the unresolved ones
+          * into arrays for laters processing. */
+        for (i= item0; i < items; i++) {
+            sv= ST(i);
+            if (SvPOK(sv)? is_only_digits(sv) : SvIOK(sv) || SvUOK(sv) || (SvNOK(sv) && ((NV)(IV)SvNV(sv)) == SvNV(sv))) {
+                atom= SvIV(sv);
+                ent= hv_fetch(cache, (void*) &atom, sizeof(atom), 0);
+                if (ent && *ent && SvOK(*ent))
+                    ST(i)= *ent;                   /* found in cache */
+                else if (!atom)
+                    ST(i)= &PL_sv_undef;           /* can't resolve */
+                else {
+                    atom_dest[n_atom_lookup]= i;   /* store result here after looking it up */
+                    atom_array[n_atom_lookup++]= atom;
+                }
+            }
+            else {
+                name= SvPV(sv, len);
+                ent= hv_fetch(cache, name, len, 0);
+                if (ent && *ent && SvOK(*ent))
+                    ST(i)= *ent;
+                else if (!len)
+                    ST(i)= &PL_sv_undef;
+                else {
+                    name_dest[-n_name_lookup]= i;
+                    name_array[n_name_lookup++]= name;
+                }
+            }
+        }
+        if (n_name_lookup) {
+            XInternAtoms(dpy, name_array, n_name_lookup, ix == 0? 1 : 0, atom_array + n_atom_lookup);
+            for (i= 0; i < n_name_lookup; i++) {
+                if (atom_array[n_atom_lookup + i]) {
+                    sv= _cache_atom(cache, atom_array[n_atom_lookup + i], name_array[i]);
+                    if (sv) ST(name_dest[-i])= sv;
+                }
+            }
+        }
+        if (n_atom_lookup) {
+            XGetAtomNames(dpy, atom_array, n_atom_lookup, name_array + n_name_lookup);
+            for (i= 0; i < n_atom_lookup; i++) {
+                if (name_array[n_name_lookup + i]) {
+                    sv= _cache_atom(cache, atom_array[i], name_array[n_name_lookup + i]);
+                    if (sv) ST(atom_dest[i])= sv;
+                }
+            }
+        }
+        /* First arg was $self, so shift down all parameters by one for the return value */
+        for (i= item0; i < items; i++) {
+            ST(i-item0)= ST(i);
+            ST(i)= &PL_sv_undef;
+        }
+        XSRETURN(items-item0);
+
 # Event Functions (fn_event) -------------------------------------------------
 
 int
