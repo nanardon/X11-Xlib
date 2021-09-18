@@ -258,24 +258,25 @@ _resolve_atoms(dpy_obj, ...)
         size_t len, item0, n_name_lookup= 0, n_atom_lookup= 0;
         Atom  *atom_array,   atom_array_on_stack[20], atom;
         char **name_array,  *name_array_on_stack[20], *name;
-        int   *atom_dest, *name_dest, link_array_on_stack[20], i;
+        int   *atom_dest, *name_dest, link_array_on_stack[20], i, n_arg;
         SV  **ent, *sv;
         HV *cache= NULL;
     PPCODE:
         item0= 1;
-        if (items-item0 <= 20) {
+        n_arg= items-item0;
+        if (n_arg <= 20) {
             atom_array= atom_array_on_stack;
             atom_dest=  link_array_on_stack;
             name_array= name_array_on_stack;
             name_dest=  atom_dest + 20 - 1;
         } else {
-            Newx(atom_array, items-item0, Atom);
+            Newx(atom_array, n_arg, Atom);
             SAVEFREEPV(atom_array);
-            Newx(atom_dest,  items-item0, int);
+            Newx(atom_dest,  n_arg, int);
             SAVEFREEPV(atom_dest);
-            Newx(name_array, items-item0, char*);
+            Newx(name_array, n_arg, char*);
             SAVEFREEPV(name_array);
-            name_dest= atom_dest + items - item0;
+            name_dest= atom_dest + n_arg - 1;
         }
         if (SvTYPE(SvRV(dpy_obj)) == SVt_PVHV) {
             if (ent= hv_fetch((HV*) SvRV(dpy_obj), "atom_cache", 10, 1)) {
