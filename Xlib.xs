@@ -87,6 +87,40 @@ _is_an_integer(str=NULL)
     OUTPUT:
         RETVAL
 
+void
+_unpack_prop(fmt, buf, n)
+    int fmt
+    SV *buf
+    size_t n
+    ALIAS:
+        _unpack_prop_signed = 0
+        _unpack_prop_unsigned = 1
+    INIT:
+        const char *p;
+        size_t len, step, i;
+    PPCODE:
+        /* As discovered by eslafgh in #6, X11 uses 32 to mean 'long' not 'whatever is 32 bits'
+         * which is annoying to unpack, as perl unpack requires either 'q' or 'l' and would need
+         * to 'use Config' to find out which.
+         * It's simpler just to implement an unpack for it directly.
+         */
+        step= fmt == 8? sizeof(char) : fmt == 16? sizeof(short) : fmt == 32? sizeof(long) : 0;
+        if (!step || ix < 0 || ix > 1)
+            croak("Format must be 8, 16, or 32, and mode must be signed or unsigned");
+        p= SvPV(buf, len);
+        if (step * n > len)
+            croak("Insufficient buffer (%d) to decode %d * %d bytes", (int) len, (int) n, (int) step);
+        EXTEND(SP, n);
+        switch (fmt+ix) {
+        case  8: for (i= 0; i < n; i++) mPUSHi(((         char *)p)[i]); break;
+        case  9: for (i= 0; i < n; i++) mPUSHu(((unsigned char *)p)[i]); break;
+        case 16: for (i= 0; i < n; i++) mPUSHi(((         short*)p)[i]); break;
+        case 17: for (i= 0; i < n; i++) mPUSHu(((unsigned short*)p)[i]); break;
+        case 32: for (i= 0; i < n; i++) mPUSHi(((         long *)p)[i]); break;
+        case 33: for (i= 0; i < n; i++) mPUSHu(((unsigned long *)p)[i]); break;
+        }
+        XSRETURN(n);
+
 # Threading Functions (fn_thread) --------------------------------------------
 
 int

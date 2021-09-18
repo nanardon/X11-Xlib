@@ -169,20 +169,17 @@ sub _decode_prop_UTF8_STRING { # ($self, $data, $n, $format)
 
 sub _decode_prop_INTEGER { # ($self, $data, $n, $format)
     my ($self, undef, $n, $format)= @_;
-    my $fmt= $format == 32? 'l*' : $format == 16? 's*' : 'c';
-    unpack $fmt, $_[1];
+    X11::Xlib::unpack_prop_signed $format, $_[1], $n;
 }
 
 sub _decode_prop_CARDINAL { # ($self, $data, $n, $format)
     my ($self, undef, $n, $format)= @_;
-    my $fmt= $format == 32? 'L*' : $format == 16? 'S*' : 'C';
-    unpack $fmt, $_[1];
+    X11::Xlib::unpack_prop_unsigned $format, $_[1], $n;
 }
 
 sub _decode_prop_ATOM { # ($self, $data, $n, $format)
     my ($self, undef, $n, $format)= @_;
-    my $fmt= $format == 32? 'L*' : $format == 16? 'S*' : 'C';
-    $self->display->atom(unpack $fmt, $_[1]);
+    $self->display->atom(X11::Xlib::unpack_prop_unsigned $format, $_[1], $n);
 }
 
 sub _decode_prop_WINDOW { # ($self, $data, $n, $format)
