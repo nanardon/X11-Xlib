@@ -35,11 +35,11 @@ is_deeply( $names, [ undef, '_NET_WM_NAME' ], 'got one name' );
 
 my @dualvars= $dpy->atom('UTF8_STRING','_NET_WM_NAME',$a_utf8,0,'',"$a_utf8");
 is( $dualvars[0]+0, $a_utf8, '->atom UTF8_STRING as number' );
-is( "$dualvars[0]", "$a_utf8=UTF8_STRING", "->atom UTF8_STRING as string" );
+is( "$dualvars[0]", "UTF8_STRING", "->atom UTF8_STRING as string" );
 is( $dualvars[1]+0, $a_netwmname, '->atom _NET_WM_NAME as number' );
-is( "$dualvars[1]", "$a_netwmname=_NET_WM_NAME", "->atom _NET_WM_NAME as string" );
+is( "$dualvars[1]", "_NET_WM_NAME", "->atom _NET_WM_NAME as string" );
 is( $dualvars[2]+0, $a_utf8, "->atom $a_utf8 as number" );
-is( "$dualvars[2]", "$a_utf8=UTF8_STRING", "->atom $a_utf8 as string" );
+is( "$dualvars[2]", "UTF8_STRING", "->atom $a_utf8 as string" );
 is( $dualvars[3], undef, "0 doesn't resolve" );
 is( $dualvars[4], undef, "'' doesn't resolve" );
 is( $dualvars[5]+0, $a_utf8, 'number passed as string still resolves as number' );

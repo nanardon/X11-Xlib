@@ -40,7 +40,7 @@ static SV* _cache_atom(HV *cache, Atom val, const char *name) {
         }
     }
     SvUPGRADE(sv, SVt_PVMG);
-    sv_setpvf(sv, "%ld=%s", (long) val, name);
+    sv_setpvn(sv, name, strlen(name));
     SvIV_set(sv, val);
     SvIOK_on(sv);
     SvREADONLY_on(sv);
@@ -59,8 +59,10 @@ static Bool is_an_integer(SV *sv) {
     size_t len, i;
     const char *str;
 
-    if (!SvPOK(sv) && (SvIOK(sv) || SvUOK(sv) || (SvNOK(sv) && ((NV)(IV)SvNV(sv)) == SvNV(sv))))
-        return true;
+    if (SvIOK(sv) || SvUOK(sv) || (SvNOK(sv) && ((NV)(IV)SvNV(sv)) == SvNV(sv)))
+        return 1;
+    if (!SvOK(sv))
+        return 0;
     str= SvPV(sv, len);
     for (i= 0; i < len; i++)
         if (!isDIGIT(str[i])) return 0;
@@ -75,11 +77,15 @@ _sanity_check_data_structures()
         PerlXlib_sanity_check_data_structures();
 
 Bool
-_is_an_integer(str)
+_is_an_integer(str=NULL)
     SV *str
-    PROTOTYPE: _
+    PROTOTYPE: ;$
     CODE:
+        dUNDERBAR;
+        if (!str) str= UNDERBAR;
         RETVAL= is_an_integer(str);
+    OUTPUT:
+        RETVAL
 
 # Threading Functions (fn_thread) --------------------------------------------
 
