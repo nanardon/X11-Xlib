@@ -13,7 +13,8 @@ BEGIN {
         'ExtUtils::MakeMaker' => 0,
     );
     %TEST_REQUIRES= (
-        'Test::More'   => 0,
+        'Test::More'   => 1.001014,
+        'Test::TempDir::Tiny' => 0,
     );
     %PREREQ_PM= (
         'Try::Tiny'    => 0,

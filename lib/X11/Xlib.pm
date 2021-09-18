@@ -86,6 +86,11 @@ my %_functions= (
     char_to_keysym codepoint_to_keysym keysym_to_char keysym_to_codepoint )],
   fn_pix => [qw( XCreateBitmapFromData XCreatePixmap
     XCreatePixmapFromBitmapData XFreePixmap )],
+  fn_resources => [qw( XResourceManagerString XScreenResourceString
+    XrmCombineDatabase XrmCombineFileDatabase XrmDestroyDatabase
+    XrmGetFileDatabase XrmGetResource XrmGetStringDatabase XrmInitialize
+    XrmLocaleOfDatabase XrmMergeDatabases XrmPutFileDatabase
+    XrmPutLineResource XrmPutResource XrmPutStringResource XrmSetDatabase )],
   fn_screen => [qw( DefaultColormap DefaultDepth DefaultGC DefaultScreen
     DefaultVisual DisplayHeight DisplayHeightMM DisplayWidth DisplayWidthMM
     RootWindow ScreenCount )],
@@ -1360,6 +1365,139 @@ Return the key code corresponding to C<$keysym> in the current mapping.
   XBell($display, $percent)
 
 Make the X server emit a sound.
+
+=head2 RESOURCE FUNCTIONS
+
+These functions provide an interface to the X resources manager and databases. Functions
+whose first parameter is a databse handle may be used as methods on the handle by importing
+L<X11::Xib::XrmDatabase>.
+
+=head3 XrmInitialize
+
+  XrmInitialize();
+
+Initialize the resource manager.
+
+=head3 XrmGetFileDatabase
+
+  $database = XrmGetFileDatabase( $filename );
+
+Create a resource database from an X resource file.
+
+=head3 XrmPutFileDatabase
+
+  XrmPutFileDatabase( $database, $filename );
+
+Write the database to the specified file.
+
+=head3 XResourceManagerString
+
+  $string = XResourceManagerString( $display );
+
+Return the C<RESOURCE_MANAGER> property from the root window of screen zero.
+
+=head3 XScreenResourceString
+
+  $string = XScreenResourceString( $screen );
+
+Return the C<SCREEN_RESOURCES> property from the root window of the specified screen.
+
+=head3 XrmGetStringDatabase
+
+  $database = XrmGetStringDatabase( $data );
+
+Create a new database from resources specified in the string specified in C<$data>.  The string
+should have the same format as an X resource file.
+
+=head3 XrmLocaleOfDatabase
+
+  $string = XrmLocaleOfDatabase( $database );
+
+Return the name of the locale bound to the database.
+
+=head3 XrmDestroyDatabase(database)
+
+  XrmDestroyDatabase( $database );
+
+Destroy the specified database.  A database is also automatically destroyed when it goes out of scope.
+
+=head3 XrmSetDatabase
+
+  XrmSetDatabase( $display, $database );
+
+Associate the resource database with the display.
+
+=head3 XrmGetDatabase
+
+  $database = XrmGetDatabase( $display );
+
+Return the database associated with the display.
+
+=head3 XrmCombineFileDatabase
+
+  $status = XrmCombineFileDatabase( $filename, $target_db, $override );
+
+Merge the contents of a resource file into a database. If C<$target_db>
+is undef or not an existing database, it will be set to a newly
+created database.
+
+If C<$override> is true, entries in C<$filename> will replace those in
+C<$target_db>.
+
+Returns zero if there is an error.
+
+=head3 XrmCombineDatabase
+
+  XrmCombineDatabase( $source_db, $target_db, $override );
+
+Merge the contents of C<$source_db> into C<$target_db>.
+If C<$override> is true, entries in C<$source_db> will replace those
+in C<$target_db>.
+
+If C<$target_db> is undef or not an existing database, it be set to
+C<$source_db>.
+
+C<$source_db> will be invalidated by this function.
+
+=head3 XrmMergeDatabases
+
+   XrmMergeDatabases( $source_db, $target_db );
+
+The same as calling L</XrmCombinDatabase> with C<$override = 1>.
+
+=head3 XrmGetResource
+
+  ($bool, $type, $value ) = XrmGetResource( $database, $name, $class );
+
+Retrieve a resource with the given C<$name> and C<$class>.  C<$bool> is true if
+the resource was found.  If C<$type> is C<String>, C<$value> contains a string.
+Otherwise, it is up to the user to decode it,
+
+=head3 XrmPutResource( XrmDatabaseMaybe database, specifier, type, value )
+
+  XrmPutResource( $database, $specifier, $type, $value );
+
+Store the resource in the specified database.  If C<$database> is
+C<undef> or not an existing database, a new one will be created and
+the handle stored in C<$database>.  If C<$type> is C<String>, the
+C<$value> is assumed to be a Perl string and will be stored as a
+string, otherwise it is stored as is.
+
+=head3 XrmPutStringResource( XrmDatabaseMaybe database, specifier, value )
+
+  XrmPutStringResource( $database, $specifier, $value );
+
+Store the resource as a string the specified database.  If C<$database> is
+C<undef> or not an existing database, a new one will be created and
+the handle stored in C<$database>.
+
+=head3 XrmPutLineResource( XrmDatabaseMaybe database, line )
+
+  XrmPutLineResource( $database, $line );
+
+Store the resource record in the database. If C<$database> is
+C<undef> or not an existing database, a new one will be created and
+the handle stored in C<$database>.
 
 =head2 EXTENSION XCOMPOSITE
 

@@ -1,0 +1,5 @@
+xmh*Paned*activeForeground:     red
+*incorporate.Foreground:     blue
+xmh.toc*Command*activeForeground:     green
+xmh.toc*?.Foreground:     white
+xmh.toc*Command.activeForeground:     black
