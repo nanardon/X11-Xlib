@@ -43,13 +43,13 @@ is( scalar(grep { $_ == $netwmname } XListProperties($dpy, $win_id)), 0, 'delete
 # Now check OO interface
 my $win= $dpy->get_cached_window($win_id);
 $win->set_property($netwmname, $type_utf8, "HelloAgain");
-is( scalar(grep { $_ eq $netwmname } $win->get_property_list), 1, 'new window title' );
+is( scalar(grep { $_ == $netwmname } $win->get_property_list), 1, 'new window title' );
 is_deeply( $win->get_property($netwmname)->{data}, "HelloAgain", 'correct title text' );
 $win->set_property($netwmname, undef);
-is( scalar(grep { $_ eq $netwmname } $win->get_property_list), 0, 'unset window title' );
+is( scalar(grep { $_ == $netwmname } $win->get_property_list), 0, 'unset window title' );
 
 ok( XSetWMProtocols($dpy, $win_id, [ $wm_dest_win ]), 'XSetWMProtocols' );
-is( scalar(grep { $_ eq $wm_proto } $win->get_property_list), 1, 'protocols set' );
+is( scalar(grep { $_ == $wm_proto } $win->get_property_list), 1, 'protocols set' );
 is_deeply( [ XGetWMProtocols($dpy, $win_id) ], [ $wm_dest_win ], 'with expected values' );
 
 is( err{ XMapWindow($dpy, $win_id); }, '', 'XMapWindow' );

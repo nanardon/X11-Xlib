@@ -21,16 +21,16 @@ sub attributes {
 
 sub get_property_list {
     my $self= shift;
-    $self->display->XListProperties($self);
+    $self->display->atom($self->display->XListProperties($self));
 }
 
 sub get_property {
     my ($self, $prop, $type, $offset, $max_length)= @_;
     $type ||= X11::Xlib::AnyPropertyType();
-    $offset ||= 0;
-    $max_length ||= 1024;
-    if (0 == $self->display->XGetWindowProperty($self, $prop, 0, int($max_length/4), 0, $type,
-        my $actual_type, my $actual_format, my $n, my $remaining, my $data)
+    $prop= $self->display->atom($prop) or Carp::croak("No such property '$prop'")
+        unless X11::Xlib::_is_an_integer($prop);
+    if (0 == $self->display->XGetWindowProperty($self, $prop, $offset || 0, $max_length || 65536,
+        0, $type, my $actual_type, my $actual_format, my $n, my $remaining, my $data)
     ) {
         return {
             type => $actual_type,

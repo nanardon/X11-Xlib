@@ -259,8 +259,9 @@ sub fake_key    { shift->XTestFakeKeyEvent(@_) }
 
 =head3 atom
 
-  my $int= $display->atom('UTF8_STRING');
+  my $atom= $display->atom('UTF8_STRING');
   my @list= $display->atom(@names);
+  say $_ for $display->atom(1..50);
 
 This is a wrapper around L<XInternAtom|X11::Xlib/XInternAtom> and
 L<XGetAtomName|X11::Xlib/XGetAtomName> which operates on lits and returns
@@ -275,7 +276,7 @@ the item is declared as an integer and/or matches C<< /^[0-9]+\z/ >>.
 
 Like C<atom>, but creates any atoms that didn't exist.  However, it still expects that strings
 matching C<< /^[0-9]+\z/ >> are intended for reverse lookup, and cannot be used to create atoms
-whose names are digits.  (X server seems to allow this, but it seems like a bad idea)
+whose names are digits.  (X server allows names that are numbers, but it seems like a bad idea)
 
 =cut
 

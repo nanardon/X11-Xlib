@@ -53,9 +53,15 @@ static SV* _cache_atom(HV *cache, Atom val, const char *name) {
         return NULL;
 }
 
-static Bool is_only_digits(SV *sv) {
+/* This provides efficient detection of whether an attribute is being passed as
+ * an integer, or something symbolic. */
+static Bool is_an_integer(SV *sv) {
     size_t len, i;
-    const char *str= SvPV(sv, len);
+    const char *str;
+
+    if (!SvPOK(sv) && (SvIOK(sv) || SvUOK(sv) || (SvNOK(sv) && ((NV)(IV)SvNV(sv)) == SvNV(sv))))
+        return true;
+    str= SvPV(sv, len);
     for (i= 0; i < len; i++)
         if (!isDIGIT(str[i])) return 0;
     return len > 0;
@@ -67,6 +73,13 @@ void
 _sanity_check_data_structures()
     PPCODE:
         PerlXlib_sanity_check_data_structures();
+
+Bool
+_is_an_integer(str)
+    SV *str
+    PROTOTYPE: _
+    CODE:
+        RETVAL= is_an_integer(str);
 
 # Threading Functions (fn_thread) --------------------------------------------
 
@@ -293,7 +306,7 @@ _resolve_atoms(dpy_obj, ...)
           * into arrays for laters processing. */
         for (i= item0; i < items; i++) {
             sv= ST(i);
-            if (SvPOK(sv)? is_only_digits(sv) : SvIOK(sv) || SvUOK(sv) || (SvNOK(sv) && ((NV)(IV)SvNV(sv)) == SvNV(sv))) {
+            if (is_an_integer(sv)) {
                 atom= SvIV(sv);
                 ent= hv_fetch(cache, (void*) &atom, sizeof(atom), 0);
                 if (ent && *ent && SvOK(*ent))
