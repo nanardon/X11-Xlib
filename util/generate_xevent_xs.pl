@@ -90,7 +90,9 @@ sub normalize_type {
 	my $f= shift;
 	my @parts= grep{ !($_ =~ /const|static|volatile/) } @$f;
 	if (grep { ref $_ } @parts) {
-		@parts == 1 or warn "Ignoring ".join(' ',@parts).' because it is too complicated';
+        @parts == 1 or warn "Ignoring "
+                .join(' ', map { ref $_? "$_->{container_type} $_->{container_name}" : $_ } @parts)
+                .' because it is too complicated';
 		return $parts[0] if @parts == 1;
 	} else {
 		return join ' ', @parts;
@@ -190,7 +192,7 @@ sub sv_read {
 	return "$access= SvIV($svname);" if $int_types{$type};
 	return "$access= SvUV($svname);" if $unsigned_types{$type};
     return "$access= PerlXlib_sv_to_xid($svname);" if $xid_types{$type};
-	return "$access= PerlXlib_get_magic_dpy($svname, 0);" if $type eq 'Display *';
+	return "$access= PerlXlib_display_objref_get_pointer($svname, PerlXlib_OR_NULL);" if $type eq 'Display *';
 	return "{"
 		." if (!SvPOK($svname) || SvCUR($svname) != sizeof($1)*$2)"
 		.'  croak("Expected scalar of length %ld but got %ld",'." (long)(sizeof($1)*$2), (long) SvCUR($svname));"
@@ -202,10 +204,10 @@ sub sv_create {
 	my ($type, $value)= @_;
 	return "newSViv($value)" if $int_types{$type};
 	return "newSVuv($value)" if $unsigned_types{$type} or $xid_types{$type};
-    return "newSVsv($value? PerlXlib_obj_for_display($value, 0) : &PL_sv_undef)" if $type eq 'Display *';
-    return "newSVsv($value? PerlXlib_obj_for_screen($value) : &PL_sv_undef)" if $type eq 'Screen *';
-    return "newSVsv($value? PerlXlib_obj_for_display_innerptr(dpy, $value, \"X11::Xlib::Visual\", SVt_PVMG, 1)"
-        ." : &PL_sv_undef)" if $type eq 'Visual *';
+    return "newSVsv(PerlXlib_get_display_objref($value, PerlXlib_AUTOCREATE))" if $type eq 'Display *';
+    return "newSVsv(PerlXlib_get_screen_objref($value, PerlXlib_AUTOCREATE))" if $type eq 'Screen *';
+    return "newSVsv(PerlXlib_get_objref($value, AUTOCREATE, \"Visual\", SVt_PVMG, \"X11::Xlib::Visual\", dpy))"
+        if $type eq 'Visual *';
 	return "newSVpvn((void*)$value, sizeof($1)*$2)"
 		if $type =~ /^(\w+) \[ (\d+) \]$/;
 	croak "Don't know how to create SV from $type";

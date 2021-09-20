@@ -32,6 +32,10 @@ This attribute is implemented "inside-out", so it can't be seen in a dump of the
 perl data, and requires help from DESTROY to clean up.  (handled by this class's
 destructor)
 
+=cut
+
+*display= *X11::Xlib::Opaque::display;
+
 =head1 METHODS
 
 =head2 new

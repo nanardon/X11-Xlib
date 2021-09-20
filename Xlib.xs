@@ -164,7 +164,7 @@ XOpenDisplay(connection_string = NULL)
         if (SvTRUE(get_sv("X11::Xlib::_error_fatal_trapped", GV_ADD)))
             croak("Cannot call further Xlib functions after fatal Xlib error");
         dpy= XOpenDisplay(connection_string);
-        self= PerlXlib_obj_for_display(dpy, 1);
+        self= PerlXlib_get_display_objref(dpy, PerlXlib_AUTOCREATE);
         if (SvROK(self)) {
             if (!hv_store((HV*) SvRV(self), "autoclose", 9, (tmp=newSViv(1)), 0)) {
                 sv_2mortal(tmp);
@@ -180,7 +180,7 @@ _pointer_value(obj)
         Display *dpy;
         SV **fp= NULL;
     PPCODE:
-        dpy= PerlXlib_get_magic_dpy(obj, 0);
+        dpy= PerlXlib_display_objref_get_pointer(obj, PerlXlib_OR_NULL);
         if (!dpy && SvROK(obj) && SvTYPE(SvRV(obj)) == SVt_PVHV) {
             /* in the case of a dead connection, the pointer value moves to a hash field */
             fp= hv_fetch((HV*)SvRV(obj), "_pointer_value", 14, 0);
@@ -196,7 +196,7 @@ _set_pointer_value(obj, dpy_val)
     PPCODE:
         if (SvOK(dpy_val) && (!SvPOK(dpy_val) || SvCUR(dpy_val) != sizeof(Display*)))
             croak("Invalid pointer value (should be scalar of %d bytes)", sizeof(Display*));
-        PerlXlib_set_magic_dpy(obj, SvOK(dpy_val)? (Display*)(void*)SvPVX(dpy_val) : NULL);
+        PerlXlib_objref_set_pointer(obj, SvOK(dpy_val)? (Display*)(void*)SvPVX(dpy_val) : NULL, "Display");
 
 char *
 XServerVendor(dpy)
@@ -223,9 +223,9 @@ XCloseDisplay(dpy_sv)
     INIT:
         Display *dpy;
     CODE:
-        dpy= PerlXlib_get_magic_dpy(dpy_sv, 1);
+        dpy= PerlXlib_display_objref_get_pointer(dpy_sv, PerlXlib_OR_DIE);
         XCloseDisplay(dpy);
-        PerlXlib_set_magic_dpy(dpy_sv, NULL); /* mark as closed */
+        PerlXlib_objref_set_pointer(dpy_sv, NULL, NULL); /* mark as closed */
         hv_delete((HV*)SvRV(dpy_sv), "autoclose", 9, G_DISCARD);
 
 # Atom Functions (fn_atom) ---------------------------------------------------
@@ -315,7 +315,7 @@ _resolve_atoms(dpy_obj, ...)
         X11::Xlib::Display::atom = 0
         X11::Xlib::Display::mkatom = 1
     INIT:
-        Display *dpy= PerlXlib_get_magic_dpy(dpy_obj, 1);
+        Display *dpy= PerlXlib_display_objref_get_pointer(dpy_obj, PerlXlib_OR_DIE);
         size_t len, item0, n_name_lookup= 0, n_atom_lookup= 0;
         Atom  *atom_array,   atom_array_on_stack[20], atom;
         char **name_array,  *name_array_on_stack[20], *name;
@@ -2049,20 +2049,18 @@ void
 display(self, dpy_sv= NULL)
     SV *self
     SV *dpy_sv
-    INIT:
-        void *opaque= PerlXlib_sv_to_display_innerptr(self, 1);
     PPCODE:
         if (dpy_sv)
-            PerlXlib_set_displayobj_of_opaque(opaque, dpy_sv);
+            PerlXlib_objref_set_display(self, dpy_sv);
         else
-            dpy_sv= PerlXlib_get_displayobj_of_opaque(opaque);
+            dpy_sv= PerlXlib_objref_get_display(self);
         PUSHs(sv_mortalcopy(dpy_sv));
 
 void
 pointer_int(self)
     SV *self
     INIT:
-        void *opaque= PerlXlib_sv_to_display_innerptr(self, 0);
+        void *opaque= PerlXlib_objref_get_pointer(self, NULL, PerlXlib_OR_NULL);
     PPCODE:
         PUSHs(sv_2mortal(newSVuv(PTR2UV(opaque))));
 
@@ -2070,18 +2068,9 @@ void
 pointer_bytes(self)
     SV *self
     INIT:
-        void *opaque= PerlXlib_sv_to_display_innerptr(self, 0);
+        void *opaque= PerlXlib_objref_get_pointer(self, NULL, PerlXlib_OR_NULL);
     PPCODE:
         PUSHs(sv_2mortal(newSVpvn((void*) &opaque, sizeof(opaque))));
-
-void
-DESTROY(self)
-    SV *self
-    INIT:
-        void *opaque= PerlXlib_sv_to_display_innerptr(self, 0);
-    PPCODE:
-        if (opaque)
-            PerlXlib_set_displayobj_of_opaque(opaque, NULL);
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::Visual
 
@@ -2092,31 +2081,6 @@ id(visual)
         RETVAL = XVisualIDFromVisual(visual);
     OUTPUT:
         RETVAL
-
-MODULE = X11::Xlib                PACKAGE = X11::Xlib::Struct
-
-void
-display(self, dpy_sv= NULL)
-    SV *self
-    SV *dpy_sv
-    INIT:
-        SV *inner_ref= NULL;
-    PPCODE:
-        if (!SvROK(self) || !SvRV(self))
-            croak("Not a struct object");
-        inner_ref= SvRV(self);
-        if (dpy_sv)
-            PerlXlib_set_displayobj_of_opaque((void*)inner_ref, dpy_sv);
-        else
-            dpy_sv= PerlXlib_get_displayobj_of_opaque((void*)inner_ref);
-        PUSHs(sv_mortalcopy(dpy_sv? dpy_sv : &PL_sv_undef));
-
-void
-DESTROY(self)
-    SV *self
-    PPCODE:
-        if (SvROK(self) && SvRV(self))
-            PerlXlib_set_displayobj_of_opaque(SvRV(self), NULL);
 
 MODULE = X11::Xlib                PACKAGE = X11::Xlib::XEvent
 
@@ -2315,10 +2279,10 @@ display(event, value=NULL)
   SV *value
   PPCODE:
     if (value) {
-      if (event->type) event->xany.display= PerlXlib_get_magic_dpy(value, 0); else event->xerror.display= PerlXlib_get_magic_dpy(value, 0);
+      if (event->type) event->xany.display= PerlXlib_display_objref_get_pointer(value, PerlXlib_OR_NULL); else event->xerror.display= PerlXlib_display_objref_get_pointer(value, PerlXlib_OR_NULL);
       PUSHs(value);
     } else {
-      PUSHs(sv_2mortal(newSVsv((event->type? event->xany.display : event->xerror.display)? PerlXlib_obj_for_display((event->type? event->xany.display : event->xerror.display), 0) : &PL_sv_undef)));
+      PUSHs(sv_2mortal(newSVsv(PerlXlib_get_display_objref((event->type? event->xany.display : event->xerror.display), PerlXlib_AUTOCREATE))));
     }
 
 void
@@ -3411,14 +3375,14 @@ visual(self, value=NULL)
            self, 0, "X11::Xlib::XVisualInfo", sizeof(XVisualInfo),
            (PerlXlib_struct_pack_fn*) &PerlXlib_XVisualInfo_pack
          );
-         SV *dpy_sv= PerlXlib_get_displayobj_of_opaque(SvRV(self));
-         Display *dpy= PerlXlib_get_magic_dpy(dpy_sv,0);
+         SV *dpy_sv= PerlXlib_objref_get_display(self);
+         Display *dpy= PerlXlib_display_objref_get_pointer(dpy_sv, PerlXlib_OR_NULL);
   PPCODE:
     if (value) {
-      s->visual= (Visual *) PerlXlib_sv_to_display_innerptr(value, 0);
+      s->visual= (Visual *) PerlXlib_objref_get_pointer(value, "Visual", PerlXlib_OR_NULL);
       PUSHs(value);
     } else {
-      PUSHs(sv_2mortal(newSVsv(s->visual? PerlXlib_obj_for_display_innerptr(dpy, s->visual, "X11::Xlib::Visual", SVt_PVMG, 1) : &PL_sv_undef)));
+      PUSHs(sv_mortalcopy(PerlXlib_get_objref(s->visual, PerlXlib_AUTOCREATE, "Visual", SVt_PVMG, "X11::Xlib::Visual", dpy)));
     }
 
 void
@@ -3845,10 +3809,10 @@ screen(self, value=NULL)
     XWindowAttributes *s= self;
   PPCODE:
     if (value) {
-      s->screen= PerlXlib_sv_to_screen(value, 0);
+      s->screen= PerlXlib_screen_objref_get_pointer(value, PerlXlib_OR_NULL);
       PUSHs(value);
     } else {
-      PUSHs(sv_2mortal(newSVsv(s->screen? PerlXlib_obj_for_screen(s->screen) : &PL_sv_undef)));
+      PUSHs(sv_2mortal(newSVsv(PerlXlib_get_screen_objref(s->screen, PerlXlib_OR_UNDEF))));
     }
 
 void
@@ -3860,14 +3824,14 @@ visual(self, value=NULL)
            self, 0, "X11::Xlib::XWindowAttributes", sizeof(XWindowAttributes),
            (PerlXlib_struct_pack_fn*) &PerlXlib_XWindowAttributes_pack
          );
-         SV *dpy_sv= PerlXlib_get_displayobj_of_opaque(SvRV(self));
-         Display *dpy= PerlXlib_get_magic_dpy(dpy_sv,0);
+         SV *dpy_sv= PerlXlib_objref_get_display(self);
+         Display *dpy= PerlXlib_display_objref_get_pointer(dpy_sv, PerlXlib_OR_NULL);
   PPCODE:
     if (value) {
-      s->visual= (Visual *) PerlXlib_sv_to_display_innerptr(value, 0);
+      s->visual= (Visual *) PerlXlib_objref_get_pointer(value, "Visual", PerlXlib_OR_NULL);
       PUSHs(value);
     } else {
-      PUSHs(sv_2mortal(newSVsv(s->visual? PerlXlib_obj_for_display_innerptr(dpy, s->visual, "X11::Xlib::Visual", SVt_PVMG, 1) : &PL_sv_undef)));
+      PUSHs(sv_mortalcopy(PerlXlib_get_objref(s->visual, PerlXlib_AUTOCREATE, "Visual", SVt_PVMG, "X11::Xlib::Visual", dpy)));
     }
 
 void

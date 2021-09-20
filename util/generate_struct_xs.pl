@@ -8,7 +8,9 @@ my $goal= shift
   or print <<'END';
 
 Usage:
-  generate_struct_xs.pl XEvent < /usr/include/X11/Xlib.h
+  generate_struct_xs.pl NameOfStruct < /usr/include/X11/Xlib.h
+
+(Note that XEvent requires lots of special cases in generate_xevent_xs.pl)
 
 END
 
@@ -82,7 +84,9 @@ sub normalize_type {
     my $f= shift;
     my @parts= grep{ !($_ =~ /const|static|volatile/) } @$f;
     if (grep { ref $_ } @parts) {
-        @parts == 1 or warn "Ignoring ".join(' ',@parts).' because it is too complicated';
+        @parts == 1 or warn "Ignoring "
+                .join(' ', map { ref $_? "$_->{container_type} $_->{container_name}" : $_ } @parts)
+                .' because it is too complicated';
         return $parts[0] if @parts == 1;
     } else {
         return join ' ', @parts;
@@ -161,28 +165,31 @@ sub sv_read {
     return "$access= SvIV($svname);" if $int_types{$type};
     return "$access= SvUV($svname);" if $unsigned_types{$type};
     return "$access= PerlXlib_sv_to_xid($svname);" if $xid_types{$type};
-    return "$access= PerlXlib_sv_to_display($svname, 0);" if $type eq 'Display *';
-    return "$access= PerlXlib_sv_to_screen($svname, 0);" if $type eq 'Screen *';
-    return "$access= ($type) PerlXlib_sv_to_display_innerptr($svname, 0);" if $type eq 'Visual *';
+    return qq{$access= PerlXlib_display_objref_get_pointer($svname, PerlXlib_OR_NULL);} if $type eq 'Display *';
+    return qq{$access= PerlXlib_screen_objref_get_pointer($svname, PerlXlib_OR_NULL);} if $type eq 'Screen *';
+    return qq{$access= ($type) PerlXlib_objref_get_pointer($svname, "Visual", PerlXlib_OR_NULL);} if $type eq 'Visual *';
     return "{"
         ." if (!SvPOK($svname) || SvCUR($svname) != sizeof($1)*$2)"
         .'  croak("Expected scalar of length %ld but got %ld",'." (long)(sizeof($1)*$2), (long)SvCUR($svname));"
         ." memcpy($access, SvPVX($svname), sizeof($1)*$2);"
         ."}" if $type =~ /^(\w+) \[ (\d+) \]$/;
-    die "Don't know how to read $type from an SV";
+    return "if (SvOK($svname)){ warn(\"Cowardly refusing to pack a pointer into $access\"): }\n$access= NULL;"
+        if $access =~ /cookie\.data$/;
+    die "Don't know how to read $type from an SV ($access = $svname)";
 }
 sub sv_create {
     my ($type, $value)= @_;
     return "newSViv($value)" if $int_types{$type};
     return "newSVuv($value)" if $unsigned_types{$type} or $xid_types{$type};
-    return "newSVsv($value? PerlXlib_obj_for_display($value, 0) : &PL_sv_undef)" if $type eq 'Display *';
-    return "newSVsv($value? PerlXlib_obj_for_screen($value) : &PL_sv_undef)" if $type eq 'Screen *';
-    return "newSVsv($value? PerlXlib_obj_for_display_innerptr(dpy, $value, \"X11::Xlib::Visual\", SVt_PVMG, 1)"
-        ." : &PL_sv_undef)" if $type eq 'Visual *';
+    return "newSVsv(PerlXlib_get_display_objref($value, PerlXlib_OR_UNDEF))" if $type eq 'Display *';
+    return "newSVsv(PerlXlib_get_screen_objref($value, PerlXlib_OR_UNDEF))" if $type eq 'Screen *';
+    return qq{newSVsv(PerlXlib_get_objref($value, PerlXlib_AUTOCREATE, "Visual", SVt_PVMG, "X11::Xlib::Visual", dpy))}
+        if $type eq 'Visual *';
     #return "($value? sv_setref_pv(newSV(0), \"X11::Xlib::$1\", (void*) $value) : &PL_sv_undef)"
     #    if $type =~ /^(\w+) \*$/;
     return "newSVpvn((void*)$value, sizeof($1)*$2)"
         if $type =~ /^(\w+) \[ (\d+) \]$/;
+    return "newSVuv(PTR2UV($value))" if $type eq 'void *';
     die "Don't know how to create SV from $type";
 }
 
@@ -198,8 +205,8 @@ sub generate_xs_accessor {
            self, 0, \"X11::Xlib::$goal\", sizeof($goal),
            (PerlXlib_struct_pack_fn*) &PerlXlib_${goal}_pack
          );
-         SV *dpy_sv= PerlXlib_get_displayobj_of_opaque(SvRV(self));
-         Display *dpy= PerlXlib_get_magic_dpy(dpy_sv,0);"
+         SV *dpy_sv= PerlXlib_objref_get_display(self);
+         Display *dpy= PerlXlib_display_objref_get_pointer(dpy_sv, PerlXlib_OR_NULL);"
         : "$goal *s= self;";
     return <<"@";
 void
@@ -261,8 +268,8 @@ void PerlXlib_${goal}_unpack_obj($goal *s, HV *fields, SV *obj_ref) {
         } elsif ($members{screen} && $members{screen}{c_type} =~ /Screen/) {
             $c .= "    Display *dpy= s->screen? DisplayOfScreen(s->screen) : NULL;\n";
         } else {
-            $c .= "    SV *dpy_sv= obj_ref && SvROK(obj_ref)? PerlXlib_get_displayobj_of_opaque((void*)SvRV(obj_ref)) : NULL;\n";
-            $c .= "    Display *dpy= dpy_sv && SvROK(dpy_sv)? PerlXlib_get_magic_dpy(dpy_sv, 0) : NULL;\n";
+            $c .= "    SV *dpy_sv= PerlXlib_objref_get_display(obj_ref);\n";
+            $c .= "    Display *dpy= PerlXlib_display_objref_get_pointer(dpy_sv, PerlXlib_OR_NULL);\n";
         }
     }
 
