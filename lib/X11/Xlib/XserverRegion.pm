@@ -5,7 +5,7 @@ use Carp;
 use parent 'X11::Xlib::XID';
 
 # All modules in dist share a version
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 sub DESTROY {
     my $self= shift;

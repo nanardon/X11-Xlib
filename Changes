@@ -1,6 +1,6 @@
 Revision history for Perl extension X11::Xlib.
 
-0.21 - 2021-10-09
+0.22 - 2021-10-09
     - New Atom API $conn->atom(@list), $conn->mkatom(@list) returns dualvars
       that are both the number and the atom name.
     - Fix bug in XGetWindowProperty/XChangeProperty on 64-bit platforms

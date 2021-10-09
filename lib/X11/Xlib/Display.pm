@@ -6,7 +6,7 @@ use Scalar::Util;
 use Carp;
 
 # All modules in dist share a version
-our $VERSION = '0.21';
+our $VERSION = '0.22';
 
 require X11::Xlib::Screen;
 require X11::Xlib::Colormap;
