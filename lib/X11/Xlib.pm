@@ -8,7 +8,7 @@ use base qw(Exporter DynaLoader);
 use Carp;
 use Try::Tiny;
 
-our $VERSION = '0.20';
+our $VERSION = '0.21';
 
 sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
 
@@ -1631,7 +1631,7 @@ Ethan Straffin <ethanstraffin@gmail.com>
 
 Copyright (C) 2009-2010 by Olivier Thauvin
 
-Copyright (C) 2017-2020 by Michael Conrad
+Copyright (C) 2017-2021 by Michael Conrad
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,
