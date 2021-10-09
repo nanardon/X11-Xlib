@@ -225,7 +225,9 @@ static struct PerlXlib_fields* PerlXlib_get_magic_fields(SV *sv, int create_flag
 extern SV * PerlXlib_get_objref(void *thing, int create_flag,
     const char *thing_type, int svtype, const char *thing_class, void *parent
 ) {
-    HV *cache;
+    HV *cache, *pkg;
+    GV *build_method;
+    AV *isa;
     SV **ent, *ret, *parent_objref;
     struct PerlXlib_fields *f, *parent_fields;
 
@@ -245,6 +247,7 @@ extern SV * PerlXlib_get_objref(void *thing, int create_flag,
         croak("No such reference");
     
     /* Doesn't exist.  Create a new one. */
+    pkg= gv_stashpv(thing_class, GV_ADD);
     if (svtype == SVt_PVMG) {
         /* return value is a new mortal RV pointing to a PV blessed as thing_class,
           * and the PV points to thing.
@@ -256,14 +259,14 @@ extern SV * PerlXlib_get_objref(void *thing, int create_flag,
           * and with "dpy_innerptr" magic attached holding the pointer to thing.
           */
         ret= sv_2mortal(newRV_noinc((SV*) newHV()));
-        sv_bless(ret, gv_stashpv(thing_class, GV_ADD));
+        sv_bless(ret, pkg);
     }
     else if (svtype == SVt_PVAV) {
         /* return value is a new mortal RV pointing to a AV blessed as thing_class,
           * and with "dpy_innerptr" magic attached holding the pointer to thing.
           */
         ret= sv_2mortal(newRV_noinc((SV*) newAV()));
-        sv_bless(ret, gv_stashpv(thing_class, GV_ADD));
+        sv_bless(ret, pkg);
     }
     else
         croak("Unsupported svtype in PerlXlib_get_obj_for_ptr");
@@ -280,6 +283,19 @@ extern SV * PerlXlib_get_objref(void *thing, int create_flag,
         /* If the parent is a Display, also reference it as the ->display attribute */
         if (parent_fields->ptr_type == T_DISPLAY)
             f->display_sv= newRV_inc(parent_fields->self);
+    }
+    /* Call the 'BUILD' method of the package, if any */
+    if ((build_method= gv_fetchmeth(pkg, "BUILD", 5, 0)) && GvCV(build_method)) {
+        dSP;
+        ENTER;
+        SAVETMPS;
+        PUSHMARK(SP);
+        EXTEND(SP, 1);
+        PUSHs(sv_mortalcopy(ret));
+        PUTBACK;
+        call_sv((SV*) GvCV(build_method), G_DISCARD);
+        FREETMPS;
+        LEAVE;
     }
     return ret;
 }
