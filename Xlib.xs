@@ -195,7 +195,7 @@ _set_pointer_value(obj, dpy_val)
     SV *dpy_val
     PPCODE:
         if (SvOK(dpy_val) && (!SvPOK(dpy_val) || SvCUR(dpy_val) != sizeof(Display*)))
-            croak("Invalid pointer value (should be scalar of %d bytes)", sizeof(Display*));
+            croak("Invalid pointer value (should be scalar of %d bytes)", (int) sizeof(Display*));
         PerlXlib_objref_set_pointer(obj, SvOK(dpy_val)? (Display*)(void*)SvPVX(dpy_val) : NULL, "Display");
 
 char *
@@ -975,7 +975,7 @@ XChangeProperty(dpy, wnd, prop_atom, type, format, mode, data, nelements)
             croak("Un-handled 'format' value %d passed to XChangeProperty", format);
         buffer= SvPV(data, svlen);
         if (bytelen > svlen)
-            croak("'nelements' (%d) exceeds length of data (%d)", nelements, svlen);
+            croak("'nelements' (%d) exceeds length of data (%d)", (int) nelements, (int) svlen);
         XChangeProperty(dpy, wnd, prop_atom, type, format, mode, buffer, nelements);
 
 void
@@ -1587,7 +1587,7 @@ load_keymap(dpy, symbolic=2, minkey=0, maxkey=255)
                     sv= PerlXlib_keysym_to_sv(syms[i*nsym+j], symbolic);
                     if (!sv) {
                         XFree(syms);
-                        croak("Your keymap includes KeySym 0x%x that can't be un-ambiguously represented by a string", syms[i*nsym+j]);
+                        croak("Your keymap includes KeySym 0x%x that can't be un-ambiguously represented by a string", (unsigned) syms[i*nsym+j]);
                     }
                     av_store(row, j, sv);
                 }

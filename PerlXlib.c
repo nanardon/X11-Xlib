@@ -155,13 +155,13 @@ static void PerlXlib_fields_free(struct PerlXlib_fields *fields) {
 /*------------------------------------------------------------------------------------
  * This defines the "Magic" that perl attaches to a scalar.
  */
-static int PerlXlib_magic_free(SV* sv, MAGIC* mg) {
+static int PerlXlib_magic_free(pTHX_ SV* sv, MAGIC* mg) {
     if (mg->mg_ptr)
         PerlXlib_fields_free((struct PerlXlib_fields*) mg->mg_ptr);
     return 0; // ignored anyway
 }
 #ifdef USE_ITHREADS
-static int PerlXlib_magic_dup(MAGIC *mg, CLONE_PARAMS *param) {
+static int PerlXlib_magic_dup(pTHX_ MAGIC *mg, CLONE_PARAMS *param) {
     croak("This object cannot be shared between threads");
     return 0;
 };
@@ -511,9 +511,9 @@ void PerlXlib_sanity_check_data_structures() {
     for (hv_iterinit(dpys); (dpy_he= hv_iternext(dpys)); ) {
         dpy_sv= hv_iterval(dpys, dpy_he);
         /* SV refcnt should be exactly 1, and should be weakref.  Ref'd object should have >1 refcnt */
-        if (SvREFCNT(dpy_sv) != 1) croak("Refcnt of %_connections member is %d", SvREFCNT(dpy_sv));
-        if (!SvROK(dpy_sv) || !SvWEAKREF(dpy_sv)) croak("%_connections member is not a weakref");
-        if (!sv_derived_from(dpy_sv, "X11::Xlib")) croak("%_connections contains non-X11::Xlib object");
+        if (SvREFCNT(dpy_sv) != 1) croak("Refcnt of %%_connections member is %d", SvREFCNT(dpy_sv));
+        if (!SvROK(dpy_sv) || !SvWEAKREF(dpy_sv)) croak("%%_connections member is not a weakref");
+        if (!sv_derived_from(dpy_sv, "X11::Xlib")) croak("%%_connections contains non-X11::Xlib object");
         dpy= PerlXlib_display_objref_get_pointer(dpy_sv, OR_DIE);
         /* Check each of the objects in the $dpy->{_obj_cache} */
         elem= hv_fetch((HV*)SvRV(dpy_sv), "_obj_cache", 10, 0);
@@ -571,7 +571,7 @@ void PerlXlib_sanity_check_data_structures() {
  */
 void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_size, PerlXlib_struct_pack_fn *packer) {
     SV *tmp, *refsv= NULL;
-    void* buf;
+    char* buf;
     size_t n;
 
     if (SvROK(sv)) {
@@ -583,7 +583,7 @@ void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_si
             if (sv_isobject(refsv) && !sv_isa(refsv, pkg)) {
                 if (!sv_derived_from(refsv, lvalue? "X11::Xlib::Struct" : pkg)) {
                     buf= SvPV(refsv, n);
-                    croak("Can't coerce %.*s to %s %s", n, buf, pkg, lvalue? "lvalue":"rvalue");
+                    croak("Can't coerce %.*s to %s %s", (int) n, buf, pkg, lvalue? "lvalue":"rvalue");
                 }
             }
         }
@@ -601,7 +601,7 @@ void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_si
         }
         else if (SvTYPE(sv) >= SVt_PVAV) { /* not a scalar */
             buf= SvPV(refsv, n);
-            croak("Can't coerce %.*s to %s %s", n, buf, pkg, lvalue? "lvalue":"rvalue");
+            croak("Can't coerce %.*s to %s %s", (int) n, buf, pkg, lvalue? "lvalue":"rvalue");
         }
     }
     
@@ -622,7 +622,7 @@ void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_si
     else if (!SvPOK(sv))
         croak("Paramters requiring %s can only be coerced from string, string ref, hashref, or undef", pkg);
     else if (SvCUR(sv) < struct_size)
-        croak("Scalars used as %s must be at least length %d (got %d)", pkg, struct_size, SvCUR(sv));
+        croak("Scalars used as %s must be at least length %d (got %d)", pkg, (int) struct_size, (int) SvCUR(sv));
     /* Make sure we have the padding even if the user tinkered with the buffer */
     SvPV_force(sv, n);
     SvGROW(sv, struct_size+X11_Xlib_Struct_Padding);
