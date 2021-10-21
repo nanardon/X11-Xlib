@@ -45,7 +45,10 @@ sub connection_fh {
 
    for (0 .. $display->screen_count - 1) { ... }
 
-Number of screens available on this display.
+Number of screens available on this display.  Note that this is an antiquated
+concept of a "screen" and is always C<1> on modern desktop systems, no matter
+how many monitors you have connected.  Adding support for the xrandr extension
+is a TODO.
 
 =head2 screen
 
@@ -264,7 +267,7 @@ sub fake_key    { shift->XTestFakeKeyEvent(@_) }
   say $_ for $display->atom(1..50);
 
 This is a wrapper around L<XInternAtom|X11::Xlib/XInternAtom> and
-L<XGetAtomName|X11::Xlib/XGetAtomName> which operates on lits and returns
+L<XGetAtomName|X11::Xlib/XGetAtomName> which operates on lists and returns
 L<dualvar values|Scalar::Util/dualvar> that show a helpful string for debugging but still
 work in numeric contexts.  It only finds existing atoms, returning C<undef> for each element
 that was not found.
@@ -448,7 +451,7 @@ sub XCreateColormap {
   my $pix= $display->new_pixmap($drawable, $width, $height, $color_depth);
 
 Create a new L<Pixmap|X11::Xlib/Pixmap> on the server, and wrap it with a
-L<X11::Xlib::Pixmap> object to track its lifespan.  If the object does
+L<X11::Xlib::Pixmap> object to track its lifespan.  If the object goes
 out of scope it calls L<XFreePixmap|X11::Xlib/XFreePixmap>.
 
 C<$drawable>'s only purpose is to determine which screen to use, and so it
