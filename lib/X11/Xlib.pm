@@ -8,7 +8,7 @@ use base qw(Exporter DynaLoader);
 use Carp;
 use Try::Tiny;
 
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
 

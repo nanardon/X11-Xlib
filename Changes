@@ -1,5 +1,8 @@
 Revision history for Perl extension X11::Xlib.
 
+0.23 - 2021-10-21
+    - Fix bugs when compiled for threaded perl
+
 0.22 - 2021-10-09
     - New Atom API $conn->atom(@list), $conn->mkatom(@list) returns dualvars
       that are both the number and the atom name.

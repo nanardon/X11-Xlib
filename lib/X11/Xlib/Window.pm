@@ -4,7 +4,7 @@ use warnings;
 use parent 'X11::Xlib::XID';
 
 # All modules in dist share a version
-our $VERSION = '0.22';
+our $VERSION = '0.23';
 
 =head1 NAME
 
