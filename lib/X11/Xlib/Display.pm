@@ -232,6 +232,30 @@ sub flush              { shift->XFlush }
 sub flush_sync         { shift->XSync }
 sub flush_sync_discard { shift->XSync(1) }
 
+=head3 warp_pointer
+
+  $display->warp_pointer($dest_win, $dest_x, $dest_y);
+  $display->warp_pointer($dest_win, $dest_x, $dest_y, $src_win, $src_rect);
+
+Move the pointer to C<< ($dest_x,$dest_y) >> relative to C<$dest_win>, or relative to current
+position if C<$dest_win> is undef.  If the C<$src_> parameters are defined, the operation only
+proceeds if the pointer is currently within that rectangle of the source window.  If the width
+or height of the rectangle are zero, they are treated as the remaining width/height of the
+window beyond the (x,y).
+
+C<$src_rect> can be given as C<< [ $x, $y, $width, $height ] >> or an object with those
+attributes, such as L<X11::Xlib::XRectangle>.
+
+=cut
+
+sub warp_pointer {
+    my ($self, $dest_win, $dest_x, $dest_y, $src_win, $src_rect)= @_;
+    my ($src_x, $src_y, $src_width, $src_height)= !defined $src_rect? (0,0,0,0)
+        : ref $src_rect eq 'ARRAY'? @$src_rect
+        : ($src_rect->x, $src_rect->y, $src_rect->width, $src_rect->height);
+    X11::Xlib::XWarpPointer($self, $src_win, $dest_win, $src_x, $src_y, $src_width, $src_height, $dest_x, $dest_y);
+}
+
 =head3 fake_motion
 
   $display->fake_motion($screen, $x, $y, $send_delay = 10);
