@@ -10,14 +10,17 @@ my $ver_str= $1;
 for (<lib/X11/Xlib/*.pm>) {
     open my $src_fh, '+<', $_;
     my $src= do { local $/; <$src_fh> };
-    if ($src =~ s/our \$VERSION *= *([^;]+);/our \$VERSION = $ver_str;/) {
+    my $changed= 0;
+    $src =~ s/our \$VERSION *= *([^;]+);/our \$VERSION = $ver_str;/
+        and $changed= 1 or warn "$_ does not have a \$VERSION\n";
+    my $year= (localtime)[5] + 1900;
+    $src =~ s/Copyright \(C\) 2017-(?!$year)\d+/Copyright (C) 2017-$year/
+        and $changed= 1 or warn "$_ does not have a Copyright\n";
+    if ($changed) {
         seek $src_fh, 0, 0;
         truncate $src_fh, 0;
         print $src_fh $src;
         close $src_fh;
-    }
-    else {
-        warn "$_ does not have a \$VERSION\n";
     }
 }
 
