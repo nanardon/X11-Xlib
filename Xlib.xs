@@ -1471,8 +1471,8 @@ XUngrabPointer(dpy, timestamp)
 int
 XWarpPointer(dpy, wnd, dest_w, src_x, src_y, src_width, src_height, dest_x, dest_y)
     Display *dpy
-    Window wnd
-    Window dest_w
+    WindowOrNull wnd
+    WindowOrNull dest_w
     int src_x
     int src_y
     unsigned int src_width
