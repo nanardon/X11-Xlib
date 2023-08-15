@@ -77,7 +77,7 @@ my %_functions= (
     )],
   fn_input => [qw( XAllowEvents XBell XGrabButton XGrabKey XGrabKeyboard
     XGrabPointer XQueryKeymap XQueryPointer XSetInputFocus XUngrabButton
-    XUngrabKey XUngrabKeyboard XUngrabPointer keyboard_leds )],
+    XUngrabKey XUngrabKeyboard XUngrabPointer XWarpPointer keyboard_leds )],
   fn_keymap => [qw( XDisplayKeycodes XGetKeyboardMapping XGetModifierMapping
     XKeysymToKeycode XLookupString XRefreshKeyboardMapping XSetModifierMapping
     load_keymap save_keymap )],
@@ -1233,6 +1233,14 @@ Cancel a grab registered by L</XGrabKey>.
 =head3 XUngrabButton
 
   XUngrabButton($display, $button, $modifiers, $window)
+
+=head3 XWarpPointer
+
+  XWarpPointer($display, $src_win, $dest_win, $src_x, $src_y, $src_width, $src_height, $dest_x, $dest_y)
+
+Move pointer to C<$dest_win> C<< ($dest_x, $dest_y) >>, or relative to current position if
+C<$dest_win> is undefined.  If the C<$src_*> parameters are defined, the move only occurs if
+the cursor is currently within that rectangle of that window.
 
 =head3 XAllowEvents
 
