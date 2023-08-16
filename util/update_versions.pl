@@ -15,7 +15,9 @@ for (<lib/X11/Xlib/*.pm>) {
         and $changed= 1 or warn "$_ does not have a \$VERSION\n";
     my $year= (localtime)[5] + 1900;
     $src =~ s/Copyright \(C\) 2017-(?!$year)\d+/Copyright (C) 2017-$year/
-        and $changed= 1 or warn "$_ does not have a Copyright\n";
+        and $changed= 1;
+    $src =~ /Copyright \(C\) 2017-$year/
+        or warn "$_ does not have a Copyright\n";
     if ($changed) {
         seek $src_fh, 0, 0;
         truncate $src_fh, 0;

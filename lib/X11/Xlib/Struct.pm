@@ -4,7 +4,7 @@ use warnings;
 use X11::Xlib ();
 use Carp ();
 
-our $VERSION = '0.23';
+our $VERSION = '0.24';
 
 =head1 NAME
 

@@ -8,7 +8,7 @@ use base qw(Exporter DynaLoader);
 use Carp;
 use Try::Tiny;
 
-our $VERSION = '0.23';
+our $VERSION = '0.24';
 
 sub dl_load_flags { 1 } # Make PerlXLib.c functions available to other XS modules
 
@@ -210,7 +210,7 @@ sub _mark_dead {
     # depend on the connection (which Xlib has now freed) and sets them all to NULL.
     # That, in turn, removes them all from the _obj_cache
     $self->_set_pointer_value(undef);
-    # The Display* still exists, so we should still allow finding this object vy looking up that pointer
+    # The Display* still exists, so we should still allow finding this object by looking up that pointer
     $self->{_pointer_value}= $pointer_value;
     Scalar::Util::weaken( $_obj_cache{$pointer_value}= $self );
 }
@@ -1633,13 +1633,17 @@ Paul Seyfert <pseyfert.mathphys@gmail.com>
 
 Ethan Straffin <ethanstraffin@gmail.com>
 
+=item *
+
+Sergei Zhmylev <zhmylove@cpan.org>
+
 =back
 
 =head1 COPYRIGHT AND LICENSE
 
 Copyright (C) 2009-2010 by Olivier Thauvin
 
-Copyright (C) 2017-2021 by Michael Conrad
+Copyright (C) 2017-2023 by Michael Conrad
 
 This library is free software; you can redistribute it and/or modify
 it under the same terms as Perl itself, either Perl version 5.10.0 or,
