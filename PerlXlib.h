@@ -16,7 +16,7 @@ typedef int ScreenNumber; /* used by typemap to coerce X11::Xlib::Screen */
 
 /* lookup or create a wrapper around a pointer */
 extern SV * PerlXlib_get_objref(void *thing, int create_flag,
-    const char *thing_type, int svtype, const char *thing_class, void *parent);
+    const char *thing_type, int xlib_svtype, const char *thing_class, void *parent);
 /* get the pointer wrapped by an object */
 extern void * PerlXlib_objref_get_pointer(SV *objref, const char *ptr_type, int fail_flag);
 /* set the pointer wrapped by an object */
@@ -122,7 +122,7 @@ extern Display * PerlXlib_get_magic_dpy(SV *sv, Bool not_null);
 extern SV * PerlXlib_set_magic_dpy(SV *sv, Display *dpy);
 extern SV * PerlXlib_obj_for_display(Display *dpy, int create);
 extern void * PerlXlib_sv_to_display_innerptr(SV *sv, bool not_null);
-extern SV * PerlXlib_obj_for_display_innerptr(Display *dpy, void *thing, const char *thing_class, int svtype, bool create);
+extern SV * PerlXlib_obj_for_display_innerptr(Display *dpy, void *thing, const char *thing_class, int xlib_svtype, bool create);
 extern void * PerlXlib_get_magic_dpy_innerptr(SV *sv, Bool not_null);
 extern SV * PerlXlib_set_magic_dpy_innerptr(SV *sv, void *innerptr);
 extern SV * PerlXlib_get_displayobj_of_opaque(void *thing);

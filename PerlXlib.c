@@ -218,12 +218,12 @@ static struct PerlXlib_fields* PerlXlib_get_magic_fields(SV *sv, int create_flag
 /* This gets a cached object known to wrap the C-level pointer 'thing'.
  * If 'thing' is NULL, this always returns NULL regardless of create_flag.
  * If one does not exist and 'create' is requested, this will create a new wrapper
- * object of the given svtype blessed as thing_class, and optionally listing it as
- * a dependency of 'parent'.
+ * object of the given xlib_svtype blessed as thing_class, and optionally listing
+ * it as a dependency of 'parent'.
  * Returns a mortal reference to the object.
  */
 extern SV * PerlXlib_get_objref(void *thing, int create_flag,
-    const char *thing_type, int svtype, const char *thing_class, void *parent
+    const char *thing_type, int xlib_svtype, const char *thing_class, void *parent
 ) {
     HV *cache, *pkg;
     GV *build_method;
@@ -248,20 +248,20 @@ extern SV * PerlXlib_get_objref(void *thing, int create_flag,
     
     /* Doesn't exist.  Create a new one. */
     pkg= gv_stashpv(thing_class, GV_ADD);
-    if (svtype == SVt_PVMG) {
+    if (xlib_svtype == SVt_PVMG) {
         /* return value is a new mortal RV pointing to a PV blessed as thing_class,
           * and the PV points to thing.
           */
         ret= sv_setref_pv(sv_newmortal(), thing_class, thing);
     }
-    else if (svtype == SVt_PVHV) {
+    else if (xlib_svtype == SVt_PVHV) {
         /* return value is a new mortal RV pointing to a HV blessed as thing_class,
           * and with "dpy_innerptr" magic attached holding the pointer to thing.
           */
         ret= sv_2mortal(newRV_noinc((SV*) newHV()));
         sv_bless(ret, pkg);
     }
-    else if (svtype == SVt_PVAV) {
+    else if (xlib_svtype == SVt_PVAV) {
         /* return value is a new mortal RV pointing to a AV blessed as thing_class,
           * and with "dpy_innerptr" magic attached holding the pointer to thing.
           */
@@ -269,7 +269,7 @@ extern SV * PerlXlib_get_objref(void *thing, int create_flag,
         sv_bless(ret, pkg);
     }
     else
-        croak("Unsupported svtype in PerlXlib_get_obj_for_ptr");
+        croak("Unsupported xlib_svtype in PerlXlib_get_obj_for_ptr");
 
     f= PerlXlib_get_magic_fields(SvRV(ret), AUTOCREATE);
     PerlXlib_fields_set_ptr(f, thing, thing_type); /* adds weak-ref to cache */
