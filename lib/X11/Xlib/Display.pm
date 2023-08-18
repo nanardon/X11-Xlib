@@ -317,35 +317,35 @@ L<screen|X11::Xlib::Screen> object:
 
 =over
 
-=item *
+=item root_window
 
 L<root_window|X11::Xlib::Screen/root_window>
 
-=item *
+=item width
 
 L<width|X11::Xlib::Screen/width>
 
-=item *
+=item height
 
 L<height|X11::Xlib::Screen/height>
 
-=item *
+=item width_mm
 
 L<width_mm|X11::Xlib::Screen/width_mm>
 
-=item *
+=item height_mm
 
 L<height_mm|X11::Xlib::Screen/height_mm>
 
-=item *
+=item visual
 
 L<visual|X11::Xlib::Screen/visual>
 
-=item *
+=item depth
 
 L<depth|X11::Xlib::Screen/depth>
 
-=item *
+=item colormap
 
 L<colormap|X11::Xlib::Screen/colormap>
 

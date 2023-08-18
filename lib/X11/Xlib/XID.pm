@@ -46,6 +46,10 @@ Required.  The L<X11::Xlib::Display> where the resource is located.
 
 Required.  The X11 numeric ID for this resource.
 
+=head2 id
+
+This is an alias to L</xid>
+
 =head2 autofree
 
 Whether this object should control the lifespan of the remote resource,
@@ -54,6 +58,10 @@ The default is False, since this base class has no idea how to release
 any resources.
 
 =head1 METHODS
+
+=head2 new
+
+Create a new instance. Attributes L</xid> and L</display> are required.
 
 =head2 summarize
 

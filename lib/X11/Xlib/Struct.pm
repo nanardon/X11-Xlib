@@ -137,6 +137,12 @@ Access the scalar holding the bytes of the struct.
 sub bytes { ${$_[0]} }
 *buffer= *bytes;
 
+=head2 buffer
+
+C<buffer> is an alias tu L</C<bytes>>
+
+=cut
+
 # The struct code is all in XS, so all we need to do is declare the package
 # inheritence.  Except for XEvent, which is complicated.
 
