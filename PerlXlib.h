@@ -26,7 +26,7 @@ extern void PerlXlib_objref_set_pointer(SV *objref, void *pointer, const char *p
 extern SV * PerlXlib_get_display_objref(Display *dpy, int create_flag);
 extern Display * PerlXlib_display_objref_get_pointer(SV *displayref, int fail_flag);
 
-/* un-pack an XID from a wrapped X11::Xlib::XID or subclass */
+/* unpack an XID from a wrapped X11::Xlib::XID or subclass */
 extern XID PerlXlib_sv_to_xid(SV *sv);
 
 /*---------------------------------------------------------
@@ -109,7 +109,7 @@ extern void PerlXlib_XRenderPictFormat_pack(XRenderPictFormat *s, HV *fields, Bo
 extern void PerlXlib_XRenderPictFormat_unpack(XRenderPictFormat *s, HV *fields);
 extern void PerlXlib_XRenderPictFormat_unpack_obj(XRenderPictFormat *s, HV *fields, SV *obj_ref);
 
-/* Keysym/unicode utility functions */
+/* Keysym/Unicode utility functions */
 extern int PerlXlib_keysym_to_codepoint(KeySym keysym);
 extern KeySym PerlXlib_codepoint_to_keysym(int codepoint);
 extern SV * PerlXlib_keysym_to_sv(KeySym keysym, int symbolic);

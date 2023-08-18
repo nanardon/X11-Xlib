@@ -258,7 +258,7 @@ This includes access to some X11 extensions like the X11 test library (Xtst).
 If you import the Xlib functions directly, or call them as methods on an
 instance of X11::Xlib, you get a near-C experience where you are required to
 manage the lifespan of resources, XIDs are integers instead of objects, and the
-library doesn't make any attempt to keep you from passing bad data to Xlib.
+library does not make any attempt to keep you from passing bad data to Xlib.
 
 If you instead create a L<X11::Xlib::Display> object and call all your methods
 on that, you get a more friendly wrapper around Xlib that helps you manage
@@ -299,7 +299,7 @@ global error handlers are invoked.  On a fatal error, all error handlers are
 invoked.
 
 Setting a value for this attribute automatically installs the Xlib error
-handler, which isn't enabled by default.
+handler, which is not enabled by default.
 
 Note that this callback is called from XS context, so your exceptions will
 not travel up the stack.  Also note that on Xlib fatal errors, you cannot
@@ -370,7 +370,7 @@ The L<X11::Xlib::Display> object constructor is recommended instead.
 The C<$connection_string> variable specifies the display string to open.
 (C<"host:display.screen">, or often C<":0"> to connect to the only screen of
 the only display on C<localhost>)
-If unset, Xlib uses the C<$DISPLAY> environement variable.
+If unset, Xlib uses the C<$DISPLAY> environment variable.
 
 If the handle goes out of scope, its destructor calls C<XCloseDisplay>, unless
 you already called C<XCloseDisplay> or the X connection was lost.  (Be sure to
@@ -423,7 +423,7 @@ atom value)
 
 Same as above, but look up multiple atoms at once, for round-trip efficiency.
 The returned array will always be the same length as C<@atom_names>, but will
-have 0 for any atom value that didn't exist if C<$only_existing> was true.
+have 0 for any atom value that did not exist if C<$only_existing> was true.
 
 =head3 XGetAtomName
 
@@ -439,7 +439,7 @@ protocol error (can be caught by C</on_error> handler) and returns undef.
 Same as above, but look up multiple atoms at once, for round-trip efficiency.
 If any atom does not exist, this generates a protocol error, but if you catch
 the error then this function will return an array the same length as
-C<@atom_values> with C<undef> for each atom that didn't exist.
+C<@atom_values> with C<undef> for each atom that did not exist.
 
 =head2 COMMUNICATION FUNCTIONS
 
@@ -497,7 +497,7 @@ event into C<$event_return> and returns true.  Else it returns false without
 blocking.
 
 (Xlib also has another variant that uses a callback to choose which message to
- extract, but I didn't implement that because it seemed like a pain and probably
+ extract, but I did not implement that because it seemed like a pain and probably
  nobody would use it.)
 
 =head3 XSendEvent
@@ -505,7 +505,7 @@ blocking.
   XSendEvent($display, $window, $propagate, $event_mask, $xevent)
     or die "Xlib hates us";
 
-Send an XEvent to the server, to be redispatched however appropriate.
+Send an XEvent to the server, to be re-dispatched however appropriate.
 
 =head3 XPutBackEvent
 
@@ -520,7 +520,7 @@ since it returns void.
   XFlush($display)
 
 Push any queued messages to the X11 server.  Some Xlib calls perform an
-implied flush of the queue, while others don't.  If you're wondering why
+implied flush of the queue, while others don't.  If you are wondering why
 nothing happened when you called an XTest function, this is why.
 
 =head3 XSync
@@ -594,7 +594,7 @@ Return number of configured L</Screen>s of this display.
   # use instead of WidthOfScreen, HeightOfScreen
 
 Return the width or height of screen number C<$screen>.  You can omit the
-C<$screen> paramter to use the default screen of your L<Display> connection.
+C<$screen> parameter to use the default screen of your L<Display> connection.
 
 =head3 DisplayWidthMM
 
@@ -715,7 +715,7 @@ If anyone actually needs palette graphics anymore, send me a patch :-)
 
 The C<$drawable> parameter is just used to determine the screen.
 You probably want to pass either C<DefaultRootWindow($display)> or the window
-you're creating the pixmap for.
+you are creating the pixmap for.
 
 =head3 XFreePixmap
 
@@ -732,7 +732,7 @@ The C<$data> is a string of bytes.
 
 The C<$data> should technically be opaque, written by another X11 function
 after having rendering graphics to a pixmap or something, but since those
-aren't implemented here yet, you'll just have to know the format.
+are not implemented here yet, you'll just have to know the format.
 
 =head3 XCreatePixmapFromBitmapData
 
@@ -769,14 +769,14 @@ an attribute C<< ->visual >>).  In the second case, you should also pass
 C<< $visual_info->depth >> as the C<$depth> parameter, and create a matching
 L</Colormap> which you pass via the C<\%attrs> parameter.
 
-Since this function didn't have nearly enough parameters for the imaginations
+Since this function did not have nearly enough parameters for the imaginations
 of the Xlib creators, they added the full L<X11::Xlib::XSetWindowAttributes> structure
 as a final argument.  But to save you the trouble of setting all I<those>
 fields, they added an C<$attr_mask> to indicate which fields you are using.
 Simply OR together the constants listed in that struct.  If C<$attr_mask> is
 zero, then C<\%attrs> may be C<undef>.
 
-The window is initially un-mapped (i.e. hidden).  See L</XMapWindow>
+The window is initially unmapped (i.e. hidden).  See L</XMapWindow>
 
 =head3 XCreateSimpleWindow
 
@@ -799,7 +799,7 @@ Ask the X server to show a window.  This call is asynchronous and you should cal
 L</XFlush> if you want it to appear immediately.  The window will only appear if
 the parent window is also mapped.  The server sends back a MapNotify event if
 the Window event mask allows it, and if a variety of other conditions are met.
-It's really pretty complicated and you should read the offical docs.
+It's really pretty complicated and you should read the official docs.
 
 =head3 XUnmapWindow
 
@@ -976,7 +976,7 @@ is a scalar that must be at least as long as C<$nitems> * C<$format> bits.
   XDeleteProperty($display, $window, $prop_atom);
 
 Deletes the property from the window if it exists.  No error is raised if it
-doesn't exist.
+does not exist.
 
 =head3 XGetWMProtocols
 
@@ -1005,7 +1005,7 @@ For example, to advertise support for standard "close" events:
 
 If a window has Window Manager Normal Hints defined on it, this function will
 store them into the C<$hints_out> variable (which will become a L<X11::Xlib::XSizeHints>
-if it wasn't already).  It will also set the bits of C<$supplied_fields_out> to
+if it was not already).  It will also set the bits of C<$supplied_fields_out> to
 indicate which fields the X11 server knows about.  This is different from the
 bits in C<< $hints_out->flags >> that indicate which individual fields are defined
 for this window.
@@ -1051,7 +1051,7 @@ before sending the event. The default is 10 milliseconds.
 Simulate an action on mouse button number C<$button>. C<$pressed> indicates whether
 the button should be pressed (true) or released (false). 
 
-The optional C<$EventSendDelay> parameter specifies the number of milliseconds ro wait
+The optional C<$EventSendDelay> parameter specifies the number of milliseconds to wait
 before sending the event. The default is 10 milliseconds.
 
 =head3 XTestFakeKeyEvent
@@ -1093,9 +1093,9 @@ C<XStringToKeysym> is the reverse of C<XKeysymToString>.
 
   my $keysym= codepoint_to_keysym(ord($char));
 
-Convert a Unicode codepoint to a KeySym value.  This isn't a true Xlib
-function, but fills a gap in the API since Xlib is pretty weak on unicode
-handling.  Every normal unicode codepoint has a keysym value, but if you
+Convert a Unicode codepoint to a KeySym value.  This is not a true Xlib
+function, but fills a gap in the API since Xlib is pretty weak on Unicode
+handling.  Every normal Unicode codepoint has a keysym value, but if you
 pass an invalid codepoint you will get C<undef>.
 
 =head3 keysym_to_codepoint
@@ -1103,14 +1103,14 @@ pass an invalid codepoint you will get C<undef>.
   my $cp= keysym_to_codepoint($keysym);
   my $char= defined $cp? chr($cp) : undef;
 
-Convert a KeySym to a unicode codepoint.  Many KeySyms (like F1, Control, etc)
+Convert a KeySym to a Unicode codepoint.  Many KeySyms (like F1, Control, etc)
 do not have any character associated with them, and will return C<undef>.
 Again, not actually part of Xlib, but provided here for convenience.
 
 =head3 char_to_keysym
 
 Like L</codepoint_to_keysym> example above, but takes a string from which it
-calls L<ord()> on the first character.  Returns undef if the string doesn't
+calls L<ord()> on the first character.  Returns undef if the string does not
 have a first character.
 
 =head3 keysym_to_char
@@ -1175,7 +1175,7 @@ C<$wnd_focus> can be None to discard all keyboard input until a new window is
 focused, or PointerRoot to actively track the root window of whatever screen
 the pointer moves to.
 
-Once the target window becomes un-viewable, the C<$revert_to> setting takes
+Once the target window becomes unviewable, the C<$revert_to> setting takes
 effect, and can be C<RevertToParent>, C<RevertToPointerRoot>, or C<RevertToNone>.
 
 =head3 XQueryKeymap
@@ -1188,7 +1188,7 @@ Return a list of the key codes currently pressed on the keyboard.
 
   $bool= XGrabKeyboard($display, $window, $owner_events, $pointer_mode, $keyboard_mode, $timestamp)
 
-Direct foxus to the specified window.  See X11 docs.
+Direct focus to the specified window.  See X11 docs.
 
 =head3 XUngrabKeyboard
 
@@ -1290,12 +1290,12 @@ access, see L<X11::Xlib::Keymap>.
   my $keymap= load_keymap($display); # all keys, symbolic=2
 
 This is a wrapper around L</XGetKeyboardMapping> which returns an arrayref
-of arrayrefs, and also translates KeySym values into KeySym names or unicode
+of arrayrefs, and also translates KeySym values into KeySym names or Unicode
 characters.  If C<$symbolic> is 0, the elements of the arrays are KeySym numbers.
 If C<$symbolic> is 1, the elements are the KeySym name (or integers, if a name
 is not available).
 If C<$symbolic> is 2, the elements are characters for every KeySym that can be
-un-ambiguously represented by a character, else KeySym names, else integers.
+unambiguously represented by a character, else KeySym names, else integers.
 
 The minimum KeyCode of an X server is never below 8.  If you omit C<$min_key>
 it defaults to 0, and so the returned array will always have at least 8 undef
@@ -1314,7 +1314,7 @@ in which case the array is assumed to start at 0 and you are requesting that
 only elements C<($min_key .. $max_key)> be sent to the X server.
 
 Each element of the inner array can be an integer KeySym, or a KeySym name
-recognized by L</XStringToKeysym>, or a single unicode character.
+recognized by L</XStringToKeysym>, or a single Unicode character.
 If the KeySym is an integer, it must be at least two integer digits, which
 all real KeySyms should be (other than C<NoSymbol> which has the value 0, and
 should be represented by C<undef>) to avoid ambiguity with the characters of

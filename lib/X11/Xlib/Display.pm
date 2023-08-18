@@ -196,7 +196,7 @@ calculate from the event type.
 
   $display->putback_event($event);
 
-"un-get" or "unshift" an event back onto your own message queue.
+"unget" or "unshift" an event back onto your own message queue.
 
 =cut
 
@@ -301,7 +301,7 @@ the item is declared as an integer and/or matches C<< /^[0-9]+\z/ >>.
 
 =head3 mkatom
 
-Like C<atom>, but creates any atoms that didn't exist.  However, it still expects that strings
+Like C<atom>, but creates any atoms that did not exist.  However, it still expects that strings
 matching C<< /^[0-9]+\z/ >> are intended for reverse lookup, and cannot be used to create atoms
 whose names are digits.  (X server allows names that are numbers, but it seems like a bad idea)
 
@@ -726,7 +726,7 @@ Each LED gets one bit of the integer, starting from the least significant.
 The Display object keeps weak references to the wrapper objects it creates so
 that if you fetch the same resource again, you get the same object instance as
 last time.  These methods are made public so that you can get the same behavior
-when working with XIDs that weren't already wrapped by this module.
+when working with XIDs that were not already wrapped by this module.
 
 There is also a cache of wrapper objects of the opaque pointers allocated for
 a display.  This cache is private.

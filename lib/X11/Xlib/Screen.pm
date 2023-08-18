@@ -84,7 +84,7 @@ sub root_window_xid {
 
 sub root_window {
     my $self= shift;
-    # Allow strong ref to root window, since it isn't going anywhere
+    # Allow strong ref to root window, since it is not going anywhere
     $self->{root_window} ||=
         $self->{display}->get_cached_window($self->root_window_xid);
 }

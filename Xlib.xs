@@ -942,7 +942,7 @@ XGetWindowProperty(dpy, wnd, prop_atom, long_offset, long_length, delete, req_ty
                 sv_setpvn(data_out, data, 0);
             } else {
                 XFree(data);
-                croak("Un-handled 'actual_format' value %d returned by XGetWindowProperty", actual_format);
+                croak("Unhandled 'actual_format' value %d returned by XGetWindowProperty", actual_format);
             }
             XFree(data);
             sv_setuv(actual_type_out, actual_type);
@@ -972,7 +972,7 @@ XChangeProperty(dpy, wnd, prop_atom, type, format, mode, data, nelements)
         char *buffer;
     CODE:
         if (bytelen < 0)
-            croak("Un-handled 'format' value %d passed to XChangeProperty", format);
+            croak("Unhandled 'format' value %d passed to XChangeProperty", format);
         buffer= SvPV(data, svlen);
         if (bytelen > svlen)
             croak("'nelements' (%d) exceeds length of data (%d)", (int) nelements, (int) svlen);
@@ -1599,7 +1599,7 @@ load_keymap(dpy, symbolic=2, minkey=0, maxkey=255)
                     sv= PerlXlib_keysym_to_sv(syms[i*nsym+j], symbolic);
                     if (!sv) {
                         XFree(syms);
-                        croak("Your keymap includes KeySym 0x%x that can't be un-ambiguously represented by a string", (unsigned) syms[i*nsym+j]);
+                        croak("Your keymap includes KeySym 0x%x that can't be unambiguously represented by a string", (unsigned) syms[i*nsym+j]);
                     }
                     av_store(row, j, sv);
                 }

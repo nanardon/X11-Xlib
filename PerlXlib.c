@@ -83,7 +83,7 @@ static void PerlXlib_fields_add_dependent(struct PerlXlib_fields *fields, SV *de
     if (SvMAGICAL(deps))
         croak("bug");
     /* The list contains weak references, and every now and then we should clean up any
-     * that got un-set.  Do this every time the list reaches a multiple of 8. */
+     * that got unset.  Do this every time the list reaches a multiple of 8. */
     if (!(av_len(deps) & 7)) {
         for (i= av_len(deps); i >= 0; --i) {
             ent= av_fetch(deps, i, 0);
@@ -133,7 +133,7 @@ static void PerlXlib_fields_invalidate_dependents(struct PerlXlib_fields *fields
 
 /* Called automatically when the magic-bearing object is freed */
 static void PerlXlib_fields_free(struct PerlXlib_fields *fields) {
-    /* un-set the ->ptr, which by extension removes the containing object from the object cache */
+    /* unset the ->ptr, which by extension removes the containing object from the object cache */
     if (fields->ptr) {
         if (fields->xfree_cleanup)
             XFree(fields->ptr);
@@ -144,7 +144,7 @@ static void PerlXlib_fields_free(struct PerlXlib_fields *fields) {
         sv_2mortal(fields->display_sv);
         fields->display_sv= NULL;
     }
-    /* No need to tell the parent we're gone because the parent holds a weak-ref */
+    /* No need to tell the parent we are gone because the parent holds a weak-ref */
     fields->parent= NULL;
     /* tell dependent objects that they are no longer valid */
     PerlXlib_fields_invalidate_dependents(fields);
@@ -183,7 +183,7 @@ static MGVTBL PerlXlib_magic_vt= {
 
 /* Get existing magic fields or attach magic fields to the object.
  * The sv should be the inner SV/HV/AV of the object, not an RV pointing to it.
- * Use AUTOCREATE to attach magic if it wasn't present.
+ * Use AUTOCREATE to attach magic if it was not present.
  * Use NOTNULL for a built-in croak() if the return value would be NULL.
  */
 static struct PerlXlib_fields* PerlXlib_get_magic_fields(SV *sv, int create_flag) {
@@ -606,7 +606,7 @@ void* PerlXlib_get_struct_ptr(SV *sv, int lvalue, const char* pkg, int struct_si
     }
     
     /* If uninitialized, initialize to a blessed struct object,
-     *  unless we're looking at \undef in which case just initialize to a string
+     *  unless we are looking at \undef in which case just initialize to a string
      */
     if (!SvOK(sv)) {
         if (!lvalue) croak("Can't coerce %sundef to %s rvalue", refsv? "\\" : "", pkg);
@@ -647,7 +647,7 @@ SV * PerlXlib_keysym_to_sv(KeySym sym, int symbolic) {
     const char *symname;
     if (sym == NoSymbol)
         return &PL_sv_undef;
-    /* Only convert to unicode character if reverse mapping matches forward mapping */
+    /* Only convert to Unicode character if reverse mapping matches forward mapping */
     if (symbolic >= 2
         && (sym_codepoint= PerlXlib_keysym_to_codepoint(sym)) >= 0
         && (PerlXlib_codepoint_to_keysym(sym_codepoint) == sym))
