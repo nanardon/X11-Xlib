@@ -1637,6 +1637,10 @@ Ethan Straffin <ethanstraffin@gmail.com>
 
 Sergei Zhmylev <zhmylove@cpan.org>
 
+=item *
+
+H.Merijn Brand <hmbrand@cpan.org>
+
 =back
 
 =head1 COPYRIGHT AND LICENSE
