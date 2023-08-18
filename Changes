@@ -3,6 +3,7 @@ Revision history for Perl extension X11::Xlib.
 0.25 - 2023-..
     - Resolve naming conflict with perl CORE (issue #8)
     - Spell-check documentation
+    - Update to Devel::PPPort-3.71
 
 0.24 - 2023-08-16
     - Add function XWarpPointer, and Display->warp_pointer

@@ -1,7 +1,6 @@
 #include "EXTERN.h"
 #include "perl.h"
 #include "XSUB.h"
-#define NEED_newCONSTSUB
 #define NEED_newRV_noinc_GLOBAL
 #define NEED_sv_pvn_force_flags_GLOBAL
 #include "ppport.h"
