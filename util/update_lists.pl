@@ -87,10 +87,22 @@ sub patch_file {
     rename($new, $fname) or die "rename: $!";
 }
 
+@constant_sets= sort { $a->[0] cmp $b->[0] } @constant_sets;
 my $consts_pl= join '',
     map {
-        wordwrap(4, 79, "  ".shift(@$_)." => [qw( ".join(' ', sort @$_)." )],\n")
-    } sort { $a->[0] cmp $b->[0] } @constant_sets;
+        wordwrap(4, 79, "  ".$_->[0]." => [qw( ".join(' ', sort @{$_}[1..$#$_])." )],\n")
+    } @constant_sets;
+my $consts_pod= join "\n\n",
+    '=over',
+    (map {
+        '=item C<:'.$_->[0].'>',
+        wordwrap(0, 79, join(' ', map 'C<'.$_.'>', sort @{$_}[1..$#$_])),
+        (map "=for Pod::Coverage $_", split "\n",
+            wordwrap(0, 120, join(' ', sort @{$_}[1..$#$_]))),
+    } @constant_sets),
+    '=back',
+    '=cut',
+    '';
 my $fn_pl= join '',
     map {
         wordwrap(4, 79, "  ".shift(@$_)." => [qw( ".join(' ', sort @$_)." )],\n")
@@ -98,5 +110,6 @@ my $fn_pl= join '',
 
 patch_file("Xlib.xs", 'GENERATED BOOT CONSTANTS', $xs_boot);
 patch_file("lib/X11/Xlib.pm", 'GENERATED XS CONSTANT LIST', $consts_pl);
+patch_file("lib/X11/Xlib.pm", 'GENERATED XS CONSTANT POD', $consts_pod);
 patch_file("lib/X11/Xlib.pm", 'GENERATED XS FUNCTION LIST', $fn_pl);
 { open my $fh, ">MANIFEST" or die "$!"; print $fh @manifest; close $fh or die "$!"; }

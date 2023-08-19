@@ -1453,6 +1453,168 @@ None of these functions are exportable.
 
 Takes a L<X11::Xlib::Visual>, and returns a L<X11::Xlib::XRenderPictFormat>.
 
+=head1 CONSTANTS
+
+XLib has a massive number of symbolic constants.  This module has an incomplete
+list, but you can export all of them with
+
+  use X11::Xlib ':constants';
+
+You can also export only the named groups that you require, like:
+
+  use X11::Xlib qw/ :const_event :const_visual /;
+
+=cut
+
+# BEGIN GENERATED XS CONSTANT POD
+=over
+
+=item C<:const_cmap>
+
+C<AllocAll> C<AllocNone>
+
+=for Pod::Coverage AllocAll AllocNone
+
+=item C<:const_error>
+
+C<BadAccess> C<BadAlloc> C<BadAtom> C<BadColor> C<BadCursor> C<BadDrawable>
+C<BadFont> C<BadGC> C<BadIDChoice> C<BadImplementation> C<BadLength>
+C<BadMatch> C<BadName> C<BadPixmap> C<BadRequest> C<BadValue> C<BadWindow>
+C<Success>
+
+=for Pod::Coverage BadAccess BadAlloc BadAtom BadColor BadCursor BadDrawable BadFont BadGC BadIDChoice BadImplementation BadLength BadMatch
+
+=for Pod::Coverage BadName BadPixmap BadRequest BadValue BadWindow Success
+
+=item C<:const_event>
+
+C<ButtonPress> C<ButtonRelease> C<CirculateNotify> C<ClientMessage>
+C<ColormapNotify> C<ConfigureNotify> C<CreateNotify> C<DestroyNotify>
+C<EnterNotify> C<Expose> C<FocusIn> C<FocusOut> C<GraphicsExpose>
+C<GravityNotify> C<KeyPress> C<KeyRelease> C<KeymapNotify> C<LeaveNotify>
+C<MapNotify> C<MapRequest> C<MappingNotify> C<MotionNotify> C<NoExpose>
+C<PropertyNotify> C<ReparentNotify> C<ResizeRequest> C<SelectionClear>
+C<SelectionNotify> C<SelectionRequest> C<UnmapNotify> C<VisibilityNotify>
+
+=for Pod::Coverage ButtonPress ButtonRelease CirculateNotify ClientMessage ColormapNotify ConfigureNotify CreateNotify DestroyNotify
+
+=for Pod::Coverage EnterNotify Expose FocusIn FocusOut GraphicsExpose GravityNotify KeyPress KeyRelease KeymapNotify LeaveNotify MapNotify
+
+=for Pod::Coverage MapRequest MappingNotify MotionNotify NoExpose PropertyNotify ReparentNotify ResizeRequest SelectionClear
+
+=for Pod::Coverage SelectionNotify SelectionRequest UnmapNotify VisibilityNotify
+
+=item C<:const_event_mask>
+
+C<Button1MotionMask> C<Button2MotionMask> C<Button3MotionMask>
+C<Button4MotionMask> C<Button5MotionMask> C<ButtonMotionMask>
+C<ButtonPressMask> C<ButtonReleaseMask> C<ColormapChangeMask>
+C<EnterWindowMask> C<ExposureMask> C<FocusChangeMask> C<KeyPressMask>
+C<KeyReleaseMask> C<KeymapStateMask> C<LeaveWindowMask> C<NoEventMask>
+C<OwnerGrabButtonMask> C<PointerMotionHintMask> C<PointerMotionMask>
+C<PropertyChangeMask> C<ResizeRedirectMask> C<StructureNotifyMask>
+C<SubstructureNotifyMask> C<SubstructureRedirectMask> C<VisibilityChangeMask>
+
+=for Pod::Coverage Button1MotionMask Button2MotionMask Button3MotionMask Button4MotionMask Button5MotionMask ButtonMotionMask
+
+=for Pod::Coverage ButtonPressMask ButtonReleaseMask ColormapChangeMask EnterWindowMask ExposureMask FocusChangeMask KeyPressMask
+
+=for Pod::Coverage KeyReleaseMask KeymapStateMask LeaveWindowMask NoEventMask OwnerGrabButtonMask PointerMotionHintMask PointerMotionMask
+
+=for Pod::Coverage PropertyChangeMask ResizeRedirectMask StructureNotifyMask SubstructureNotifyMask SubstructureRedirectMask
+
+=for Pod::Coverage VisibilityChangeMask
+
+=item C<:const_ext_composite>
+
+C<CompositeRedirectAutomatic> C<CompositeRedirectManual>
+
+=for Pod::Coverage CompositeRedirectAutomatic CompositeRedirectManual
+
+=item C<:const_ext_shape>
+
+C<ShapeBounding> C<ShapeClip> C<ShapeInput> C<ShapeIntersect> C<ShapeInvert>
+C<ShapeSet> C<ShapeSubtract> C<ShapeUnion>
+
+=for Pod::Coverage ShapeBounding ShapeClip ShapeInput ShapeIntersect ShapeInvert ShapeSet ShapeSubtract ShapeUnion
+
+=item C<:const_input>
+
+C<AnyKey> C<AnyModifier> C<AsyncBoth> C<AsyncKeyboard> C<AsyncPointer>
+C<Button1Mask> C<Button2Mask> C<Button3Mask> C<Button4Mask> C<Button5Mask>
+C<ControlMask> C<GrabModeAsync> C<GrabModeSync> C<LockMask> C<Mod1Mask>
+C<Mod2Mask> C<Mod3Mask> C<Mod4Mask> C<Mod5Mask> C<NoSymbol> C<PointerRoot>
+C<ReplayKeyboard> C<ReplayPointer> C<RevertToNone> C<RevertToParent>
+C<RevertToPointerRoot> C<ShiftMask> C<SyncBoth> C<SyncKeyboard> C<SyncPointer>
+C<XK_VoidSymbol>
+
+=for Pod::Coverage AnyKey AnyModifier AsyncBoth AsyncKeyboard AsyncPointer Button1Mask Button2Mask Button3Mask Button4Mask Button5Mask
+
+=for Pod::Coverage ControlMask GrabModeAsync GrabModeSync LockMask Mod1Mask Mod2Mask Mod3Mask Mod4Mask Mod5Mask NoSymbol PointerRoot
+
+=for Pod::Coverage ReplayKeyboard ReplayPointer RevertToNone RevertToParent RevertToPointerRoot ShiftMask SyncBoth SyncKeyboard
+
+=for Pod::Coverage SyncPointer XK_VoidSymbol
+
+=item C<:const_sizehint>
+
+C<PAspect> C<PBaseSize> C<PMaxSize> C<PMinSize> C<PPosition> C<PResizeInc>
+C<PSize> C<PWinGravity> C<USPosition> C<USSize>
+
+=for Pod::Coverage PAspect PBaseSize PMaxSize PMinSize PPosition PResizeInc PSize PWinGravity USPosition USSize
+
+=item C<:const_visual>
+
+C<VisualAllMask> C<VisualBitsPerRGBMask> C<VisualBlueMaskMask>
+C<VisualClassMask> C<VisualColormapSizeMask> C<VisualDepthMask>
+C<VisualGreenMaskMask> C<VisualIDMask> C<VisualRedMaskMask>
+C<VisualScreenMask>
+
+=for Pod::Coverage VisualAllMask VisualBitsPerRGBMask VisualBlueMaskMask VisualClassMask VisualColormapSizeMask VisualDepthMask
+
+=for Pod::Coverage VisualGreenMaskMask VisualIDMask VisualRedMaskMask VisualScreenMask
+
+=item C<:const_win>
+
+C<Above> C<AnyPropertyType> C<Below> C<BottomIf> C<CenterGravity>
+C<CopyFromParent> C<EastGravity> C<ForgetGravity> C<InputOnly> C<InputOutput>
+C<LowerHighest> C<NorthEastGravity> C<NorthGravity> C<NorthWestGravity>
+C<Opposite> C<PropModeAppend> C<PropModePrepend> C<PropModeReplace>
+C<RaiseLowest> C<SouthEastGravity> C<SouthGravity> C<SouthWestGravity>
+C<StaticGravity> C<TopIf> C<UnmapGravity> C<WestGravity>
+
+=for Pod::Coverage Above AnyPropertyType Below BottomIf CenterGravity CopyFromParent EastGravity ForgetGravity InputOnly InputOutput
+
+=for Pod::Coverage LowerHighest NorthEastGravity NorthGravity NorthWestGravity Opposite PropModeAppend PropModePrepend PropModeReplace
+
+=for Pod::Coverage RaiseLowest SouthEastGravity SouthGravity SouthWestGravity StaticGravity TopIf UnmapGravity WestGravity
+
+=item C<:const_winattr>
+
+C<CWBackPixel> C<CWBackPixmap> C<CWBackingPixel> C<CWBackingPlanes>
+C<CWBackingStore> C<CWBitGravity> C<CWBorderPixel> C<CWBorderPixmap>
+C<CWBorderWidth> C<CWColormap> C<CWCursor> C<CWDontPropagate> C<CWEventMask>
+C<CWHeight> C<CWOverrideRedirect> C<CWSaveUnder> C<CWSibling> C<CWStackMode>
+C<CWWidth> C<CWWinGravity> C<CWX> C<CWY>
+
+=for Pod::Coverage CWBackPixel CWBackPixmap CWBackingPixel CWBackingPlanes CWBackingStore CWBitGravity CWBorderPixel CWBorderPixmap
+
+=for Pod::Coverage CWBorderWidth CWColormap CWCursor CWDontPropagate CWEventMask CWHeight CWOverrideRedirect CWSaveUnder CWSibling
+
+=for Pod::Coverage CWStackMode CWWidth CWWinGravity CWX CWY
+
+=item C<:const_x>
+
+C<None>
+
+=for Pod::Coverage None
+
+=back
+
+=cut
+
+# END GENERATED XS CONSTANT POD
+
 =head1 STRUCTURES
 
 Xlib has a lot of C B<struct>s.  Most of them do not have much "depth"
