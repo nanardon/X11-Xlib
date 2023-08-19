@@ -8,6 +8,7 @@ Xlib.xs
 PerlXlib.h
 PerlXlib.c
 keysym_to_codepoint.c
+cpanfile
 META.yml                                 Module YAML meta-data (added by MakeMaker)
 META.json                                Module JSON meta-data (added by MakeMaker)
 lib/X11/Xlib.pm
@@ -31,8 +32,6 @@ lib/X11/Xlib/XVisualInfo.pm
 lib/X11/Xlib/XWindowAttributes.pm
 lib/X11/Xlib/XWindowChanges.pm
 lib/X11/Xlib/XserverRegion.pm
-t/0-Pod-Coverage.t
-t/0-Pod.t
 t/1-X11-Xlib.t
 t/20-xevent.t
 t/21-xvisualinfo.t

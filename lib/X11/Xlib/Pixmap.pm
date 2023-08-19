@@ -31,7 +31,7 @@ X11::Xlib::Pixmap - XID wrapper for Pixmap
 
 Object representing a Pixmap remote X11 resource.
 
-There doesn't seem to be any way to query the attributes of a pixmap,
+There does not seem to be any way to query the attributes of a pixmap,
 so this object's attributes must be passed to the constructor.
 
 =head1 ATTRIBUTES
@@ -56,7 +56,7 @@ Color depth, in bits.
 
   my ($w, $h)= $pixmap->get_w_h
 
-Reutrn the width and height of the pixmap as a list
+Return the width and height of the pixmap as a list
 
 =head1 AUTHOR
 
