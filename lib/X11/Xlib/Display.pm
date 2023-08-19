@@ -317,37 +317,21 @@ L<screen|X11::Xlib::Screen> object:
 
 =over
 
-=item root_window
+=item L<root_window|X11::Xlib::Screen/root_window>
 
-L<root_window|X11::Xlib::Screen/root_window>
+=item L<width|X11::Xlib::Screen/width>
 
-=item width
+=item L<height|X11::Xlib::Screen/height>
 
-L<width|X11::Xlib::Screen/width>
+=item L<width_mm|X11::Xlib::Screen/width_mm>
 
-=item height
+=item L<height_mm|X11::Xlib::Screen/height_mm>
 
-L<height|X11::Xlib::Screen/height>
+=item L<visual|X11::Xlib::Screen/visual>
 
-=item width_mm
+=item L<depth|X11::Xlib::Screen/depth>
 
-L<width_mm|X11::Xlib::Screen/width_mm>
-
-=item height_mm
-
-L<height_mm|X11::Xlib::Screen/height_mm>
-
-=item visual
-
-L<visual|X11::Xlib::Screen/visual>
-
-=item depth
-
-L<depth|X11::Xlib::Screen/depth>
-
-=item colormap
-
-L<colormap|X11::Xlib::Screen/colormap>
+=item L<colormap|X11::Xlib::Screen/colormap>
 
 =back
 
@@ -398,6 +382,11 @@ Search for a visual on C<$scren_num> that matches the color depth and class.
 
 Search for a visual by any of its L<X11::Xlib::XVisualInfo> members.
 You can specify as many or as few fields as you like.
+
+=head3 XGetVisualInfo
+
+Same as L<X11::Xlib/XGetVisualInfo>, but when called as a method the returned
+structs contain a C<display> attribute referencing the current Display object.
 
 =cut
 
@@ -461,14 +450,6 @@ C<$allocFlag> defaults to C<AllocNone>.
 sub new_colormap {
     shift->XCreateColormap(@_);
 }
-sub DefaultColormap {
-    my $xid= X11::Xlib::DefaultColormap(@_);
-    $_[0]->get_cached_colormap($xid);
-}
-sub XCreateColormap {
-    my $xid= X11::Xlib::XCreateColormap(@_);
-    $_[0]->get_cached_colormap($xid, autofree => 1);
-}
 
 =head3 new_pixmap
 
@@ -491,42 +472,6 @@ sub new_pixmap {
         if ref $drawable && $drawable->isa('X11::Xlib::Screen');
     return $self->XCreatePixmap($drawable, $width, $height, $depth);
 }
-
-sub XCreatePixmap {
-    my ($self, $drawable, $width, $height, $depth)= @_;
-    my $xid= &X11::Xlib::XCreatePixmap;
-    return $self->get_cached_pixmap($xid,
-        width    => $width,
-        height   => $height,
-        depth    => $depth,
-        autofree => 1,
-    );
-}
-sub XCreateBitmapFromData {
-    my ($self, $drawable, $data, $width, $height)= @_;
-    my $xid= &X11::Xlib::XCreateBitmapFromData;
-    $self->get_cached_pixmap($xid,
-        width    => $width,
-        height   => $height,
-        depth    => 1,
-        autofree => 1,
-    );
-}
-sub XCreatePixmapFromBitmapData {
-    my ($self, $drawable, $data, $width, $height, $fg, $bg, $depth)= @_;
-    my $xid= &X11::Xlib::XCreatePixmapFromBitmapData;
-    $_[0]->get_cached_pixmap($xid,
-        width    => $width,
-        height   => $height,
-        depth    => $depth,
-        autofree => 1,
-    );
-}
-
-*X11::Xlib::Display::XCompositeNameWindowPixmap= sub {
-    my $xid= &X11::Xlib::XCompositeNameWindowPixmap;
-    $_[0]->get_cached_pixmap($xid, autofree => 1);
-} if X11::Xlib->can('XCompositeNameWindowPixmap');
 
 =head3 new_window
 
@@ -632,45 +577,6 @@ sub new_window {
     return $wnd;
 }
 
-sub RootWindow {
-    $_[0]->get_cached_window( &X11::Xlib::RootWindow );
-}
-
-=head3 XCreateWindow
-
-Like L<X11::Xlib/XCreateWindow>, but returns a L<X11::Xlib::Window> object.
-
-=head3 XCreateSimpleWindow
-
-Like L<X11::Xlib::XCreateSimpleWindow>, but returns a L<X11::Xlib::Window> object.
-
-=cut
-
-sub XCreateWindow {
-    $_[0]->get_cached_window( &X11::Xlib::XCreateWindow, autofree => 1);
-}
-
-sub XCreateSimpleWindow {
-    $_[0]->get_cached_window( &X11::Xlib::XCreateSimpleWindow, autofree => 1);
-}
-
-*X11::Xlib::Display::XCompositeGetOverlayWindow= sub {
-    my $xid= &X11::Xlib::XCompositeGetOverlayWindow;
-    $_[0]->get_cached_window( $xid, autofree => 0 ); # can be only one, and needs freed specially
-} if X11::Xlib->can('XCompositeGetOverlayWindow');
-
-*X11::Xlib::Display::XCompositeCreateRegionFromBorderClip= sub {
-    my $self= $_[0];
-    my $xid= &X11::Xlib::XCompositeCreateRegionFromBorderClip;
-    $self->get_cached_region( $xid, autofree => 1 );
-} if X11::Xlib->can('XCompositeCreateRegionFromBorderClip');
-
-*X11::Xlib::Display::XFixesCreateRegion= sub {
-    my $self= $_[0];
-    my $xid= &X11::Xlib::XFixesCreateRegion;
-    $self->get_cached_region( $xid, autofree => 1 );
-} if X11::Xlib->can('XFixesCreateRegion');
-
 =head2 INPUT
 
 =head3 keymap
@@ -768,11 +674,94 @@ sub get_cached_xobj {
 
 Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::Colormap>
 
+The following X11::Xlib functions return Colomap objects when called as methods
+on a Display object:
+
+=over
+
+=item L<DefaultColormap|X11::Xlib/DefaultColormap>
+
+=item L<XCreateColormap|X11::Xlib/XCreateColormap>
+
+=back
+
+=cut
+
+sub get_cached_colormap {
+    shift->get_cached_xobj(shift, 'X11::Xlib::Colormap', @_);
+}
+
+sub DefaultColormap {
+    my $xid= X11::Xlib::DefaultColormap(@_);
+    $_[0]->get_cached_colormap($xid);
+}
+sub XCreateColormap {
+    my $xid= X11::Xlib::XCreateColormap(@_);
+    $_[0]->get_cached_colormap($xid, autofree => 1);
+}
+
 =head3 get_cached_pixmap
 
   my $pixmap= $display->get_cached_pixmap($xid, @new_args);
 
 Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::Pixmap>
+
+The following X11::Xlib functions return Pixmap objects when called as methods
+of a Display object:
+
+=over
+
+=item L<XCreatePixmap|X11::Xlib/XCreatePixmap>
+
+=item L<XCreateBitmapFromData|X11::Xlib/XCreateBitmapFromData>
+
+=item L<XCreatePixmapFromBitmapData|X11::Xlib/XCreatePixmapFromBitmapData>
+
+=item L<XCompositeNameWindowPixmap|X11::Xlib/XCompositeNameWindowPixmap>
+
+=back
+
+=cut
+
+sub get_cached_pixmap {
+    shift->get_cached_xobj(shift, 'X11::Xlib::Pixmap', @_);
+}
+
+sub XCreatePixmap {
+    my ($self, $drawable, $width, $height, $depth)= @_;
+    my $xid= &X11::Xlib::XCreatePixmap;
+    return $self->get_cached_pixmap($xid,
+        width    => $width,
+        height   => $height,
+        depth    => $depth,
+        autofree => 1,
+    );
+}
+sub XCreateBitmapFromData {
+    my ($self, $drawable, $data, $width, $height)= @_;
+    my $xid= &X11::Xlib::XCreateBitmapFromData;
+    $self->get_cached_pixmap($xid,
+        width    => $width,
+        height   => $height,
+        depth    => 1,
+        autofree => 1,
+    );
+}
+sub XCreatePixmapFromBitmapData {
+    my ($self, $drawable, $data, $width, $height, $fg, $bg, $depth)= @_;
+    my $xid= &X11::Xlib::XCreatePixmapFromBitmapData;
+    $_[0]->get_cached_pixmap($xid,
+        width    => $width,
+        height   => $height,
+        depth    => $depth,
+        autofree => 1,
+    );
+}
+
+*X11::Xlib::Display::XCompositeNameWindowPixmap= sub {
+    my $xid= &X11::Xlib::XCompositeNameWindowPixmap;
+    $_[0]->get_cached_pixmap($xid, autofree => 1);
+} if X11::Xlib->can('XCompositeNameWindowPixmap');
 
 =head3 get_cached_window
 
@@ -780,20 +769,74 @@ Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::Pixmap>
 
 Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::Window>
 
+The following X11::Xlib functions return Window objects when called as methods
+of a Display object:
+
+=over
+
+=item L<RootWindow|X11::Xlib/RootWindow>
+
+=item L<XCreateWindow|X11::Xlib/XCreateWindow>
+
+=item L<XCreateSimpleWindow|X11::Xlib/XCreateSimpleWindow>
+
+=item L<XCompositeGetOverlayWindow|X11::Xlib/XCompositeGetOverlayWindow>
+
+=back
+
 =cut
 
-sub get_cached_colormap {
-    shift->get_cached_xobj(shift, 'X11::Xlib::Colormap', @_);
-}
-sub get_cached_pixmap {
-    shift->get_cached_xobj(shift, 'X11::Xlib::Pixmap', @_);
-}
 sub get_cached_window {
     shift->get_cached_xobj(shift, 'X11::Xlib::Window', @_);
 }
+sub RootWindow {
+    $_[0]->get_cached_window( &X11::Xlib::RootWindow );
+}
+sub XCreateWindow {
+    $_[0]->get_cached_window( &X11::Xlib::XCreateWindow, autofree => 1);
+}
+sub XCreateSimpleWindow {
+    $_[0]->get_cached_window( &X11::Xlib::XCreateSimpleWindow, autofree => 1);
+}
+
+*X11::Xlib::Display::XCompositeGetOverlayWindow= sub {
+    my $xid= &X11::Xlib::XCompositeGetOverlayWindow;
+    $_[0]->get_cached_window( $xid, autofree => 0 ); # can be only one, and needs freed specially
+} if X11::Xlib->can('XCompositeGetOverlayWindow');
+
+=head3 get_cached_region
+
+  my $window= $display->get_cached_region($xid, @new_args);
+
+Shortcut for L</get_cached_xobj> that implies a class of L<X11::Xlib::XserverRegion>.
+
+The following X11::Xlib functions return XserverRegion objects when called as
+methods of a Display object:
+
+=over
+
+=item L<XCompositeCreateRegionFromBorderClip|X11::Xlib/XCompositeCreateRegionFromBorderClip>
+
+=item L<XFixesCreateRegion|X11::Xlib/XFixesCreateRegion>
+
+=back
+
+=cut
+
 sub get_cached_region {
     shift->get_cached_xobj(shift, 'X11::Xlib::XserverRegion', @_);
 }
+
+*X11::Xlib::Display::XCompositeCreateRegionFromBorderClip= sub {
+    my $xid= &X11::Xlib::XCompositeCreateRegionFromBorderClip;
+    $_[0]->get_cached_region( $xid, autofree => 1 );
+} if X11::Xlib->can('XCompositeCreateRegionFromBorderClip');
+
+*X11::Xlib::Display::XFixesCreateRegion= sub {
+    my $xid= &X11::Xlib::XFixesCreateRegion;
+    $_[0]->get_cached_region( $xid, autofree => 1 );
+} if X11::Xlib->can('XFixesCreateRegion');
+
 
 1;
 
