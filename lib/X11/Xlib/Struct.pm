@@ -132,16 +132,12 @@ sub unpack {
 
 Access the scalar holding the bytes of the struct.
 
+=for Pod::Coverage buffer
+
 =cut
 
 sub bytes { ${$_[0]} }
-*buffer= *bytes;
-
-=head2 buffer
-
-C<buffer> is an alias tu L</C<bytes>>
-
-=cut
+*buffer= *bytes; # back-compat alias, not official API anymore
 
 # The struct code is all in XS, so all we need to do is declare the package
 # inheritence.  Except for XEvent, which is complicated.

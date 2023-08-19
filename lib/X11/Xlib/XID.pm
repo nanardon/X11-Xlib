@@ -18,7 +18,7 @@ sub new {
 sub display { croak "read-only" if @_ > 1; $_[0]{display} }
 
 sub xid     { croak "read-only" if @_ > 1; $_[0]{xid} }
-*id= *xid;
+*id= *xid; # back-compat alias, not official API anymore
 
 sub autofree { my $self= shift; $self->{autofree}= shift if @_; $self->{autofree} }
 
@@ -46,9 +46,7 @@ Required.  The L<X11::Xlib::Display> where the resource is located.
 
 Required.  The X11 numeric ID for this resource.
 
-=head2 id
-
-This is an alias to L</xid>
+=for Pod::Coverage id
 
 =head2 autofree
 

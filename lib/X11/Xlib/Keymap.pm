@@ -450,7 +450,7 @@ __END__
 
 =head2 Press a Key
 
-Suppose you have got an old DOS game that you are playing in Dosbox, and you
+Suppose you have an old DOS game that you are playing in Dosbox, and you
 find a neat trick to level up your character by pressing 'R' repeatedly.
 You might bang out a quick perl one-liner like this:
 
