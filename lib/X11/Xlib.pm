@@ -1234,6 +1234,20 @@ Cancel a grab registered by L</XGrabKey>.
 
   XUngrabButton($display, $button, $modifiers, $window)
 
+=head3 XQueryPointer
+
+  XQueryPointer($display, $window,
+    my $root_out, my $child_out, my $root_x_out, my $root_y_out,
+    my $win_x_out, my $win_y_out, my $mask_out);
+  
+  # or more perl-like:
+  ($root, $child, $root_x, $root_y, $win_x, $win_y, $mask)
+     = XQueryPointer($display, $window);
+
+Return information about the current location of the pointer.  The native API returns the values
+into parameters, but this implementation offers them as a returned list, if you only pass the
+window argument.
+
 =head3 XWarpPointer
 
   XWarpPointer($display, $src_win, $dest_win, $src_x, $src_y, $src_width, $src_height, $dest_x, $dest_y)

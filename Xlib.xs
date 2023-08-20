@@ -1431,23 +1431,49 @@ XUngrabKey(dpy, keycode, modifiers, grab_window)
     Window grab_window
 
 void
-XQueryPointer(dpy, wnd)
+XQueryPointer(dpy, wnd, root_out=NULL, child_out=NULL, root_x_out=NULL, root_y_out=NULL, win_x_out=NULL, win_y_out=NULL, mask_out=NULL)
     Display *dpy
     Window wnd
+    SV *root_out
+    SV *child_out
+    SV *root_x_out
+    SV *root_y_out
+    SV *win_x_out
+    SV *win_y_out
+    SV *mask_out
     INIT:
         Window root, child;
         int root_x, root_y, win_x, win_y;
         unsigned mask;
     PPCODE:
         if (XQueryPointer(dpy, wnd, &root, &child, &root_x, &root_y, &win_x, &win_y, &mask)) {
-            EXTEND(SP, 7);
-            PUSHs(sv_2mortal(newSVuv(root)));
-            PUSHs(sv_2mortal(newSVuv(child)));
-            PUSHs(sv_2mortal(newSViv(root_x)));
-            PUSHs(sv_2mortal(newSViv(root_y)));
-            PUSHs(sv_2mortal(newSViv(win_x)));
-            PUSHs(sv_2mortal(newSViv(win_y)));
-            PUSHs(sv_2mortal(newSVuv(mask)));
+            if (items > 2) {
+                if (root_out)   sv_setuv(root_out, root);
+                if (child_out)  sv_setuv(child_out, child);
+                if (root_x_out) sv_setiv(root_x_out, root_x);
+                if (root_y_out) sv_setiv(root_y_out, root_y);
+                if (win_x_out)  sv_setiv(win_x_out, win_x);
+                if (win_y_out)  sv_setiv(win_y_out, win_y);
+                if (mask_out)   sv_setuv(mask_out, mask);
+                EXTEND(SP, 1);
+                PUSHs(&PL_sv_yes);
+            } else {
+                EXTEND(SP, 7);
+                PUSHs(sv_2mortal(newSVuv(root)));
+                PUSHs(sv_2mortal(newSVuv(child)));
+                PUSHs(sv_2mortal(newSViv(root_x)));
+                PUSHs(sv_2mortal(newSViv(root_y)));
+                PUSHs(sv_2mortal(newSViv(win_x)));
+                PUSHs(sv_2mortal(newSViv(win_y)));
+                PUSHs(sv_2mortal(newSVuv(mask)));
+            }
+        } else {
+            if (root_out) {
+                EXTEND(SP, 1);
+                PUSHs(&PL_sv_undef);
+            } else {
+                # return empty list
+            }
         }
 
 int
