@@ -1554,6 +1554,11 @@ XAllowEvents(dpy, event_mode, timestamp)
     int event_mode
     Time timestamp
 
+void
+XGetKeyboardControl(dpy, state_out)
+    Display *dpy
+    XKeyboardState *state_out
+
 unsigned long
 keyboard_leds(dpy)
     Display *dpy;
@@ -4603,6 +4608,144 @@ y(self, value=NULL)
     }
 
 # END GENERATED X11_Xlib_XRectangle
+# ----------------------------------------------------------------------------
+# BEGIN GENERATED X11_Xlib_XKeyboardState
+
+MODULE = X11::Xlib                PACKAGE = X11::Xlib::XKeyboardState
+
+int
+_sizeof(ignored=NULL)
+    SV* ignored;
+    CODE:
+        RETVAL = sizeof(XKeyboardState);
+    OUTPUT:
+        RETVAL
+
+void
+_initialize(s)
+    SV *s
+    INIT:
+        void *sptr;
+    PPCODE:
+        sptr= PerlXlib_get_struct_ptr(s, 1, "X11::Xlib::XKeyboardState", sizeof(XKeyboardState),
+            (PerlXlib_struct_pack_fn*) &PerlXlib_XKeyboardState_pack
+        );
+        memset((void*) sptr, 0, sizeof(XKeyboardState));
+
+void
+_pack(s, fields, consume=0)
+    XKeyboardState *s
+    HV *fields
+    Bool consume
+    PPCODE:
+        PerlXlib_XKeyboardState_pack(s, fields, consume);
+
+void
+_unpack(s, fields)
+    XKeyboardState *s
+    HV *fields
+    PPCODE:
+        PerlXlib_XKeyboardState_unpack_obj(s, fields, ST(0));
+
+void
+auto_repeats(self, value=NULL)
+    XKeyboardState *self
+    SV *value
+  INIT:
+    XKeyboardState *s= self;
+  PPCODE:
+    if (value) {
+      { if (!SvPOK(value) || SvCUR(value) != sizeof(char)*32)  croak("Expected scalar of length %ld but got %ld", (long)(sizeof(char)*32), (long)SvCUR(value)); memcpy(s->auto_repeats, SvPVX(value), sizeof(char)*32);}
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVpvn((void*)s->auto_repeats, sizeof(char)*32)));
+    }
+
+void
+bell_duration(self, value=NULL)
+    XKeyboardState *self
+    SV *value
+  INIT:
+    XKeyboardState *s= self;
+  PPCODE:
+    if (value) {
+      s->bell_duration= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->bell_duration)));
+    }
+
+void
+bell_percent(self, value=NULL)
+    XKeyboardState *self
+    SV *value
+  INIT:
+    XKeyboardState *s= self;
+  PPCODE:
+    if (value) {
+      s->bell_percent= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->bell_percent)));
+    }
+
+void
+bell_pitch(self, value=NULL)
+    XKeyboardState *self
+    SV *value
+  INIT:
+    XKeyboardState *s= self;
+  PPCODE:
+    if (value) {
+      s->bell_pitch= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->bell_pitch)));
+    }
+
+void
+global_auto_repeat(self, value=NULL)
+    XKeyboardState *self
+    SV *value
+  INIT:
+    XKeyboardState *s= self;
+  PPCODE:
+    if (value) {
+      s->global_auto_repeat= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->global_auto_repeat)));
+    }
+
+void
+key_click_percent(self, value=NULL)
+    XKeyboardState *self
+    SV *value
+  INIT:
+    XKeyboardState *s= self;
+  PPCODE:
+    if (value) {
+      s->key_click_percent= SvIV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSViv(s->key_click_percent)));
+    }
+
+void
+led_mask(self, value=NULL)
+    XKeyboardState *self
+    SV *value
+  INIT:
+    XKeyboardState *s= self;
+  PPCODE:
+    if (value) {
+      s->led_mask= SvUV(value);
+      PUSHs(value);
+    } else {
+      PUSHs(sv_2mortal(newSVuv(s->led_mask)));
+    }
+
+# END GENERATED X11_Xlib_XKeyboardState
 # ----------------------------------------------------------------------------
 # BEGIN GENERATED X11_Xlib_XRenderPictFormat
 

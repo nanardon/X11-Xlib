@@ -157,6 +157,8 @@ $X11::Xlib::XSizeHints::VERSION= $VERSION;
 $X11::Xlib::XRectangle::VERSION= $VERSION;
 @X11::Xlib::XRenderPictFormat::ISA= ( __PACKAGE__ );
 $X11::Xlib::XRenderPictFormat::VERSION= $VERSION;
+@X11::Xlib::XKeyboardState::ISA= ( __PACKAGE__ );
+$X11::Xlib::XKeyboardState::VERSION= $VERSION;
 
 1;
 

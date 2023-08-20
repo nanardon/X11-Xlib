@@ -75,9 +75,10 @@ my %_functions= (
     XCheckWindowEvent XEventsQueued XFlush XGetErrorDatabaseText XGetErrorText
     XNextEvent XPending XPutBackEvent XQLength XSelectInput XSendEvent XSync
     )],
-  fn_input => [qw( XAllowEvents XBell XGrabButton XGrabKey XGrabKeyboard
-    XGrabPointer XQueryKeymap XQueryPointer XSetInputFocus XUngrabButton
-    XUngrabKey XUngrabKeyboard XUngrabPointer XWarpPointer keyboard_leds )],
+  fn_input => [qw( XAllowEvents XBell XGetKeyboardControl XGrabButton XGrabKey
+    XGrabKeyboard XGrabPointer XQueryKeymap XQueryPointer XSetInputFocus
+    XUngrabButton XUngrabKey XUngrabKeyboard XUngrabPointer XWarpPointer
+    keyboard_leds )],
   fn_keymap => [qw( XDisplayKeycodes XGetKeyboardMapping XGetModifierMapping
     XKeysymToKeycode XLookupString XRefreshKeyboardMapping XSetModifierMapping
     load_keymap save_keymap )],
@@ -1444,6 +1445,18 @@ Return the key code corresponding to C<$keysym> in the current mapping.
   XBell($display, $percent)
 
 Make the X server emit a sound.
+
+=head2 XGetKeyboardControl
+
+  XGetKeyboardControl($display, my $state_out);
+
+Returns a L<XKeyboardState|X11::Xlib::XKeyboardState> record in $state_out.
+
+=head3 keyboard_leds
+
+  $led_mask= $display->keyboard_leds;
+
+Shortcut for reading the led_mask field of XKeyboardState of a call to XGetKeyboardControl.
 
 =head2 EXTENSION XCOMPOSITE
 

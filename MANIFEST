@@ -24,6 +24,7 @@ lib/X11/Xlib/Visual.pm
 lib/X11/Xlib/Window.pm
 lib/X11/Xlib/XEvent.pm
 lib/X11/Xlib/XID.pm
+lib/X11/Xlib/XKeyboardState.pm
 lib/X11/Xlib/XRectangle.pm
 lib/X11/Xlib/XRenderPictFormat.pm
 lib/X11/Xlib/XSetWindowAttributes.pm

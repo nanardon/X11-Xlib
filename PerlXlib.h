@@ -77,6 +77,9 @@ extern void PerlXlib_XWindowChanges_unpack_obj(XWindowChanges *s, HV *fields, SV
 extern void PerlXlib_XSizeHints_pack(XSizeHints *s, HV *fields, Bool consume);
 extern void PerlXlib_XSizeHints_unpack(XSizeHints *s, HV *fields);
 extern void PerlXlib_XSizeHints_unpack_obj(XSizeHints *s, HV *fields, SV *obj_ref);
+extern void PerlXlib_XKeyboardState_pack(XKeyboardState *s, HV *fields, Bool consume);
+extern void PerlXlib_XKeyboardState_unpack(XKeyboardState *s, HV *fields);
+extern void PerlXlib_XKeyboardState_unpack_obj(XKeyboardState *s, HV *fields, SV *obj_ref);
 extern void PerlXlib_XRectangle_pack(XRectangle *s, HV *fields, Bool consume);
 extern void PerlXlib_XRectangle_unpack(XRectangle *s, HV *fields);
 extern void PerlXlib_XRectangle_unpack_obj(XRectangle *s, HV *fields, SV *obj_ref);

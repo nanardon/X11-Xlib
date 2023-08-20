@@ -1930,6 +1930,55 @@ void PerlXlib_XRectangle_unpack_obj(XRectangle *s, HV *fields, SV *obj_ref) {
 
 /* END GENERATED X11_Xlib_XRectangle */
 /*--------------------------------------------------------------------------*/
+/* BEGIN GENERATED X11_Xlib_XKeyboardState */
+
+void PerlXlib_XKeyboardState_pack(XKeyboardState *s, HV *fields, Bool consume) {
+    SV **fp;
+    Display *dpy= NULL; /* not available.  Magic display attribute is handled by caller. */
+
+    fp= hv_fetch(fields, "auto_repeats", 12, 0);
+    if (fp && *fp) { { if (!SvPOK(*fp) || SvCUR(*fp) != sizeof(char)*32)  croak("Expected scalar of length %ld but got %ld", (long)(sizeof(char)*32), (long)SvCUR(*fp)); memcpy(s->auto_repeats, SvPVX(*fp), sizeof(char)*32);} if (consume) hv_delete(fields, "auto_repeats", 12, G_DISCARD); }
+
+    fp= hv_fetch(fields, "bell_duration", 13, 0);
+    if (fp && *fp) { s->bell_duration= SvUV(*fp); if (consume) hv_delete(fields, "bell_duration", 13, G_DISCARD); }
+
+    fp= hv_fetch(fields, "bell_percent", 12, 0);
+    if (fp && *fp) { s->bell_percent= SvIV(*fp); if (consume) hv_delete(fields, "bell_percent", 12, G_DISCARD); }
+
+    fp= hv_fetch(fields, "bell_pitch", 10, 0);
+    if (fp && *fp) { s->bell_pitch= SvUV(*fp); if (consume) hv_delete(fields, "bell_pitch", 10, G_DISCARD); }
+
+    fp= hv_fetch(fields, "global_auto_repeat", 18, 0);
+    if (fp && *fp) { s->global_auto_repeat= SvIV(*fp); if (consume) hv_delete(fields, "global_auto_repeat", 18, G_DISCARD); }
+
+    fp= hv_fetch(fields, "key_click_percent", 17, 0);
+    if (fp && *fp) { s->key_click_percent= SvIV(*fp); if (consume) hv_delete(fields, "key_click_percent", 17, G_DISCARD); }
+
+    fp= hv_fetch(fields, "led_mask", 8, 0);
+    if (fp && *fp) { s->led_mask= SvUV(*fp); if (consume) hv_delete(fields, "led_mask", 8, G_DISCARD); }
+}
+
+void PerlXlib_XKeyboardState_unpack_obj(XKeyboardState *s, HV *fields, SV *obj_ref) {
+    /* hv_store may return NULL if there is an error, or if the hash is tied.
+     * If it does, we need to release the reference to the value we almost inserted,
+     * so track allocated SV in this var.
+     */
+    SV *sv= NULL;
+    if (!hv_store(fields, "auto_repeats", 12, (sv=newSVpvn((void*)s->auto_repeats, sizeof(char)*32)), 0)) goto store_fail;
+    if (!hv_store(fields, "bell_duration", 13, (sv=newSVuv(s->bell_duration)), 0)) goto store_fail;
+    if (!hv_store(fields, "bell_percent", 12, (sv=newSViv(s->bell_percent)), 0)) goto store_fail;
+    if (!hv_store(fields, "bell_pitch", 10, (sv=newSVuv(s->bell_pitch)), 0)) goto store_fail;
+    if (!hv_store(fields, "global_auto_repeat", 18, (sv=newSViv(s->global_auto_repeat)), 0)) goto store_fail;
+    if (!hv_store(fields, "key_click_percent", 17, (sv=newSViv(s->key_click_percent)), 0)) goto store_fail;
+    if (!hv_store(fields, "led_mask"  ,  8, (sv=newSVuv(s->led_mask)), 0)) goto store_fail;
+    return;
+    store_fail:
+        if (sv) sv_2mortal(sv);
+        croak("Can't store field in supplied hash (tied maybe?)");
+}
+
+/* END GENERATED X11_Xlib_XKeyboardState */
+/*--------------------------------------------------------------------------*/
 /* BEGIN GENERATED X11_Xlib_XRenderPictFormat */
 
 void PerlXlib_XRenderPictFormat_pack(XRenderPictFormat *s, HV *fields, Bool consume) {
