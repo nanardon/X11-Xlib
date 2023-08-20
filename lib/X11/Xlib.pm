@@ -1501,6 +1501,48 @@ None of these functions are exportable.
 
   $display->XCompositeReleaseOverlayWindow($window);
 
+=head2 EXTENSION XFIXES
+
+This is an optional extension.  If you have XFixes available when this module was installed,
+the following functions will be available:
+
+=head3 XFixesQueryExtension
+
+  ($event_base, $error_base)= $display->XFixesQueryExtension()
+    if $display->can('XFixesQueryExtension');
+
+=head3 XFixesQueryVersion
+
+  ($major, $minor)= $display->XFixesQueryVersion()
+    if $display->can('XFixesQueryVersion');
+
+=head3 XFixesVersion
+
+  $ver= X11::Xlib::XFixesVersion();
+
+The local client library version, independent of the server.
+
+=head3 XFixesCreateRegion
+
+  $region_xid= XFixesCreateRegion($display, \@rects);
+
+Given an arrayref of L<XRectangle|X11::Xlib::XRectangle>, returns the union of all those rects
+as an XserverRegion (server-side XID).  If you want an L<XserverRegion|X11::Xlib::XserverRegion>
+object, use the method of the Display object.
+
+=head3 XFixesDestroyRegion
+
+  XFixesDestroyRegion($display, $region);
+
+=head3 XFixesSetWindowShapeRegion
+
+  XFixesSetWindowShapeRegion($display, $window, $shape_kind, $x_ofs, $y_ofs, $region);
+
+Alter the shape of a window (either C<ShapeInput> or C<ShapeBounding>) to match the given
+region at an offset.  The shape is a copy of the region, and does not hold a reference to it.
+By setting the input shape to an empty region, and using a Visual with alpha channel, you can
+make a top-level transparent window that does not intercept input events.
+
 =head2 EXTENSION XRENDER
 
 This is an optional extension.  If you have Xrender available when this
