@@ -890,7 +890,7 @@ XGetGeometry(dpy, wnd, root_out=NULL, x_out=NULL, y_out=NULL, width_out=NULL, he
             }
         } else {
             if (items > 2) {
-                PUSHs($PL_sv_undef);
+                PUSHs(&PL_sv_undef);
             }
             // else return empty list
         }
