@@ -395,6 +395,18 @@ Return the file descriptor (integer) of the socket connected to the server.
 This is useful for select/poll designs.
 (See also: L<X11::Xlib::Display/wait_event>)
 
+=head3 XServerVendor
+
+  $name= XServerVendor($display);
+
+Return the vendor string from the X Server.
+
+=head3 XVendorRelease
+
+  $version= XVendorRelease($display);
+
+Return the version number from the server (packed into a single integer)
+
 =head3 XSetCloseDownMode
 
   XSetCloseDownMode($display, $close_mode)
@@ -585,6 +597,10 @@ went, drop the leading X and do a quick search on this page.
 
 Return number of configured L</Screen>s of this display.
 
+=head3 DefaultScreen
+
+Returns the default screen number of the display
+
 =head3 DisplayWidth
 
 =head3 DisplayHeight
@@ -630,6 +646,14 @@ This returns a L</Visual>, not a L</XVisualInfo>.
 
 Return bits-per-pixel of the root window of a screen.
 If you omit C<$screen> it uses the default screen.
+
+=head3 DefaultColormap
+
+Default color map of the display
+
+=head3 DefaultGC
+
+Default graphics context of the display
 
 =head2 VISUAL/COLORMAP FUNCTIONS
 
@@ -809,9 +833,22 @@ Hide a window.
 
 =head3 XGetGeometry
 
-  my ($root, $x, $y, $width, $height, $border_width, $color_depth)
+  $bool= XGetGeometry($display, $drawable, my $root_out, my $x_out, my $y_out,
+        my $width_out, my $height_out, my $border_width_out, my $color_depth_out);
+  
+  # or more perl-ish
+  ($root, $x, $y, $width, $height, $border_width, $color_depth)
     = XGetGeometry($display, $drawable)
     or die "XGetGeometry failed";
+
+=head3 XTranslateCoordinates
+
+  $bool= XTranslateCoordinates($display, $src_win, $dst_win, $src_x, $src_y,
+      my $dst_x_out, my $dst_y_out, my $child_out);
+  
+  # or more perl-ish
+  ($x, $y, $child)= XTranslateCoordinates($display, $src_win, $dst_win, $src_x, $src_y)
+    or die;
 
 =head3 XGetWindowAttributes
 
@@ -1262,6 +1299,13 @@ the cursor is currently within that rectangle of that window.
 
 If grab modes used above are C<GrabModeSync> then further X11 input processing
 is halted until you call this function.  See X11 docs.
+
+=head3 XDisplayKeycodes
+
+  XDisplayKeycodes($display, my $min_code_out, my $max_code_out);
+
+Returns the minimum keycode and maximum keycode into the supplied scalars.  Minimum is never
+less than 8 and maximum is never greater than 255.
 
 =head3 XGetKeyboardMapping
 

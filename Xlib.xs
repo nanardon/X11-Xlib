@@ -863,32 +863,72 @@ XGetGeometry(dpy, wnd, root_out=NULL, x_out=NULL, y_out=NULL, width_out=NULL, he
     SV *depth_out
     INIT:
         Window root;
-        int x, y, ret;
+        int x, y;
         unsigned int w, h, bw, d;
     PPCODE:
-        ret = XGetGeometry(dpy, wnd, &root, &x, &y, &w, &h, &bw, &d);
-        if (items > 2) {
-            /* C-style API */
-            warn("C-style XGetGeometry is deprecated; use 2 arguments to return a list, instead");
-            if (root_out)   sv_setuv(root_out, root);
-            if (x_out)      sv_setiv(x_out, x);
-            if (y_out)      sv_setiv(y_out, y);
-            if (width_out)  sv_setuv(width_out, w);
-            if (height_out) sv_setuv(height_out, h);
-            if (border_out) sv_setuv(border_out, bw);
-            if (depth_out)  sv_setuv(depth_out, d);
-            PUSHs(sv_2mortal(newSViv(ret)));
+        if (XGetGeometry(dpy, wnd, &root, &x, &y, &w, &h, &bw, &d)) {
+            if (items > 2) {
+                # C-style API, return via parameters
+                if (root_out)   sv_setuv(root_out, root);
+                if (x_out)      sv_setiv(x_out, x);
+                if (y_out)      sv_setiv(y_out, y);
+                if (width_out)  sv_setuv(width_out, w);
+                if (height_out) sv_setuv(height_out, h);
+                if (border_out) sv_setuv(border_out, bw);
+                if (depth_out)  sv_setuv(depth_out, d);
+                PUSHs(&PL_sv_yes);
+            } else {
+                # Perl-style API, return a list
+                EXTEND(SP, 7);
+                PUSHs(sv_2mortal(newSVuv(root)));
+                PUSHs(sv_2mortal(newSViv(x)));
+                PUSHs(sv_2mortal(newSViv(y)));
+                PUSHs(sv_2mortal(newSVuv(w)));
+                PUSHs(sv_2mortal(newSVuv(h)));
+                PUSHs(sv_2mortal(newSVuv(bw)));
+                PUSHs(sv_2mortal(newSVuv(d)));
+            }
+        } else {
+            if (items > 2) {
+                PUSHs($PL_sv_undef);
+            }
+            // else return empty list
         }
-        /* perl-style API */
-        else if (ret) {
-            EXTEND(SP, 7);
-            PUSHs(sv_2mortal(newSVuv(root)));
-            PUSHs(sv_2mortal(newSViv(x)));
-            PUSHs(sv_2mortal(newSViv(y)));
-            PUSHs(sv_2mortal(newSVuv(w)));
-            PUSHs(sv_2mortal(newSVuv(h)));
-            PUSHs(sv_2mortal(newSVuv(bw)));
-            PUSHs(sv_2mortal(newSVuv(d)));
+
+void
+XTranslateCoordinates(dpy, src_wnd, dest_wnd, src_x, src_y, dest_x_out= NULL, dest_y_out= NULL, child_out= NULL)
+    Display *dpy
+    Window src_wnd
+    Window dest_wnd
+    int src_x
+    int src_y
+    SV *dest_x_out
+    SV *dest_y_out
+    SV *child_out
+    INIT:
+        int dest_x, dest_y;
+        Window child;
+        Bool success;
+    PPCODE:
+        if (XTranslateCoordinates(dpy, src_wnd, dest_wnd, src_x, src_y, &dest_x, &dest_y, &child)) {
+            if (items > 5) {
+                # C-style API, return via parameters
+                if (dest_x_out) sv_setiv(dest_x_out, dest_x);
+                if (dest_y_out) sv_setiv(dest_y_out, dest_y);
+                if (child_out)  sv_setuv(child_out,  child);
+                PUSHs(&PL_sv_yes);
+            } else {
+                # Perl-style API, return a list
+                EXTEND(SP, 3);
+                PUSHs(sv_2mortal(newSViv(dest_x)));
+                PUSHs(sv_2mortal(newSViv(dest_y)));
+                PUSHs(sv_2mortal(newSViv(child)));
+            }
+        } else {
+            if (items > 5) {
+                PUSHs(&PL_sv_undef);
+            }
+            # else return empty list
         }
 
 void
@@ -1234,23 +1274,6 @@ XRestackWindows(dpy, windows_av)
             wndarray[i]= PerlXlib_sv_to_xid(*elem);
         }
         XRestackWindows(dpy, wndarray, n);
-
-void
-XTranslateCoordinates(dpy, src_wnd, dest_wnd, src_x, src_y)
-    Display *dpy
-    Window src_wnd
-    Window dest_wnd
-    int src_x
-    int src_y
-    INIT:
-        int dest_x, dest_y;
-        Window child;
-    PPCODE:
-        if (XTranslateCoordinates(dpy, src_wnd, dest_wnd, src_x, src_y, &dest_x, &dest_y, &child)) {
-            PUSHs(sv_2mortal(newSViv(dest_x)));
-            PUSHs(sv_2mortal(newSViv(dest_y)));
-            PUSHs(sv_2mortal(newSViv(child)));
-        }
 
 # XTest Functions (fn_xtest) -------------------------------------------------
 
