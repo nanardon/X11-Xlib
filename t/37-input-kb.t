@@ -10,10 +10,10 @@ plan skip_all => "No X11 Server available"
     unless $ENV{DISPLAY};
 plan tests => 8;
 
-my $TEST_DESTRUTIVE= !!$ENV{TEST_DESTRUTIVE};
+my $TEST_DESTRUCTIVE= !!$ENV{TEST_DESTRUCTIVE};
 sub skip_destructive($) {
-    skip "TEST_DESTRUTIVE is false; skipping destrutive tests", shift
-        unless $TEST_DESTRUTIVE;
+    skip "TEST_DESTRUCTIVE is false; skipping destrutive tests", shift
+        unless $TEST_DESTRUCTIVE;
 }
 
 my $dpy= new_ok( 'X11::Xlib', [], 'connect to X11' );
