@@ -1062,28 +1062,6 @@ XSetWMProtocols(dpy, wnd, proto_av)
         RETVAL
 
 int
-XGetWMSizeHints(dpy, wnd, hints_out, supplied_out, property)
-    Display * dpy
-    Window wnd
-    XSizeHints *hints_out
-    SV *supplied_out
-    Atom property
-    INIT:
-        long supplied;
-    CODE:
-        RETVAL = XGetWMSizeHints(dpy, wnd, hints_out, &supplied, property);
-        sv_setiv(supplied_out, supplied);
-    OUTPUT:
-        RETVAL
-
-void
-XSetWMSizeHints(dpy, wnd, szhints, property)
-    Display * dpy
-    Window wnd
-    XSizeHints *szhints
-    Atom property
-
-int
 XGetWMNormalHints(dpy, wnd, hints_out, supplied_out)
     Display * dpy
     Window wnd
@@ -1111,6 +1089,28 @@ XSetWMNormalHints(dpy, wnd, szhints)
     Display *dpy
     Window wnd
     XSizeHints *szhints
+
+int
+XGetWMSizeHints(dpy, wnd, hints_out, supplied_out, property)
+    Display * dpy
+    Window wnd
+    XSizeHints *hints_out
+    SV *supplied_out
+    Atom property
+    INIT:
+        long supplied= 0;
+    CODE:
+        RETVAL = XGetWMSizeHints(dpy, wnd, hints_out, &supplied, property);
+        sv_setiv(supplied_out, supplied);
+    OUTPUT:
+        RETVAL
+
+void
+XSetWMSizeHints(dpy, wnd, szhints, property)
+    Display * dpy
+    Window wnd
+    XSizeHints *szhints
+    Atom property
 
 int
 XGetWindowAttributes(dpy, wnd, attrs_out)

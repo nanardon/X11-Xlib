@@ -1056,6 +1056,21 @@ L<X11::Xlib::XSizeHints>, or a hashref of its fields.  Note that the C<< ->flags
 member of this struct will be initialized for you if you pass a hashref, according
 to what fields exist in the hashref.
 
+=head3 XGetWMSizeHints
+
+  XGetWMSizeHints($display, $window, $hints_out, $supplied_fields_out, $prop_atom);
+
+Request the attribute $prop_atom from the $window.  If it exists and is an
+XSizeHints type, the variable $hints_out will be filled with the struct fields,
+and $supplied_fields_out will be set to a bit mask of which fields were available.
+
+=head3 XSetWMSizeHints
+
+  XSetWMSizeHints($display, $window, $hints, $prop_atom);
+
+Write value of type XSizeHints to the named property of the window.  $hints should
+be a XSizeHints object, or packed buffer containing the fields of one.
+
 =head3 XDestroyWindow
 
   XDestroyWindow($display, $window);
