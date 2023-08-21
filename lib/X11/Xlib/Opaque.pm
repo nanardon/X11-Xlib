@@ -2,7 +2,7 @@ package X11::Xlib::Opaque;
 use X11::Xlib ();
 
 # All modules in dist share a version
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 @X11::Xlib::Visual::ISA= ( __PACKAGE__ );
 $X11::Xlib::Visual::VERSION= $VERSION;

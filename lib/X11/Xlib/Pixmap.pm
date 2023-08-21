@@ -5,7 +5,7 @@ use Carp;
 use parent 'X11::Xlib::XID';
 
 # All modules in dist share a version
-our $VERSION = '0.24';
+our $VERSION = '0.25';
 
 sub width  { croak "read-only" if @_ > 1; $_[0]{width} }
 sub height { croak "read-only" if @_ > 1; $_[0]{height} }

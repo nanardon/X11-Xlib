@@ -1,8 +1,13 @@
 Revision history for Perl extension X11::Xlib.
 
-0.25 - 2023-..
+0.25 - 2023-08-21
     - Resolve naming conflict with perl CORE (issue #8)
-    - Spell-check documentation
+    - Implement XGetKeyboardControl and struct XKeyboardState
+    - Allow C-style API for XTranslateCoordinates, XQueryPointer, and
+       XGetGeometry that return values into params, while also allowing
+       perl-style API that returns a list.
+    - Many documentation updates (full method coverage)
+    - Numerous tooling improvements and author tests
     - Update to Devel::PPPort-3.71
 
 0.24 - 2023-08-16
