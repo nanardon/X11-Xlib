@@ -100,9 +100,10 @@ subtest geometry => sub {
 };
 
 subtest XTranslateCoordinates => sub {
+    my $root= $dpy->RootWindow;
     my @ret= XTranslateCoordinates($dpy, $root, $root, 0, 0);
     is( scalar @ret, 3, 'called with 5 args returns 3-arg list' );
-    my @ret= XTranslateCoordinates($dpy, $root, $root, 0, 0, my $x_out);
+    @ret= XTranslateCoordinates($dpy, $root, $root, 0, 0, my $x_out);
     is( scalar @ret, 1, 'called with 6 args returns single value' );
     @ret= XTranslateCoordinates($dpy, $root, $root, 5, 5, $x_out, my $y_out, my $child_out);
     is( scalar @ret, 1, 'called with 8 args returns single value' );
