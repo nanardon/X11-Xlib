@@ -140,12 +140,6 @@ For conveniently unrolling this into list context, use C<get_decoded_property_it
 
   my @items= $window->get_decoded_property_items($prop_atom, $type_atom=Any);
   
-  # Example: dump out all properties of the window
-  for my $prop ($window->get_property_list) {
-    eval { say join " ", $prop, "=", $window->get_decoded_property_items($prop); }
-      or say "$prop: Cant decode ".$window->get_property($prop)->{type};
-  }
-
 The return value is a list, since many properties are multi-value but many are single-value,
 and there's no good way to know which properties are intended as arrays with one element.
 
@@ -200,6 +194,23 @@ sub _encode_prop_UTF8_STRING {
     utf8::encode($str);
     return ( $str, length $str, 8 );
 }
+{ no strict 'refs';
+  *{"_decode_prop_UTF-8"}= *_decode_prop_UTF8_STRING;
+  *{"_encode_prop_UTF-8"}= *_encode_prop_UTF8_STRING;
+}
+
+sub _decode_prop_COMPOUND_TEXT {
+    my @strings= split /\0/, $_[1];
+    utf8::decode($_) for @strings;
+    return @strings;
+}
+sub _encode_prop_COMPOUND_TEXT {
+    my $self= shift;
+    /\0/ && Carp::croak("Text cannot contain NUL bytes") for @_;
+    my $str= join "\0", @_;
+    utf8::encode($str);
+    return ($str, length $str, 8 );
+}
 
 my $long_pack= X11::Xlib::_prop_format_width(32) == 4? 'l*' : 'q*';
 my $ulong_pack= uc($long_pack);
@@ -244,6 +255,24 @@ sub _decode_prop_PIXMAP { # ($self, $data, $n, $format)
     map $_[0]->display->get_cached_pixmap($_), _decode_prop_CARDINAL(@_);
 }
 *_encode_prop_PIXMAP = *_encode_prop_WINDOW;
+
+=head2 get_all_properties_as_hash
+
+This method is for convenient debugging, when you just want to pull all the properties
+of a window and dump them with Data::Dump or Data::Printer.  Property values are returned
+as arrayrefs.  Decoding errors are returned as scalars.
+
+=cut
+
+sub get_all_properties_as_hash {
+    my ($self)= @_;
+    my %ret;
+    for my $prop ($self->get_property_list) {
+      eval { $ret{$prop}= [ $self->get_decoded_property_items($prop) ]; }
+        or $ret{$prop}= 'error: '.$@;
+    }
+    \%ret;
+}
 
 =head2 set_property
 
