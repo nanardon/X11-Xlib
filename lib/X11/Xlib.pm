@@ -58,11 +58,11 @@ my %_constants= (
     PropModeAppend PropModePrepend PropModeReplace RaiseLowest
     SouthEastGravity SouthGravity SouthWestGravity StaticGravity TopIf
     UnmapGravity WestGravity )],
-  const_winattr => [qw( CWBackPixel CWBackPixmap CWBackingPixel CWBackingPlanes
-    CWBackingStore CWBitGravity CWBorderPixel CWBorderPixmap CWBorderWidth
-    CWColormap CWCursor CWDontPropagate CWEventMask CWHeight
+  const_winattr => [qw( Always CWBackPixel CWBackPixmap CWBackingPixel
+    CWBackingPlanes CWBackingStore CWBitGravity CWBorderPixel CWBorderPixmap
+    CWBorderWidth CWColormap CWCursor CWDontPropagate CWEventMask CWHeight
     CWOverrideRedirect CWSaveUnder CWSibling CWStackMode CWWidth CWWinGravity
-    CWX CWY )],
+    CWX CWY IsUnmapped IsUnviewable IsViewable NotUseful WhenMapped )],
   const_x => [qw( None )],
 # END GENERATED XS CONSTANT LIST
 );

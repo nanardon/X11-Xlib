@@ -5126,6 +5126,12 @@ BOOT:
   newCONSTSUB(stash, "CWWinGravity", newSViv(CWWinGravity));
   newCONSTSUB(stash, "CWX", newSViv(CWX));
   newCONSTSUB(stash, "CWY", newSViv(CWY));
+  newCONSTSUB(stash, "IsUnmapped", newSViv(IsUnmapped));
+  newCONSTSUB(stash, "IsUnviewable", newSViv(IsUnviewable));
+  newCONSTSUB(stash, "IsViewable", newSViv(IsViewable));
+  newCONSTSUB(stash, "NotUseful", newSViv(NotUseful));
+  newCONSTSUB(stash, "WhenMapped", newSViv(WhenMapped));
+  newCONSTSUB(stash, "Always", newSViv(Always));
   newCONSTSUB(stash, "USPosition", newSViv(USPosition));
   newCONSTSUB(stash, "USSize", newSViv(USSize));
   newCONSTSUB(stash, "PPosition", newSViv(PPosition));

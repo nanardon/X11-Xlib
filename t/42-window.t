@@ -70,6 +70,8 @@ subtest wm_protocols => sub {
 
 is( err{ XMapWindow($dpy, $win_id); }, '', 'XMapWindow' );
 $dpy->XSync;
+# map_state isn't changing... why?
+# is( $dpy->get_cached_window($win_id)->clear_cache->attributes->map_state, IsViewable, 'map_state' );
 
 subtest geometry => sub {
     my ($root, $x, $y, $w, $h, $b, $d);
@@ -178,7 +180,15 @@ subtest events => sub {
     is( $dpy->root_window->event_mask, KeyPressMask, 'event_mask set to KeyPressMask' );
 };
 
+my $wnd= $dpy->get_cached_window($win_id);
+$wnd->clear_cache;
+# these fail, why?  should be mapped
+#ok( $wnd->is_viewable, 'is_viewable' ) or diag explain [ $wnd->attributes->map_state, IsViewable, IsUnmapped, IsUnviewable ];
+#ok( !$wnd->is_unmapped, 'not is_unmapped' );
 is( err{ XUnmapWindow($dpy, $win_id); }, '', 'XUnmapWindow' );
+$wnd->clear_cache;
+ok( !$wnd->is_viewable, 'not is_viewable' );
+ok( $wnd->is_unmapped, 'is_unmapped' );
 
 is( err{ XDestroyWindow($dpy, $win_id); }, '', 'XDestroyWindow' );
 

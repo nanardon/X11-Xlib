@@ -50,10 +50,18 @@ sub children {
 Calls L<X11::Xlib/XGetWindowAttributes>, caches the result, and returns
 the instance of L<X11::Xlib::XWindowAttributes>.
 
-=head2 clear_all
+=head2 is_unmapped
 
-Clear any cached value of the window so that the next access loads it fresh
-from the server.
+Shortcut for C<< attributes->map_state == IsUnmapped >>.
+
+=head2 is_unviewable
+
+Shortcut for C<< attributes->map_state == IsUnviewable >>.
+(This means the window is mapped, but an ancestor is not)
+
+=head2 is_viewable
+
+Shortcut for C<< attributes->map_state == IsViewable >>.
 
 =cut
 
@@ -66,9 +74,22 @@ sub attributes {
     $self->{attributes}
 }
 
-sub clear_all {
+sub is_unmapped   { shift->attributes->map_state == X11::Xlib::IsUnmapped() }
+sub is_unviewable { shift->attributes->map_state == X11::Xlib::IsUnviewable() }
+sub is_viewable   { shift->attributes->map_state == X11::Xlib::IsViewable() }
+
+=head2 clear_cache
+
+Clear any cached value of the window so that the next access loads it fresh
+from the server.
+
+=cut
+
+sub clear_cache {
     delete @{$_[0]}{qw( attributes )};
+    $_[0]; # for chaining
 }
+*clear_all= *clear_cache;
 
 =head2 get_property_list
 
