@@ -21,6 +21,30 @@ X11::Xlib::Window - XID wrapper for Window
 
 (see L<X11::Xlib::XID> for inherited methods/attributes)
 
+=head2 parent
+
+Return the parent window, if any.
+
+=head2 children
+
+Return a list of all child windows.
+
+=cut
+
+sub parent {
+    my $self= shift;
+    my $display= $self->display;
+    my (undef, $parent)= $display->XQueryTree($self);
+    $display->get_cached_window($parent);
+}
+
+sub children {
+    my $self= shift;
+    my $display= $self->display;
+    my (undef, undef, @children)= $display->XQueryTree($self);
+    return map $display->get_cached_window($_), @children;
+}
+
 =head2 attributes
 
 Calls L<X11::Xlib/XGetWindowAttributes>, caches the result, and returns

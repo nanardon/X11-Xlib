@@ -130,6 +130,13 @@ is( $root2,  RootWindow($dpy), 'XQueryTree - root' );
 # is( $parent, $root, 'XQueryTree - parent' ); can't verify
 is_deeply( \@children, \@cwnd, 'XQueryTree - children' );
 
+subtest window_hierarchy_methods => sub {
+    my $wnd= $dpy->get_cached_window($win_id);
+    is( $wnd->parent, $dpy->root_window, 'window parent is root' );
+    is( $dpy->root_window->parent, undef, 'root window has no parent' );
+    is_deeply( [ map $_->xid, $wnd->children ], \@cwnd, 'window children list' );
+};
+
 # Call a bunch of functions to see if any throw an error.
 # TODO: actually verify the behavior of these calls
 subtest does_it_crash => sub {

@@ -657,6 +657,7 @@ sub get_cached_xobj {
         $obj= $xid;
         $xid= $obj->xid;
     }
+    return undef unless $xid; # XID 0 equates to undef/NULL
     return $self->{_xid_cache}{$xid} || do {
         $obj ||= ($class || 'X11::Xlib::XID')->new(
             display => $self,
