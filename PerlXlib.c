@@ -27,7 +27,7 @@ static struct PerlXlib_fields* PerlXlib_get_magic_fields(SV *sv, int create_flag
  */
 struct PerlXlib_fields {
     SV *self;              /* reference to the SV this struct is attached to */
-	SV *display_sv;        /* optional reference to Display, no lifespan tracking */
+    SV *display_sv;        /* optional reference to Display, no lifespan tracking */
     void *ptr;             /* struct/opaque pointer to something in xlib */
     const char *ptr_type;  /* static string identifying the type of the object */
     int xfree_cleanup: 1;  /* whether to call XFree(ptr) during destructor */
@@ -169,15 +169,15 @@ static int PerlXlib_magic_dup(pTHX_ MAGIC *mg, CLONE_PARAMS *param) {
 #define PerlXlib_magic_dup 0
 #endif
 static MGVTBL PerlXlib_magic_vt= {
-	0, /* get */
-	0, /* write */
-	0, /* length */
-	0, /* clear */
-	PerlXlib_magic_free,
-	0, /* copy */
-	PerlXlib_magic_dup
+    0, /* get */
+    0, /* write */
+    0, /* length */
+    0, /* clear */
+    PerlXlib_magic_free,
+    0, /* copy */
+    PerlXlib_magic_dup
 #ifdef MGf_LOCAL
-	,0
+    ,0
 #endif
 };
 
@@ -187,14 +187,12 @@ static MGVTBL PerlXlib_magic_vt= {
  * Use NOTNULL for a built-in croak() if the return value would be NULL.
  */
 static struct PerlXlib_fields* PerlXlib_get_magic_fields(SV *sv, int create_flag) {
-	MAGIC* magic;
     struct PerlXlib_fields *fields;
-	if (SvMAGICAL(sv)) {
-        /* Iterate magic attached to this scalar, looking for one with our vtable */
-        for (magic= SvMAGIC(sv); magic; magic = magic->mg_moremagic)
-            if (magic->mg_type == PERL_MAGIC_ext && magic->mg_virtual == &PerlXlib_magic_vt)
-                /* If found, the mg_ptr points to the fields structure. */
-                return (struct PerlXlib_fields*) magic->mg_ptr;
+    if (SvMAGICAL(sv)) {
+        MAGIC* magic= mg_findext(sv, PERL_MAGIC_ext, &PerlXlib_magic_vt);
+        /* If found, the mg_ptr points to the fields structure. */
+        if (magic)
+            return (struct PerlXlib_fields*) magic->mg_ptr;
     }
     if (create_flag == OR_DIE)
         croak("Object lacks X11 magic");
@@ -207,7 +205,7 @@ static struct PerlXlib_fields* PerlXlib_get_magic_fields(SV *sv, int create_flag
 #endif
         return fields;
     }
-	return NULL;
+    return NULL;
 }
 
 
